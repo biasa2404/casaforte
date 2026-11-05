@@ -81,6 +81,7 @@ function todasAsFalas(nome){
     Object.values(ROTEIRO.incentivo).forEach(l=>each('incentivo',l));
   }
   Object.keys(COMO).forEach(a=>explicacao(a).forEach(t=>add(t,'explica')));
+  if(typeof AULA!=='undefined'){Object.values(AULA).forEach(l=>l.forEach(p=>add(p.fala,'explica')));add(AULA_FIM,'explica');}
   return out; // Map texto -> estilo
 }
 if(typeof module!=='undefined') module.exports={VOZ,ROTEIRO,fala,hashFala,todasAsFalas,explicacao,CALMAS};

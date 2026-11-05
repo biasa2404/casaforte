@@ -78,7 +78,7 @@ function build(dayIdx,tier,dur,opt={}){
     const coolS=60;
     while(used+hold+tr<=target-coolS||i<poses.length){
       const it=poses[i%poses.length];
-      if(cycle===1&&learn(it.a)){steps.push({k:'learn',s:16,it,label:'Aprenda a postura'});used+=16;}
+      if(cycle===1&&learn(it.a)){steps.push({k:'learn',s:10,it,label:'Aprenda a postura'});used+=10;}
       steps.push({k:'work',s:hold,it,label:'Sequência '+cycle,ph:'yoga'});
       used+=hold;
       steps.push({k:'rest',s:tr,label:'Transição',soft:1}); used+=tr;
@@ -99,7 +99,7 @@ function build(dayIdx,tier,dur,opt={}){
     steps.push({k:'rest',s:15,label:'Prepare-se'});
     for(let r=1;r<=R;r++){
       ex.forEach((it,i)=>{
-        if(r===1&&learn(it.a)) steps.push({k:'learn',s:20,it,label:'Aprenda o movimento'});
+        if(r===1&&learn(it.a)) steps.push({k:'learn',s:10,it,label:'Aprenda o movimento'});
         steps.push({k:'work',s:tp.w,it,r,R,label:'Rodada '+r+' de '+R,first:r===1});
         if(i<ex.length-1) steps.push({k:'rest',s:tp.r,label:'Descanso',r,R});
         else if(r<R) steps.push({k:'rest',s:tp.rr,label:'Fim da rodada '+r,r,R,round:1});

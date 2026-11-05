@@ -13,7 +13,7 @@ import {fileURLToPath} from 'node:url';
 
 const raiz=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const ctx={console};vm.createContext(ctx);
-const codigo=['js/teach.js','js/catalog.js','js/lines.js'].map(f=>fs.readFileSync(path.join(raiz,f),'utf8').replace(/^'use strict';/,'')).join('\n;\n')
+const codigo=['js/teach.js','js/catalog.js','js/aula.js','js/lines.js'].map(f=>fs.readFileSync(path.join(raiz,f),'utf8').replace(/^'use strict';/,'')).join('\n;\n')
   +'\n;globalThis.__api={VOZ,todasAsFalas,hashFala};';
 vm.runInContext(codigo,ctx);
 const {VOZ,todasAsFalas,hashFala}=ctx.__api;

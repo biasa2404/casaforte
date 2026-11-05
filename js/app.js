@@ -202,9 +202,16 @@ function openPreview(it){
   pvStage.guides=S.prefs.guides;pvStage.applyColors();pvStage.setAnim(AN[it.a],it.a);
   $('pvClose').focus();
 }
-function closePreview(){$('preview').hidden=true;pvItem=null;pararFala();}
+function closePreview(){$('preview').hidden=true;pvItem=null;pararFala();pararAulaPv();}
+let pvAula=null,pvLast=0;
+function pararAulaPv(){if(pvAula){pvAula.parar();pvAula=null;}$('pvListen').textContent='Aula em câmera lenta';}
 $('pvClose').onclick=closePreview;
-$('pvListen').onclick=()=>{unlockAudio();if(pvItem){const c2=explicacao(pvItem.a);sayQ([line('aprender',{ex:pvItem.n}),...(c2||[pvItem.tip])],true);}};
+$('pvListen').onclick=()=>{
+  unlockAudio();if(!pvItem) return;
+  if(pvAula){pararFala();pararAulaPv();pvT0=performance.now();return;}
+  pvAula=new Aula(pvStage,pvItem.a,AN[pvItem.a],(l,cb)=>sayQ(l,true,cb),true);pvAula.intro=line('aprender',{ex:pvItem.n});
+  pvLast=performance.now();$('pvListen').textContent='Parar aula';
+};
 $('preview').addEventListener('click',e=>{if(e.target.id==='preview') closePreview();});
 
 /* ---------- Voz e som ---------- */
@@ -242,11 +249,12 @@ const audioEl=new Audio();audioEl.preload='auto';
 let falaJob=0;
 function pararFala(){falaJob++;try{audioEl.pause();}catch(e){}try{hasTTS&&speechSynthesis.cancel()}catch(e){}}
 function tts(t,done){if(!hasTTS){done();return;}try{const u=utter(t);u.onend=done;u.onerror=done;speechSynthesis.speak(u);}catch(e){done();}}
-function sayQ(list,force){
-  if(!S.prefs.voice&&!force) return;
+function sayQ(list,force,done){
+  if(!S.prefs.voice&&!force){done&&done();return;}
   pararFala();const job=falaJob;
   const next=i=>{
-    if(job!==falaJob||i>=list.length) return;
+    if(job!==falaJob) return;
+    if(i>=list.length){done&&done();return;}
     const t=list[i],h=hashFala(t),go=()=>next(i+1);
     if(gravados.has(h)){
       audioEl.onended=go;audioEl.onerror=()=>{if(job===falaJob)tts(t,go);};
@@ -288,6 +296,7 @@ function setHow(show){
 }
 function enterStep(announce){
   const s=cur();P.rem=s.s*1000;P.lastSec=null;P.anim0=performance.now();P.frozen=null;
+  if(P.aula){P.aula.parar();P.aula=null;}
   const it=s.it||s.nx,isRest=!s.it,isLearn=s.k==='learn';
   if(it){plStage.setAnim(AN[it.a],it.a);}
   plStage.guides=S.prefs.guides&&(isLearn||s.k==='work'||isRest);
@@ -306,8 +315,9 @@ function enterStep(announce){
   const ex=it?it.n:'';
   if(s.k==='prep') sayQ([nmLine('boasVindas'),line(PLANS[P.day].flow?'primeiroYoga':'primeiro',{ex})]);
   else if(isLearn){
-    const c=explicacao(s.it.a);
-    sayQ([line('aprender',{ex:s.it.n}),...(c||[s.it.tip])]);
+    P.aula=new Aula(plStage,s.it.a,AN[s.it.a],(l,cb)=>sayQ(l,false,cb),S.prefs.voice);
+    if(P.aula.done){P.aula=null;const c=explicacao(s.it.a);sayQ([line('aprender',{ex:s.it.n}),...(c||[s.it.tip])]);}
+    else P.aula.intro=line('aprender',{ex:s.it.n});
   }
   else if(isRest){
     if(s.round) sayQ([s.R-s.r===1?line('penultimaRodada'):line('fimRodada',{n:s.R-s.r}),line('descanso',{ex})]);
@@ -330,7 +340,9 @@ function tick(now){
   if(P&&!$('player').hidden){
     const dt=Math.min(250,now-P.last);P.last=now;
     const s=cur();
-    if(P.run){
+    const emAula=P.aula&&!P.aula.done;
+    if(P.run&&emAula){P.aulaMs=P.aula.update(dt);}
+    else if(P.run){
       P.rem-=dt;P.doneMs+=dt;
       const sec=Math.ceil(P.rem/1000);
       if(sec!==P.lastSec){
@@ -346,15 +358,19 @@ function tick(now){
     const st=cur();
     if(!P.run&&P.frozen==null) P.frozen=now-P.anim0;
     const speed=st.k==='learn'?0.7:1;
-    plStage.frame(P.run?(now-P.anim0)*speed:(P.frozen||0)*speed);
+    if(P.aula) plStage.frame(P.aula.done&&P.run?P.aula.update(dt):(P.aulaMs||0));
+    else plStage.frame(P.run?(now-P.anim0)*speed:(P.frozen||0)*speed);
     const frac=Math.max(0,P.rem)/(st.s*1000);
     $('plArc').style.strokeDashoffset=String(326.7*(1-frac));
-    $('plTime').textContent=st.s>=60||P.rem>59000?mmss(P.rem/1000):Math.max(0,Math.ceil(P.rem/1000));
+    $('plTime').style.fontSize=emAula?'60%':'';$('plTime').textContent=emAula?'Aula':st.s>=60||P.rem>59000?mmss(P.rem/1000):Math.max(0,Math.ceil(P.rem/1000));
     const tt=total(P.steps)*1000,done=P.steps.slice(0,P.i).reduce((a,x)=>a+x.s*1000,0)+(st.s*1000-Math.max(0,P.rem));
     $('plProg').style.width=(done/tt*100)+'%';
     $('plTotal').textContent=mmss((tt-done)/1000)+' restantes';
   }
-  if(pvItem&&!$('preview').hidden&&pvStage) pvStage.frame(performance.now()-pvT0);
+  if(pvItem&&!$('preview').hidden&&pvStage){
+    if(pvAula){const dt=Math.min(100,now-pvLast);pvLast=now;pvStage.frame(pvAula.update(dt));if(pvAula.done&&pvAula.reps>=4){pararAulaPv();pvT0=now;}}
+    else pvStage.frame(performance.now()-pvT0);
+  }
   if(!$('done').hidden) confettiFrame(now);
   requestAnimationFrame(tick);
 }
@@ -365,6 +381,7 @@ function setPause(run){
   $('pauseBtn').setAttribute('aria-label',run?'Pausar':'Continuar');
   $('pauseIco').innerHTML=run?'<rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/>':'<path d="M7 4.5v15l13-7.5z" fill="currentColor"/>';
   if(!run){pararFala();}
+  else if(P.aula) P.aula.falou=true;
 }
 $('pauseBtn').onclick=()=>{unlockAudio();setPause(!P.run);say(line(P.run?'volta':'pausa'));};
 $('nextBtn').onclick=()=>go(1);
