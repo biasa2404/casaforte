@@ -29,14 +29,16 @@ const MOCAP={
   teep:'assets/mixamo/teep.json',
   dodge:'assets/mixamo/dodge.json',
   bodyJab:'assets/mixamo/bodyJab.json',
+  ropeJump:'assets/mixamo/ropeJump.json',
+  neckStretch:'assets/mixamo/neckStretch.json',
 };
 // velocidade de reprodução (1 = velocidade real); um pouco mais lento ajuda a aprender
-const MOCAP_RATE={squat:0.8,bicycle:0.55};
+const MOCAP_RATE={squat:0.8,bicycle:0.55,neckStretch:0.45};
 // enquanto o arquivo carrega (ou sem internet), mostra um movimento parecido
 if(typeof AN!=='undefined'){
   const alias={hiphop:'danceMarch',salsa:'danceMarch',samba:'danceMarch',belly:'danceMarch',situp:'crunch',bicycle:'crunch',
     snapKick:'teep',jog:'highknees',jacks:'danceMarch',armStretch:'circles',breathIdle:'breath',
-    hookLead:'jabcross',hookRear:'jabcross',upperRear:'jabcross',boxWarm:'circles',pikeWalk:'dog',dodge:'squat',bodyJab:'jabcross'};
+    hookLead:'jabcross',hookRear:'jabcross',upperRear:'jabcross',boxWarm:'circles',pikeWalk:'dog',dodge:'squat',bodyJab:'jabcross',ropeJump:'highknees',neckStretch:'breath'};
   for(const k in alias) if(!AN[k]) AN[k]=AN[alias[k]];
 }
 const _mc={};

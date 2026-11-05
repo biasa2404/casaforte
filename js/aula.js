@@ -109,6 +109,16 @@ const AULA={
     {t:0.43,yaw:0.2,cola:'Empurre com a sola',fala:'Agora estenda a perna e empurre com a sola do pé, levando o quadril para a frente. É um empurrão, não uma pancada.',guias:[{t:'dot',j:'ball0',label:'Sola do pé'}]},
     {t:0.7,yaw:1.2,cola:'Recolha e volte à base',fala:'Recolha a perna dobrando o joelho e volte para a base, com as mãos na guarda. Troque de perna na metade.'},
   ],
+  ropeJump:[
+    {t:0.07,yaw:1.4,cola:'Punhos na altura do quadril',fala:'Cotovelos perto do corpo e punhos na altura do quadril, como se segurasse a corda.',guias:[{t:'dot',j:'hand0',label:'Punho'}]},
+    {t:0.33,yaw:0.6,cola:'Na ponta dos pés',fala:'Salte baixo, na ponta dos pés, só o suficiente para a corda passar.',guias:[{t:'dot',j:'ball0',label:'Ponta do pé'}]},
+    {t:0.59,yaw:0.6,cola:'Aterrisse leve',fala:'Aterrisse leve, com os joelhos soltos. Se cansar, continue só girando os punhos.',guias:[{t:'dot',j:'knee0',label:'Joelho solto'}]},
+  ],
+  neckStretch:[
+    {t:0,yaw:1.4,cola:'Ombros soltos',fala:'Em pé, ombros soltos e longe das orelhas. Respire devagar.'},
+    {t:0.25,yaw:1.4,cola:'Orelha em direção ao ombro',fala:'Incline a cabeça devagar, levando a orelha em direção ao ombro. O ombro não sobe.'},
+    {t:0.72,yaw:1.4,cola:'Agora o outro lado',fala:'Volte ao centro e faça o mesmo para o outro lado. Só até sentir um alongamento leve, sem dor.'},
+  ],
   dodge:[
     {t:0,yaw:1.2,cola:'Base e guarda',fala:'Base de luta, mãos protegendo o rosto.'},
     {t:0.14,yaw:0.4,cola:'Abaixe dobrando os joelhos',fala:'Abaixe o corpo dobrando os joelhos, como se passasse por baixo de um soco. As costas ficam retas.',guias:[{t:'dot',j:'knee0',label:'Dobre os joelhos'},{t:'dot',j:'hand1',label:'Mãos na guarda'}]},
