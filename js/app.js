@@ -3,7 +3,7 @@
 
 /* ---------- Estado salvo ---------- */
 const KEY='casaforte.v1';
-const PREFS0={dur:40,voice:true,tier:'auto',tierMin:0,name:'',voiceName:'',explain:'first',guides:true,trat:'n',meta:4,onboarded:false};
+const PREFS0={dur:40,voice:true,musica:true,tier:'auto',tierMin:0,name:'',voiceName:'',explain:'first',guides:true,trat:'n',meta:4,onboarded:false};
 let S={hist:[],xp:0,learned:{},prefs:{...PREFS0},quiz:null,plano:null,humor:{},troca:{}};
 function carregar(o){
   S={hist:Array.isArray(o.hist)?o.hist:[],xp:+o.xp||0,learned:o.learned||{},prefs:{...PREFS0,...(o.prefs||{})},
@@ -161,12 +161,14 @@ function renderHoje(){
     const P=PLANS[o.plan],steps=build(o.plan,o.tier,o.dur,{learn:needLearn}),tt=Math.round(total(steps)/60);
     const works=steps.filter(s=>s.k==='work').length,R=P.flow?0:works/P.ex.length,learns=new Set(steps.filter(s=>s.k==='learn').map(s=>s.it.a)).size;
     const tags=[`${tt} min`];
-    if(P.flow) tags.push(`${TP[o.tier].hold}s em cada postura`); else tags.push(`${R} rodadas`,TIERS[o.tier]);
+    if(P.flow) tags.push(`${TP[o.tier].hold}s em cada postura`); else if(P.mt||P.coreo) tags.push(TIERS[o.tier]); else tags.push(`${R} rodadas`,TIERS[o.tier]);
     if(learns) tags.push(learns>1?`${learns} aulas de movimento novo`:'1 aula de movimento novo');
     const eyebrow={normal:'Treino de hoje',leve:'Treino de hoje, versão leve',troca:'Troca sugerida para hoje'}[o.tipo];
     let txt;
     if(o.tipo==='leve') txt=`O mesmo treino com menos tempo${o.tier<baseTier()?' e variações mais simples':''}. Ainda conta para a sua semana.`;
     else if(o.tipo==='troca') txt=`Hoje o corpo pede recuperação. ${esc(PLANS[o.original].nome)} fica para outro dia.`;
+    else if(P.mt){const Rr=Math.max(...steps.map(x=>x.R||0));txt=`Aquecimento com corda, técnica de ${P.ex.length} golpes e ${Rr} rounds de sequências de golpes.`;}
+    else if(P.coreo){const Rr=Math.max(...steps.map(x=>x.R||0));txt=`Coreografia ${steps.coreo.n}: ${steps.coreo.b.length} passos, primeiro um por um e depois tudo junto ${Rr} vezes, com batida de ${steps.coreo.bpm} BPM.`;}
     else txt=P.flow?'Posturas com respiração, no seu tempo.':`Aquecimento, ${P.ex.length} movimentos em ${R} rodadas e alongamento no final.`;
     c.className='hero '+o.tipo;
     c.innerHTML=`<span class="eyebrow">${eyebrow}</span><h2>${esc(P.nome)}</h2><p>${txt}</p><div class="herotags">${tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div>`+
@@ -195,18 +197,27 @@ function renderTreino(){
   $('trName').textContent=P.nome;
   const works=steps.filter(s=>s.k==='work').length,R=P.flow?0:works/P.ex.length;
   $('trTags').innerHTML=[`${tt} min`,P.tipo,TIERS[sel.tier],'Sem equipamento'].map(t=>`<span class="tag">${esc(t)}</span>`).join('');
-  const r=P.flow?null:(P.ex.map(f=>ritmoDe(resolve(f,sel.tier).a,sel.tier)).find(Boolean));
-  $('trRitmo').hidden=!r;
+  const r=P.flow||P.mt||P.coreo?null:(P.ex.map(f=>ritmoDe(resolve(f,sel.tier).a,sel.tier)).find(Boolean));
+  $('trRitmo').hidden=!r&&!P.mt&&!P.coreo;
   if(r) $('trRitmo').innerHTML=`Ritmo de hoje: <b>${esc(r.txt)}</b>. O boneco faz nesse tempo para você acompanhar.`;
+  else if(P.mt) $('trRitmo').innerHTML='Como numa aula de Muay Thai: <b>aquecimento, técnica e sequência de golpes</b> em rounds. A voz fala cada sequência e a boneca faz junto.';
+  else if(P.coreo) $('trRitmo').innerHTML=`Coreografia <b>${esc(steps.coreo.n)}</b>, com batida própria a <b>${steps.coreo.bpm} batidas por minuto</b>. Prefere sua playlist? Abaixe a batida no treino e procure músicas com cerca de ${steps.coreo.bpm} BPM no Spotify.`;
   $('durChips').innerHTML=[20,30,40,50].map(d=>`<button class="chip" data-trdur="${d}" aria-pressed="${sel.dur===d}">${d} min</button>`).join('');
   // blocos
   const learnSet=new Set(steps.filter(s=>s.k==='learn').map(s=>s.it.a));
-  const linha=(it,d)=>{const i=trItems.push(it)-1;return `<button class="exrow" data-tri="${i}"><span class="exic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v7M12 10l-5 3M12 10l5-3M12 14l-4 7M12 14l4 7"/></svg></span><span class="exnm"><b>${esc(it.n)}</b><small>${esc(d)}</small></span>${learnSet.has(it.a)?'<span class="badge-aula">Aula antes</span>':''}${MOCAP[it.a]?'<span class="badge-real">Real</span>':''}</button>`;};
-  trItems=[];
+  const linha=(it,d)=>{const i=trItems.push(it)-1;return `<button class="exrow" data-tri="${i}"><span class="exic" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v7M12 10l-5 3M12 10l5-3M12 14l-4 7M12 14l4 7"/></svg></span><span class="exnm"><b>${esc(it.n)}</b><small>${esc(d)}</small></span>${learnSet.has(it.a)&&!it.combo&&!semAula?'<span class="badge-aula">Aula antes</span>':''}${MOCAP[it.a]?'<span class="badge-real">Real</span>':''}</button>`;};
+  trItems=[];let semAula=false;
   let html='';
   if(P.flow){
     const hold=TP[sel.tier].hold;
     html+=`<section class="block"><div class="bhead"><h2 class="h2s">Sequência de posturas</h2><span class="muted small">${hold}s em cada uma</span></div><div class="blist">${P.flow.map(k=>linha(YOGA[k],YOGA[k].tip)).join('')}</div></section>`;
+  } else if(P.mt||P.coreo){
+    const fases=[];steps.forEach(st=>{if(!st.fase||!st.it||st.k==='learn') return;let f=fases.find(x=>x.n===st.fase);if(!f){f={n:st.fase,itens:[],s:0,R:0};fases.push(f);}f.s+=st.s;f.R=Math.max(f.R,st.R||0);if(!f.itens.some(x=>x.it.n===st.it.n)) f.itens.push({it:st.it,s:st.s});});
+    fases.forEach(f=>{
+      semAula=f.n==='Coreografia completa';
+      const info=f.R?`${f.R} ${P.mt?'rounds':'vezes'} · ${Math.round(f.s/60)} min`:`${Math.max(1,Math.round(f.s/60))} min`;
+      html+=`<section class="block"><div class="bhead"><h2 class="h2s">${esc(f.n)}</h2><span class="muted small">${info}</span></div><div class="blist">${f.itens.map(({it,s:sx})=>linha(it,it.combo?it.g||it.tip:(f.n==='Técnica'?`${sx} s praticando · ${it.tip}`:it.tip))).join('')}</div></section>`;
+    });
   } else {
     const tp=TP[sel.tier],warm=WARM[P.warm];
     const wS=steps.filter(s=>s.k==='warm').reduce((a,s)=>a+s.s,0),cS=steps.filter(s=>s.k==='cool').reduce((a,s)=>a+s.s,0);
@@ -553,10 +564,14 @@ function enterStep(announce){
   const s=cur();P.rem=s.s*1000;P.lastSec=null;P.anim0=performance.now();P.frozen=null;
   if(P.aula){P.aula.parar();P.aula=null;}
   const it=s.it||s.nx,isRest=!s.it,isLearn=s.k==='learn';
-  const rit=s.k==='work'&&s.it?ritmoDe(s.it.a,P.tier):null;
-  if(it){plStage.setAnim(rit?ritmoAnim(AN[it.a],it.a,P.tier):AN[it.a],it.a);}
+  const rit=s.k==='work'&&s.it&&!s.it.seq?ritmoDe(s.it.a,P.tier):null;
+  if(it){if(it.seq&&!isRest) plStage.setSeq(it.seq,AN[it.a]||AN.danceMarch);else plStage.setAnim(rit?ritmoAnim(AN[it.a],it.a,P.tier):AN[it.a],it.a);}
+  // batida própria nas coreografias
+  const bpm=s.it&&s.it.danca&&s.k==='work'?s.it.bpm:0;
+  if(bpm&&S.prefs.musica&&P.run){if(!Batida.on||Batida.bpm!==bpm) Batida.start(actx,bpm);} else if(!bpm) Batida.stop();
   plStage.tempo=rit;
-  $('plTempo').hidden=!rit;$('plTempo').textContent=rit?'Ritmo: '+rit.txt:'';
+  $('plTempo').hidden=!rit&&!bpm;$('plTempo').textContent=rit?'Ritmo: '+rit.txt:(bpm?`Música: ${bpm} batidas por minuto`:'');
+  $('plMusic').hidden=!(P.steps.coreo);
   plStage.guides=S.prefs.guides&&(isLearn||s.k==='work'||isRest);
   $('plLabel').textContent=s.label;
   $('plBadge').textContent=s.k==='prep'?'Prepare-se':(isLearn?'Aprenda':(isRest?(s.soft?'Próxima postura':'Descanso'):(s.k==='warm'?'Aquecimento':(s.k==='cool'?'Volta à calma':'Agora é com você'))));
@@ -582,6 +597,9 @@ function enterStep(announce){
     else if(s.soft) say(line('proximaPostura',{ex}));
     else if(s.label==='Volta à calma') say(line('calma',{ex}));
     else say(line('descanso',{ex}));
+  } else if(s.it&&s.it.seq){
+    if(s.it.combo) say(s.seguido?s.it.n+'!':line('inicio',{ex:'a sequência '+s.it.n,seg:s.s}));
+    else say(s.seguido?'Agora, '+s.it.n+'!':line('inicio',{ex:s.it.n,seg:s.s}));
   } else {
     const learnedBefore=P.steps[P.i-1]&&P.steps[P.i-1].k==='learn';
     const l1=learnedBefore?line('depoisDeAprender',{ex:s.it.n}):line('inicio',{ex:s.it.n,seg:s.s});
@@ -608,8 +626,8 @@ function tick(now){
       const sec=Math.ceil(P.rem/1000);
       if(sec!==P.lastSec){
         P.lastSec=sec;
-        if(sec<=3&&sec>=1&&s.k!=='learn') beep(sec===1?990:780,.11);
-        if(s.it&&s.k==='work'&&s.s>=30){
+        if(sec<=3&&sec>=1&&s.k!=='learn'&&!(s.it&&s.it.seq)) beep(sec===1?990:780,.11);
+        if(s.it&&s.k==='work'&&s.s>=30&&!s.it.seq){
           if(sec===Math.floor(s.s/2)) say(s.it.sw?line('trocaLado'):pick(ROTEIRO.incentivo[s.it.k]||ROTEIRO.incentivo.forca));
           else if(sec===10&&!s.it.sw) say(pick(ROTEIRO.incentivo[s.it.k]||ROTEIRO.incentivo.forca));
         }
@@ -641,8 +659,8 @@ function setPause(run){
   if(run){P.anim0=performance.now()-(P.frozen||0);P.frozen=null;}
   $('pauseBtn').setAttribute('aria-label',run?'Pausar':'Continuar');
   $('pauseIco').innerHTML=run?'<rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/>':'<path d="M7 4.5v15l13-7.5z" fill="currentColor"/>';
-  if(!run){pararFala();}
-  else if(P.aula) P.aula.falou=true;
+  if(!run){pararFala();Batida.stop();}
+  else{const st=cur();if(st.it&&st.it.danca&&st.k==='work'&&S.prefs.musica) Batida.start(actx,st.it.bpm);if(P.aula) P.aula.falou=true;}
 }
 $('pauseBtn').onclick=()=>{unlockAudio();setPause(!P.run);say(line(P.run?'volta':'pausa'));};
 $('nextBtn').onclick=()=>go(1);
@@ -650,9 +668,11 @@ $('prevBtn').onclick=()=>{if(P.rem<(cur().s*1000-3000)) enterStep(true); else go
 $('plVoice').onclick=()=>{S.prefs.voice=!S.prefs.voice;save();syncBtns();if(!S.prefs.voice){pararFala();}};
 $('guideBtn').onclick=()=>{S.prefs.guides=!S.prefs.guides;save();syncBtns();if(plStage)plStage.guides=S.prefs.guides;};
 $('howBtn').onclick=()=>setHow(!P.showHow);
+$('plMusic').onclick=()=>{S.prefs.musica=!S.prefs.musica;save();syncBtns();const st=cur();if(S.prefs.musica&&st.it&&st.it.danca&&st.k==='work'&&P.run) Batida.start(actx,st.it.bpm);else Batida.stop();};
 function syncBtns(){
   $('plVoice').setAttribute('aria-pressed',S.prefs.voice);$('plVoice').setAttribute('aria-label',S.prefs.voice?'Desligar voz':'Ligar voz');
   $('guideBtn').setAttribute('aria-pressed',S.prefs.guides);
+  $('plMusic').setAttribute('aria-pressed',S.prefs.musica);
 }
 syncBtns();
 $('quitBtn').onclick=()=>{
@@ -665,7 +685,7 @@ $('quitBtn').onclick=()=>{
 };
 const DONE_LINES=['Você apareceu para você hoje. Isso é o que transforma.','Mais forte que ontem. Hidrate-se e descanse bem.','Cada treino é um presente para o seu corpo.','Disciplina é carinho com o seu futuro.'];
 function finish(record){
-  const p=P;P=null;
+  const p=P;P=null;Batida.stop();
   try{wake&&wake.release();}catch(e){}
   $('player').hidden=true;document.body.style.overflow='';
   if(!record){pararFala(); render();return;}

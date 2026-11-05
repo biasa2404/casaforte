@@ -118,8 +118,18 @@ class Stage{
     const up=()=>{down=null;};el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);
     el.addEventListener('dblclick',()=>{this.yaw=this.opt.yaw??0.5;this.pitch=0.16;});
   }
+  setSeq(seq,an){ // sequência de movimentos gravados (combinação de golpes ou coreografia)
+    this.seq=null;this.setAnim(an,seq[0].k);this.seq=seq;this.seqTot=seq.reduce((a,x)=>a+x.ms,0);
+    seq.forEach(x=>{mocapFor(x.k);try{realLoad();realClip(x.k);}catch(e){}});
+  }
+  seqAt(ms){ // qual movimento e em que ponto dele, no instante ms
+    let m=((ms%this.seqTot)+this.seqTot)%this.seqTot,i=0;
+    while(i<this.seq.length-1&&m>=this.seq[i].ms){m-=this.seq[i].ms;i++;}
+    const x=this.seq[i],d=m/1000*(x.rate??1);return {i,k:x.k,t:(x.t0||0)+(x.len?d%x.len:d),seg:x,local:m};
+  }
   setAnim(an,key){
-    if(this.an===an) return; this.an=an;this.key2=key;this.mcOn=false;this.tSet=performance.now();
+    this.seq=null;
+    if(this.an===an&&this.key2===key) return; this.an=an;this.key2=key;this.mcOn=false;this.tSet=performance.now();
     if(key) mocapFor(key); // começa a carregar o movimento gravado, se houver
     const b=bbox(an);this.bb=b;this.fitMat(b);
     this.mat.scale.x=Math.max(70,b.x1-b.x0+40);this.mat.position.x=(b.x0+b.x1)/2;
@@ -225,7 +235,8 @@ class Stage{
   }
   frame(ms){
     if(!this.an||!this.resize()) return;
-    const k2=this.key2&&MOCAP[this.key2]?this.key2:null;
+    const sq=this.seq?this.seqAt(ms):null;this.seqNow=sq;
+    const k2=sq?sq.k:(this.key2&&MOCAP[this.key2]?this.key2:null);
     const clip=k2&&this.real!==false?(realLoad(),realClip(k2)):null;
     if(clip&&REAL.ok&&!this.char){try{this.char=new RealChar(this.scene);}catch(e){console.warn(e);this.real=false;}}
     const mc=k2?mocapFor(k2):null;
@@ -242,13 +253,14 @@ class Stage{
     let j;
     if(clip&&this.char){
       const fit=this.char.use(k2,clip);
-      if(this.mcOn!=='real'){this.mcOn='real';this.bb=fit.bb;this.fitMat(fit.bb);}
+      if(this.mcOn!=='real'){this.mcOn='real';this.bb={...fit.bb};this.fitMat(this.bb);}
+      else if(sq){const b=this.bb,f=fit.bb;if(f.x0<b.x0||f.x1>b.x1||f.y1>b.y1){this.bb={x0:Math.min(b.x0,f.x0),x1:Math.max(b.x1,f.x1),y1:Math.max(b.y1,f.y1)};this.fitMat(this.bb);}}
       this.char.visible=true;this.showBody(false);
-      j={J3:this.char.joints(this.clipSec(ms,this.char.dur,k2))};
+      j={J3:this.char.joints(sq?sq.t:this.clipSec(ms,this.char.dur,k2))};
     } else if(mc){
       if(this.char) this.char.visible=false;this.showBody(true);
       if(!this.mcOn){this.mcOn=true;this.bb=mc.bb;this.fitMat(mc.bb);}
-      const J=mocapJoints(mc,this.clipSec(ms,mc.frames.length/mc.fps,k2));J.sh=J.shJ0.map((x,i)=>(x+J.shJ1[i])/2);j={J3:J};this.pose3(J);
+      const J=mocapJoints(mc,sq?sq.t%(mc.frames.length/mc.fps):this.clipSec(ms,mc.frames.length/mc.fps,k2));J.sh=J.shJ0.map((x,i)=>(x+J.shJ1[i])/2);j={J3:J};this.pose3(J);
     } else {if(this.char) this.char.visible=false;this.showBody(true);j=solve(poseAt(this.an,ms));this.pose(j);}
     this.j=j;
     if(this.yawTarget!=null) this.yaw+=(this.yawTarget-this.yaw)*0.06;
@@ -286,7 +298,7 @@ class Stage{
   drawGuides(j){
     const ov=this.ov;if(!ov) return;const ctx=ov.getContext('2d'),d=ov.width/this._w;
     ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,this._w,this._h);
-    const list=this.guideList!=null?this.guideList:(this.guides?GUIDES[this.key2]:null);
+    const list=this.guideList!=null?this.guideList:(this.guides&&!this.seq?GUIDES[this.key2]:null);
     if(this.cola) this.drawCola(this.cola);
     if(!list||!list.length) return;
     const cs=getComputedStyle(document.documentElement),ok=cs.getPropertyValue('--accent').trim(),ink=cs.getPropertyValue('--ink').trim(),srf=cs.getPropertyValue('--surface').trim();

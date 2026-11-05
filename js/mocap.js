@@ -31,6 +31,22 @@ const MOCAP={
   bodyJab:'assets/mixamo/bodyJab.json',
   ropeJump:'assets/mixamo/ropeJump.json',
   neckStretch:'assets/mixamo/neckStretch.json',
+  stepTouch:'assets/mixamo/stepTouch.json',
+  shuffle:'assets/mixamo/shuffle.json',
+  twist:'assets/mixamo/twist.json',
+  rumba:'assets/mixamo/rumba.json',
+  armsUp:'assets/mixamo/armsUp.json',
+  cabbage:'assets/mixamo/cabbage.json',
+  bootyStep:'assets/mixamo/bootyStep.json',
+  samba:'assets/mixamo/samba.json',
+  salsa:'assets/mixamo/salsa.json',
+  rainbow:'assets/mixamo/rainbow.json',
+  jazzSquare:'assets/mixamo/jazzSquare.json',
+  runningMan:'assets/mixamo/runningMan.json',
+  rockette:'assets/mixamo/rockette.json',
+  armPush:'assets/mixamo/armPush.json',
+  armCircle:'assets/mixamo/armCircle.json',
+  maraschino:'assets/mixamo/maraschino.json',
 };
 // velocidade de reprodução (1 = velocidade real); um pouco mais lento ajuda a aprender
 const MOCAP_RATE={squat:0.8,bicycle:0.55,neckStretch:0.45};
@@ -38,7 +54,7 @@ const MOCAP_RATE={squat:0.8,bicycle:0.55,neckStretch:0.45};
 if(typeof AN!=='undefined'){
   const alias={hiphop:'danceMarch',salsa:'danceMarch',samba:'danceMarch',belly:'danceMarch',situp:'crunch',bicycle:'crunch',
     snapKick:'teep',jog:'highknees',jacks:'danceMarch',armStretch:'circles',breathIdle:'breath',
-    hookLead:'jabcross',hookRear:'jabcross',upperRear:'jabcross',boxWarm:'circles',pikeWalk:'dog',dodge:'squat',bodyJab:'jabcross',ropeJump:'highknees',neckStretch:'breath'};
+    hookLead:'jabcross',hookRear:'jabcross',upperRear:'jabcross',boxWarm:'circles',pikeWalk:'dog',dodge:'squat',bodyJab:'jabcross',ropeJump:'highknees',neckStretch:'breath',stepTouch:'danceMarch',shuffle:'danceMarch',twist:'danceMarch',rumba:'danceMarch',armsUp:'danceMarch',cabbage:'danceMarch',bootyStep:'danceMarch',rainbow:'danceMarch',jazzSquare:'danceMarch',runningMan:'danceMarch',rockette:'danceMarch',armPush:'danceMarch',armCircle:'danceMarch',maraschino:'danceMarch'};
   for(const k in alias) if(!AN[k]) AN[k]=AN[alias[k]];
 }
 const _mc={};
