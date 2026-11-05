@@ -103,6 +103,24 @@ const AULA={
     {t:0.3,yaw:0.6,cola:'Canela na altura da cabeça',fala:'A canela sobe até a altura da cabeça, só até onde for confortável. O braço do mesmo lado desce, a outra mão protege o rosto.',guias:[{t:'dot',j:'knee0',label:'Canela'}]},
     {t:0.72,yaw:1.2,cola:'Volte com equilíbrio',fala:'Volte a perna com controle e retorne à base. Se perder o equilíbrio, chute mais baixo. Troque de lado na metade.'},
   ],
+  teep:[
+    {t:0.15,yaw:1.2,cola:'Base de luta',fala:'Base de luta, mãos na guarda e peso bem distribuído.'},
+    {t:0.35,yaw:0.4,cola:'Suba o joelho primeiro',fala:'Suba o joelho da perna de trás, na altura da cintura, antes de estender.',guias:[{t:'dot',j:'knee0',label:'Joelho alto'}]},
+    {t:0.43,yaw:0.2,cola:'Empurre com a sola',fala:'Agora estenda a perna e empurre com a sola do pé, levando o quadril para a frente. É um empurrão, não uma pancada.',guias:[{t:'dot',j:'ball0',label:'Sola do pé'}]},
+    {t:0.7,yaw:1.2,cola:'Recolha e volte à base',fala:'Recolha a perna dobrando o joelho e volte para a base, com as mãos na guarda. Troque de perna na metade.'},
+  ],
+  dodge:[
+    {t:0,yaw:1.2,cola:'Base e guarda',fala:'Base de luta, mãos protegendo o rosto.'},
+    {t:0.14,yaw:0.4,cola:'Abaixe dobrando os joelhos',fala:'Abaixe o corpo dobrando os joelhos, como se passasse por baixo de um soco. As costas ficam retas.',guias:[{t:'dot',j:'knee0',label:'Dobre os joelhos'},{t:'dot',j:'hand1',label:'Mãos na guarda'}]},
+    {t:0.36,yaw:0.8,cola:'Volte para cima',fala:'Volte para cima empurrando o chão, sem tirar as mãos do rosto.'},
+    {t:0.68,yaw:1.2,cola:'Olhos sempre à frente',fala:'Repita num ritmo constante, olhando sempre para a frente.'},
+  ],
+  bodyJab:[
+    {t:0,yaw:1.2,cola:'Base e guarda',fala:'Base de luta, mãos na guarda.'},
+    {t:0.25,yaw:0.6,cola:'Abaixe com as pernas',fala:'Dobre os joelhos para baixar o corpo e solte o jab na altura da barriga. Quem abaixa são as pernas, não as costas.',guias:[{t:'dot',j:'knee1',label:'Joelhos dobrados'},{t:'dot',j:'hand1',label:'Jab'}]},
+    {t:0.45,yaw:0.6,cola:'Direto no corpo',fala:'Agora o direto no corpo, girando o pé de trás e o quadril. A mão da frente volta para o rosto.',guias:[{t:'dot',j:'hand0',label:'Direto'},{t:'dot',j:'ankle0',label:'Gire o pé de trás'}]},
+    {t:0.8,yaw:1.2,cola:'Volte para a guarda',fala:'Suba de volta para a base, mãos na guarda, e solte o ar a cada soco.'},
+  ],
   hookLead:[
     {t:0,yaw:1.2,cola:'Base e guarda',fala:'Base de luta, mãos na guarda.'},
     {t:0.15,yaw:0.9,cola:'Gire o pé da frente',fala:'Gire o pé da frente e o quadril para dentro. É daí que vem a força do gancho.',guias:[{t:'dot',j:'ankle1',label:'Gire o pé da frente'}]},

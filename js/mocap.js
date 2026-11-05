@@ -26,6 +26,9 @@ const MOCAP={
   hookRear:'assets/mixamo/hookRear.json',
   boxWarm:'assets/mixamo/boxWarm.json',
   pikeWalk:'assets/mixamo/pikeWalk.json',
+  teep:'assets/mixamo/teep.json',
+  dodge:'assets/mixamo/dodge.json',
+  bodyJab:'assets/mixamo/bodyJab.json',
 };
 // velocidade de reprodução (1 = velocidade real); um pouco mais lento ajuda a aprender
 const MOCAP_RATE={squat:0.8,bicycle:0.55};
@@ -33,7 +36,7 @@ const MOCAP_RATE={squat:0.8,bicycle:0.55};
 if(typeof AN!=='undefined'){
   const alias={hiphop:'danceMarch',salsa:'danceMarch',samba:'danceMarch',belly:'danceMarch',situp:'crunch',bicycle:'crunch',
     snapKick:'teep',jog:'highknees',jacks:'danceMarch',armStretch:'circles',breathIdle:'breath',
-    hookLead:'jabcross',hookRear:'jabcross',upperRear:'jabcross',boxWarm:'circles',pikeWalk:'dog'};
+    hookLead:'jabcross',hookRear:'jabcross',upperRear:'jabcross',boxWarm:'circles',pikeWalk:'dog',dodge:'squat',bodyJab:'jabcross'};
   for(const k in alias) if(!AN[k]) AN[k]=AN[alias[k]];
 }
 const _mc={};

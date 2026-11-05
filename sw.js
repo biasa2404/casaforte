@@ -1,6 +1,6 @@
 // Casa Forte: guarda o site no aparelho para abrir sem internet.
 // Ao publicar mudanças, aumente a VERSAO para os aparelhos baixarem a nova versão.
-const VERSAO='casa-forte-v7';
+const VERSAO='casa-forte-v8';
 const BASE=['./','index.html','manifest.webmanifest','css/style.css','js/vendor/three.min.js','js/engine.js','js/teach.js','js/catalog.js','js/lines.js','js/vendor/GLTFLoader.js','js/vendor/SkeletonUtils.js','js/vendor/meshopt_decoder.js','js/mocap.js','js/real.js','js/mannequin.js','js/ritmo.js','js/aula.js','js/app.js','audio/manifest.json','icons/icon-192.png','icons/icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(VERSAO).then(c=>c.addAll(BASE)).then(()=>self.skipWaiting()));});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==VERSAO).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
