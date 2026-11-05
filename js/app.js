@@ -164,6 +164,7 @@ document.addEventListener('click',e=>{
   else if(t.dataset.tier){S.prefs.tier=t.dataset.tier;save();renderHome();}
   else if(t.dataset.energy!=null&&t.dataset.energy!==''){energy=+t.dataset.energy;renderHome();}
   else if(t.dataset.explain){S.prefs.explain=t.dataset.explain;save();renderHome();}
+  else if(t.dataset.ver){verMov(t.dataset.ver);}
   else if(t.dataset.pv){openPreview(homeItems[+t.dataset.pv]);}
   else if(t.dataset.trat){S.prefs.trat=t.dataset.trat;save();if(!$('welcome').hidden) $('wTrat').innerHTML=tratChips(S.prefs.trat);else renderHome();}
   else if(t.dataset.meta){S.prefs.meta=+t.dataset.meta;save();if(!$('welcome').hidden) $('wMeta').innerHTML=metaChips(S.prefs.meta);else renderHome();}
@@ -431,8 +432,9 @@ document.addEventListener('visibilitychange',()=>{if(document.visibilityState===
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readCol();plStage&&plStage.applyColors();pvStage&&pvStage.applyColors();setTimeout(queueThumbs,50);});}catch(e){}
 renderHome();
 /* Link direto para ver um movimento: #ver=squat */
-function verPorLink(){
-  const k=(location.hash.match(/^#ver=(\w+)/)||[])[1];if(!k||!AN[k]) return false;
+function verPorLink(){return verMov((location.hash.match(/^#ver=(\w+)/)||[])[1]);}
+function verMov(k){
+  if(!k||!AN[k]) return false;
   for(const f in FAM){const t=FAM[f].v.findIndex(x=>x.a===k);if(t>=0){openPreview(resolve(f,t));return true;}}
   return false;
 }
