@@ -4,6 +4,9 @@
    As guias de técnica são calculadas a partir dos ossos do próprio personagem. */
 
 const REAL={url:'assets/mixamo/personagem.glb',ok:false,clips:{}};
+// espessura aproximada do corpo em volta de cada osso (unidades do boneco), para encostar no chão
+const RAIO={hip:6,spine:7,chest:7,nk:4,headB:6,top:3,shJ0:4,shJ1:4,elbow0:2.5,elbow1:2.5,hand0:1.5,hand1:1.5,
+  hipJ0:5,hipJ1:5,knee0:3,knee1:3,ankle0:3,ankle1:3,ball0:1.6,ball1:1.6,toe0:1,toe1:1};
 const RBONES={hip:'Hips',spine:'Spine1',chest:'Spine2',nk:'Neck',headB:'Head',top:'HeadTop_End',
   shJ0:'RightArm',elbow0:'RightForeArm',hand0:'RightHand',shJ1:'LeftArm',elbow1:'LeftForeArm',hand1:'LeftHand',
   hipJ0:'RightUpLeg',knee0:'RightLeg',ankle0:'RightFoot',ball0:'RightToeBase',toe0:'RightToe_End',
@@ -48,8 +51,9 @@ class RealChar{
       this.root.position.set(0,0,0);
       let minY=1e9,h0=null;const bb={x0:1e9,x1:-1e9,y1:-1e9},N=24,all=[];
       for(let i=0;i<N;i++){const J=this.joints(this.dur*i/N);if(!h0) h0=J.hip;all.push(J);
-        ['ball0','ball1','toe0','toe1'].forEach(k=>minY=Math.min(minY,J[k][1]));}
-      const off=[-h0[0],1.6-minY,-h0[2]];
+        // ponto mais baixo do corpo: osso menos a espessura aproximada do corpo em volta dele
+        for(const k in RAIO) if(J[k]) minY=Math.min(minY,J[k][1]-RAIO[k]);}
+      const off=[-h0[0],-minY,-h0[2]];
       all.forEach(J=>Object.values(J).forEach(p=>{bb.x0=Math.min(bb.x0,p[0]+off[0]);bb.x1=Math.max(bb.x1,p[0]+off[0]);bb.y1=Math.max(bb.y1,p[1]+off[1]);}));
       bb.x0-=8;bb.x1+=8;bb.y1+=6;this.fits[key]={off,bb};
     }

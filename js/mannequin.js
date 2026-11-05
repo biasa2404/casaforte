@@ -119,7 +119,7 @@ class Stage{
     el.addEventListener('dblclick',()=>{this.yaw=this.opt.yaw??0.5;this.pitch=0.16;});
   }
   setAnim(an,key){
-    if(this.an===an) return; this.an=an;this.key2=key;this.mcOn=false;
+    if(this.an===an) return; this.an=an;this.key2=key;this.mcOn=false;this.tSet=performance.now();
     if(key) mocapFor(key); // começa a carregar o movimento gravado, se houver
     const b=bbox(an);this.bb=b;this.fitMat(b);
     this.mat.scale.x=Math.max(70,b.x1-b.x0+40);this.mat.position.x=(b.x0+b.x1)/2;
@@ -229,6 +229,16 @@ class Stage{
     const clip=k2&&this.real!==false?(realLoad(),realClip(k2)):null;
     if(clip&&REAL.ok&&!this.char){try{this.char=new RealChar(this.scene);}catch(e){console.warn(e);this.real=false;}}
     const mc=k2?mocapFor(k2):null;
+    // enquanto o movimento real carrega, não mostra o boneco antigo (até 10 s; depois usa o reserva)
+    const rc=k2&&REAL.clips[k2];
+    if(k2&&this.real!==false&&!(clip&&this.char)&&!REAL.err&&!(rc&&rc.err)&&performance.now()-(this.tSet||0)<10000){
+      if(this.char) this.char.visible=false;this.showBody(false);this.j=null;
+      this.r.setClearColor(0x000000,0);this.r.clear();
+      if(this.ov){const ctx=this.ov.getContext('2d'),d=this.ov.width/this._w;ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,this._w,this._h);
+        ctx.font='600 15px "Atkinson Hyperlegible",system-ui,sans-serif';ctx.textAlign='center';ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()||'#667';
+        ctx.fillText('Carregando o movimento…',this._w/2,this._h/2);ctx.textAlign='start';}
+      return;
+    }
     let j;
     if(clip&&this.char){
       const fit=this.char.use(k2,clip);

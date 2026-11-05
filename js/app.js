@@ -281,6 +281,7 @@ async function keepAwake(){try{wake=await navigator.wakeLock?.request('screen');
 function startWorkout(){
   unlockAudio();
   const tier=curTier(),steps=build(selDay,tier,S.prefs.dur,{learn:needLearn});
+  preCarregar(steps.map(x=>(x.it||x.nx||{}).a).filter(Boolean));
   P={steps,i:0,rem:steps[0].s*1000,run:true,last:performance.now(),lastSec:null,anim0:performance.now(),day:selDay,tier,doneMs:0,frozen:null,showHow:false};
   $('player').hidden=false;$('quitBox').hidden=true;document.body.style.overflow='hidden';
   if(!plStage) plStage=makeStage($('plCanvas'),$('plOverlay'),{yaw:0.5});
@@ -454,6 +455,9 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&P&&!wake) keepAwake();});
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readCol();plStage&&plStage.applyColors();pvStage&&pvStage.applyColors();setTimeout(queueThumbs,50);});}catch(e){}
 renderHome();
+/* Já começa a baixar o personagem e os movimentos do treino de hoje, para não esperar depois */
+function preCarregar(keys){try{realLoad();keys.forEach(k=>{if(MOCAP[k]) realClip(k);});}catch(e){}}
+setTimeout(()=>preCarregar((homeItems||[]).map(it=>it.a)),600);
 /* Link direto para ver um movimento: #ver=squat */
 function verPorLink(){return verMov((location.hash.match(/^#ver=(\w+)/)||[])[1]);}
 function verMov(k){
