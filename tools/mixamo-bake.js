@@ -28,3 +28,25 @@ function assar(buf,fps=30){return new Promise((ok,fail)=>{const obj=new THREE.FB
   const frames=fr.map(p=>NOMES.flatMap(k=>{const v=p[OSSO[k]];return [r1((v.x+off[0])*s),r1((v.y+off[1])*s+1.6),r1((v.z+off[2])*s)];}));
   ok({fps:N/clip.duration,dur:clip.duration,keys:NOMES,frames});
 }catch(e){fail(e);}});}
+
+/* Clip do movimento em JSON (para o personagem realista), só com ossos usados e números arredondados */
+function clipJSON(buf){
+  const obj=new THREE.FBXLoader().parse(buf,'');const clip=obj.animations[0];
+  const j=THREE.AnimationClip.toJSON(clip);
+  j.tracks=j.tracks.filter(t=>/quaternion$/.test(t.name)||/Hips\.position$/.test(t.name));
+  j.tracks.forEach(t=>{t.times=t.times.map(x=>Math.round(x*1000)/1000);t.values=t.values.map(x=>Math.round(x*(t.name.endsWith('position')?100:10000))/(t.name.endsWith('position')?100:10000));});
+  return j;
+}
+/* Personagem com pele: vira .glb sem animações, materiais simples e texturas de 1024 px */
+async function personagemGLB(buf){
+  const ch=new THREE.FBXLoader().parse(buf,'');
+  await new Promise(r=>setTimeout(r,4000)); // espera as texturas
+  ch.traverse(o=>{if(!o.isMesh) return;const alpha=/Hair|Eyelash/.test(o.name);const conv=m=>{
+    if(m.map&&!alpha) m.map.format=THREE.RGBFormat; if(m.normalMap) m.normalMap.format=THREE.RGBFormat;
+    return new THREE.MeshStandardMaterial({name:m.name,map:m.map,normalMap:alpha?null:m.normalMap,roughness:/Sneakers|Shoe/.test(o.name)?0.6:0.85,metalness:0,transparent:alpha,alphaTest:alpha?0.4:0,side:alpha?THREE.DoubleSide:THREE.FrontSide});};
+    o.material=Array.isArray(o.material)?o.material.map(conv):conv(o.material);});
+  ch.animations=[];
+  const glb=await new Promise(r=>new THREE.GLTFExporter().parse(ch,r,{binary:true,maxTextureSize:1024,onlyVisible:true}));
+  const u8=new Uint8Array(glb);let s='';for(let i=0;i<u8.length;i+=32768) s+=String.fromCharCode.apply(null,u8.subarray(i,i+32768));
+  return btoa(s);
+}

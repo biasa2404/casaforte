@@ -8,6 +8,8 @@ const MOCAP={
   squat:'assets/mixamo/squat.json',
   hiphop:'assets/mixamo/hiphop.json',
 };
+// velocidade de reprodução (1 = velocidade real); um pouco mais lento ajuda a aprender
+const MOCAP_RATE={squat:0.8};
 // enquanto o arquivo carrega (ou sem internet), mostra um movimento parecido
 if(typeof AN!=='undefined'&&!AN.hiphop) AN.hiphop=AN.danceMarch;
 const _mc={};

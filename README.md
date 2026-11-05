@@ -62,4 +62,11 @@ npm i playwright && npx playwright install chromium
 node tools/converter-mixamo.mjs ~/Downloads/Air_Squat.fbx squat
 ```
 
+Isso grava `<chave>.json` (juntas) e `<chave>.anim.json` (movimento do personagem realista).
 Depois acrescente a chave em `MOCAP` no arquivo `js/mocap.js`. Sem o arquivo, o boneco usa o movimento desenhado à mão.
+
+O personagem realista (`assets/mixamo/personagem.glb`) vem de um download do Mixamo **com pele**:
+
+```
+node tools/converter-mixamo.mjs --personagem arquivo-com-pele.fbx
+```

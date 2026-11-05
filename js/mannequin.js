@@ -135,6 +135,7 @@ class Stage{
       g.position.x=p.x;this.props.add(g);
     });
   }
+  showBody(v){if(this._body===v) return;this._body=v;for(const k in this.parts) this.parts[k].visible=v;}
   fitMat(b){this.mat.scale.x=Math.max(70,b.x1-b.x0+40);this.mat.position.x=(b.x0+b.x1)/2;}
   resize(){
     const w=this.c.clientWidth,h=this.c.clientHeight;if(!w||!h) return false;
@@ -224,12 +225,21 @@ class Stage{
   }
   frame(ms){
     if(!this.an||!this.resize()) return;
-    const mc=this.key2&&MOCAP[this.key2]?mocapFor(this.key2):null;
+    const k2=this.key2&&MOCAP[this.key2]?this.key2:null;
+    const clip=k2&&this.real!==false?(realLoad(),realClip(k2)):null;
+    if(clip&&REAL.ok&&!this.char){try{this.char=new RealChar(this.scene);}catch(e){console.warn(e);this.real=false;}}
+    const mc=k2?mocapFor(k2):null;
     let j;
-    if(mc){
+    if(clip&&this.char){
+      const fit=this.char.use(k2,clip);
+      if(this.mcOn!=='real'){this.mcOn='real';this.bb=fit.bb;this.fitMat(fit.bb);}
+      this.char.visible=true;this.showBody(false);
+      j={J3:this.char.joints(ms/1000*(MOCAP_RATE[k2]||1))};
+    } else if(mc){
+      if(this.char) this.char.visible=false;this.showBody(true);
       if(!this.mcOn){this.mcOn=true;this.bb=mc.bb;this.fitMat(mc.bb);}
-      const J=mocapJoints(mc,ms/1000);J.sh=J.shJ0.map((x,i)=>(x+J.shJ1[i])/2);j={J3:J};this.pose3(J);
-    } else {j=solve(poseAt(this.an,ms));this.pose(j);}
+      const J=mocapJoints(mc,ms/1000*(MOCAP_RATE[k2]||1));J.sh=J.shJ0.map((x,i)=>(x+J.shJ1[i])/2);j={J3:J};this.pose3(J);
+    } else {if(this.char) this.char.visible=false;this.showBody(true);j=solve(poseAt(this.an,ms));this.pose(j);}
     this.j=j;
     const b=this.bb,cx=(b.x0+b.x1)/2,cy=Math.max(b.y1,40)/2+2;
     const half=Math.max((b.x1-b.x0)/2+14,(Math.max(b.y1,50))/2*(this.cam.aspect)+10);
