@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Casa Forte</title>
 <meta name="description" content="Treinos em casa sem equipamento: força, Muay Thai, yoga, alongamento e dança, com boneco 3D que ensina cada movimento e voz de incentivo.">
-<meta name="theme-color" content="#0B7A5E">
+<meta name="theme-color" content="#0B6B53">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -17,138 +17,138 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div class="wrap" id="home">
-  <header class="top">
+<div class="app" id="app">
+  <nav class="tabbar" aria-label="Menu principal">
     <div class="brand">
       <svg viewBox="0 0 40 40" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="9" fill="var(--accent)"/><circle cx="20" cy="11" r="4" fill="var(--accent-ink)"/><path d="M20 15v11M20 18l-8 4M20 18l8-6M20 26l-6 8M20 26l7 8" stroke="var(--accent-ink)" stroke-width="3.2" stroke-linecap="round" fill="none"/></svg>
       <span class="brandname">Casa Forte</span>
     </div>
-    <div class="today-date" id="todayDate"></div>
-  </header>
+    <button class="tab" data-tab="hoje"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg><span>Hoje</span></button>
+    <button class="tab" data-tab="plano"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Plano</span></button>
+    <button class="tab" data-tab="mov"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="4.5" r="2"/><path d="M12 7v7M12 10l-5 3M12 10l5-3M12 14l-4 7M12 14l4 7"/></svg><span>Movimentos</span></button>
+    <button class="tab" data-tab="prog"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20V11M12 20V5M19 20v-6"/></svg><span>Progresso</span></button>
+    <button class="tab" data-tab="perfil"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/></svg><span>Perfil</span></button>
+  </nav>
 
-  <section class="hello-card" aria-label="Boas-vindas">
-    <h1 id="hello">Olá!</h1>
-    <p id="helloLine"></p>
-  </section>
-
-  <section class="card safety" aria-label="Treine com segurança">
-    <h2>Treine com segurança</h2>
-    <p class="muted">Cansaço e ardência no músculo são esperados. Pare se sentir dor aguda ou na articulação, tontura, dor no peito ou falta de ar fora do normal. Se você tem alguma condição de saúde, lesão ou está grávida, converse com um profissional de saúde antes.</p>
-  </section>
-
-  <section class="card" aria-label="Movimentos reais">
-    <h2>Novo: movimentos reais</h2>
-    <p class="muted">Gravados com captura de movimento de uma pessoa de verdade. Toque em um e depois em "Aula em câmera lenta".</p>
-    <div class="chips"><button class="chip" data-ver="squat">Agachamento livre</button><button class="chip" data-ver="pushFull">Flexão</button><button class="chip" data-ver="highPlank">Prancha alta</button><button class="chip" data-ver="bicycle">Abdominal bicicleta</button><button class="chip" data-ver="burpee">Burpee</button><button class="chip" data-ver="jabcross">Jab e direto</button><button class="chip" data-ver="shadowbox">Sequência de socos</button><button class="chip" data-ver="elbow">Cotovelada</button><button class="chip" data-ver="knee">Joelhada</button><button class="chip" data-ver="kickMid">Chute circular</button><button class="chip" data-ver="mtBounce">Base de luta</button><button class="chip" data-ver="jacks">Polichinelo</button><button class="chip" data-ver="jog">Corrida no lugar</button><button class="chip" data-ver="armStretch">Alongamento de braço</button><button class="chip" data-ver="kickLow">Chute baixo</button><button class="chip" data-ver="kickHigh">Chute alto</button><button class="chip" data-ver="hookLead">Gancho da frente</button><button class="chip" data-ver="hookRear">Gancho de trás</button><button class="chip" data-ver="upperRear">Uppercut</button><button class="chip" data-ver="boxWarm">Aquecimento de luta</button><button class="chip" data-ver="pikeWalk">Lagarta</button><button class="chip" data-ver="teep">Teep (chute frontal)</button><button class="chip" data-ver="dodge">Esquiva</button><button class="chip" data-ver="bodyJab">Jab e direto no corpo</button><button class="chip" data-ver="ropeJump">Corda imaginária</button><button class="chip" data-ver="neckStretch">Alongamento de pescoço</button></div>
-  </section>
-
-  <section class="card" aria-label="Seu nível">
-    <div class="levelrow">
-      <div class="lvl"><small>Nível</small><b id="lvlNum">1</b></div>
-      <div>
-        <span class="tierpill" id="tierName">Iniciante</span>
-        <div class="xpbar"><i id="xpFill" style="width:0%"></i></div>
-        <div class="muted" style="font-size:.9rem" id="xpText"></div>
-      </div>
-    </div>
-    <div class="stats">
-      <div class="stat"><b id="stStreak">0</b><span>dias seguidos</span></div>
-      <div class="stat"><b id="stCount">0</b><span>treinos feitos</span></div>
-      <div class="stat"><b id="stMin">0</b><span>minutos no total</span></div>
-    </div>
-    <div class="weekgoal"><div class="wg-dots" id="wgDots"></div><span id="wgText"></span></div>
-  </section>
-
-  <section class="card today" aria-label="Treino escolhido">
-    <div>
-      <div class="eyebrow" id="planEyebrow">Treino de hoje</div>
-      <h2 id="planName"></h2>
-    </div>
-    <div class="tagrow" id="planTags"></div>
-    <div class="opts">
-      <div>
-        <div class="eyebrow" style="margin-bottom:6px">Como está sua energia hoje?</div>
-        <div class="chips" id="energyChips"></div>
-        <p class="note" id="energyNote"></p>
-      </div>
-      <div>
-        <div class="eyebrow" style="margin-bottom:6px">Duração</div>
-        <div class="chips" id="durChips"></div>
-      </div>
-    </div>
-    <div class="focus">
-      <div id="bodyMap"></div>
-      <div>
-        <div class="eyebrow">Foco do treino</div>
-        <ul id="focusList"></ul>
-      </div>
-    </div>
-    <div>
-      <div class="eyebrow" style="margin-bottom:4px" id="exHead">Exercícios</div>
-      <div class="exlist" id="exList"></div>
-    </div>
-    <button class="go" id="startBtn"><svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg>Começar treino</button>
-  </section>
-
-  <section aria-label="Semana">
-    <div class="eyebrow" style="margin-bottom:8px">Sua semana · toque para trocar o treino</div>
-    <div class="week" id="week"></div>
-  </section>
-
-  <div class="two">
-    <section class="card" aria-label="Calendário">
-      <h3>Últimas cinco semanas</h3>
-      <div class="cal" id="cal"></div>
+  <main class="views">
+    <!-- HOJE -->
+    <section class="view" id="v-hoje" aria-labelledby="hello">
+      <header class="vhead">
+        <div><span class="muted small" id="todayDate"></span><h1 id="hello">Olá!</h1></div>
+        <span class="streak" id="streakPill" hidden></span>
+      </header>
+      <p class="lead" id="helloLine"></p>
+      <div class="wkstrip" id="wkStrip" aria-label="Sua semana"></div>
+      <section class="card" id="checkin" aria-labelledby="ckTitle">
+        <h2 class="h2s" id="ckTitle">Como você está hoje?</h2>
+        <div class="moods" id="moods"></div>
+        <button class="linkbtn" id="sickBtn">Estou com febre, dor forte ou doente</button>
+      </section>
+      <section class="hero" id="todayCard" aria-live="polite"></section>
+      <button class="rowlink" id="nextRow"></button>
+      <section class="card cuidado" id="cuidadoNote" hidden></section>
     </section>
-    <section class="card" aria-label="Histórico">
-      <h3>Histórico</h3>
-      <ul class="hist" id="hist"></ul>
+
+    <!-- DETALHE DO TREINO -->
+    <section class="view" id="v-treino" aria-labelledby="trName" hidden>
+      <button class="back" id="trBack" aria-label="Voltar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <h1 id="trName"></h1>
+      <div class="tagrow" id="trTags"></div>
+      <p class="info" id="trRitmo" hidden></p>
+      <div><div class="eyebrow">Duração</div><div class="chips" id="durChips"></div></div>
+      <div id="trBlocks" class="blocks"></div>
+      <section class="card focus" aria-label="Partes do corpo trabalhadas">
+        <div id="bodyMap"></div>
+        <div><div class="eyebrow">Foco do treino</div><ul id="focusList"></ul></div>
+      </section>
+      <div class="startbar">
+        <button class="iconbtn" id="trVoice" aria-pressed="true" aria-label="Voz de incentivo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></button>
+        <button class="go" id="startBtn"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg>Começar</button>
+      </div>
     </section>
-  </div>
 
-  <section class="card" aria-label="Vídeos">
-    <h3>Vídeos para aprender</h3>
-    <p class="muted" style="margin:4px 0 0;font-size:.95rem">Buscas prontas no YouTube, em português. Cada exercício também tem seu botão de vídeo.</p>
-    <div class="vids" id="vids"></div>
-  </section>
+    <!-- PLANO -->
+    <section class="view" id="v-plano" aria-labelledby="plTitle" hidden>
+      <header class="vhead">
+        <div><h1 id="plTitle">Seu plano</h1><span class="muted small" id="plSub"></span></div>
+        <button class="btn2" data-tab="perfil">Ajustar plano</button>
+      </header>
+      <p class="muted small" style="margin:0">Toque em um dia para ver o treino. Dá para fazer qualquer um deles hoje.</p>
+      <div class="planlist" id="planList"></div>
+      <section class="card soft" aria-labelledby="whyTitle"><h2 class="h2s" id="whyTitle">Por que o plano é assim</h2><ul class="why" id="planWhy"></ul></section>
+    </section>
 
-  <section class="card" aria-label="Ajustes">
-    <h3>Ajustes</h3>
-    <div class="setrow">
-      <div><b>Qual é o seu nome ou apelido?</b><div class="muted small">A voz usa esse nome para falar com você.</div></div>
-      <input id="nameIn" class="field" type="text" maxlength="30" placeholder="Seu nome ou apelido" autocomplete="nickname">
-    </div>
-    <div class="setrow">
-      <div><b>Como a voz fala com você</b><div class="muted small">Muda palavras como “pronta” ou “pronto”.</div></div>
-      <div class="chips" id="tratChips"></div>
-    </div>
-    <div class="setrow">
-      <div><b>Meta da semana</b><div class="muted small">Quantos dias por semana você quer treinar.</div></div>
-      <div class="chips" id="metaChips"></div>
-    </div>
-    <div class="setrow">
-      <div style="min-width:0;flex:1 1 240px"><b>Voz de incentivo</b><div class="muted small" id="voiceInfo">Fala o exercício, explica os movimentos e anima você.</div></div>
-      <div class="chips"><button class="chip" id="voiceToggle" aria-pressed="true">Ligada</button></div>
-    </div>
-    <div class="setrow">
-      <div><b>Escolha a voz</b><div class="muted small">As marcadas como “natural” soam mais humanas.</div></div>
-      <div class="chips"><select id="voiceSel" class="field" aria-label="Voz"></select><button class="btn2" id="voiceTest">Ouvir</button></div>
-    </div>
-    <div class="setrow">
-      <div><b>Explicar os movimentos</b><div class="muted small">Antes do exercício, o boneco mostra devagar e a voz explica.</div></div>
-      <div class="chips" id="explainChips"></div>
-    </div>
-    <div class="setrow">
-      <div><b>Dificuldade</b><div class="muted small">Automática sobe conforme o seu nível.</div></div>
-      <div class="chips" id="tierChips"></div>
-    </div>
-    <div class="setrow">
-      <div><b>Apagar progresso</b><div class="muted small">Zera nível, histórico e calendário.</div></div>
-      <div id="resetBox"><button class="btn2 danger" id="resetBtn">Apagar</button></div>
-    </div>
-  </section>
-  <p class="foot">Seu progresso fica salvo neste navegador. Sentiu dor aguda? Pare o exercício e descanse.</p>
+    <!-- MOVIMENTOS -->
+    <section class="view" id="v-mov" aria-labelledby="movTitle" hidden>
+      <header class="vhead"><div><h1 id="movTitle">Movimentos</h1><span class="muted small">Cada um tem aula em câmera lenta, com voz e colinhas.</span></div></header>
+      <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg><span class="sr">Buscar movimento</span><input id="movBusca" type="search" placeholder="Buscar movimento" autocomplete="off"></label>
+      <div class="chips" id="movCats"></div>
+      <div class="movgrid" id="movGrid"></div>
+      <section class="card" aria-labelledby="vidTitle">
+        <h2 class="h2s" id="vidTitle">Vídeos para aprender</h2>
+        <p class="muted small" style="margin:4px 0 0">Buscas prontas no YouTube, em português.</p>
+        <div class="vids" id="vids"></div>
+      </section>
+    </section>
+
+    <!-- PROGRESSO -->
+    <section class="view" id="v-prog" aria-labelledby="pgTitle" hidden>
+      <header class="vhead"><div><h1 id="pgTitle">Progresso</h1></div></header>
+      <div class="tiles" id="progTiles"></div>
+      <section class="card" aria-labelledby="chTitle">
+        <h2 class="h2s" id="chTitle">Minutos ativos por semana</h2>
+        <p class="muted small" style="margin:2px 0 10px">Linha tracejada: 150 minutos, o mínimo que a OMS recomenda por semana.</p>
+        <div class="chart" id="chart"></div>
+      </section>
+      <section class="card soft levelcard">
+        <div class="lvl"><small>Nível</small><b id="lvlNum">1</b></div>
+        <div style="min-width:0;flex:1"><b id="tierName">Iniciante</b><div class="xpbar"><i id="xpFill" style="width:0%"></i></div><div class="muted small" id="xpText"></div></div>
+      </section>
+      <div class="two">
+        <section class="card" aria-labelledby="calTitle"><h2 class="h2s" id="calTitle">Últimas cinco semanas</h2><div class="cal" id="cal"></div></section>
+        <section class="card" aria-labelledby="hiTitle"><h2 class="h2s" id="hiTitle">Últimos treinos</h2><ul class="hist" id="hist"></ul></section>
+      </div>
+    </section>
+
+    <!-- PERFIL -->
+    <section class="view" id="v-perfil" aria-labelledby="pfName" hidden>
+      <header class="pfhead"><span class="avatar" id="pfAvatar" aria-hidden="true">C</span><div><h1 id="pfName">Você</h1><span class="muted small" id="pfSub"></span></div></header>
+      <section class="card" aria-labelledby="objTitle">
+        <h2 class="h2s" id="objTitle">Seus objetivos e respostas</h2>
+        <div class="chips static" id="objChips"></div>
+        <button class="btn outline" id="redoQuiz">Refazer as perguntas</button>
+        <span class="muted small">Gera um plano novo. Seu histórico e seu nível continuam.</span>
+      </section>
+      <section class="card" aria-labelledby="cfgTitle">
+        <h2 class="h2s" id="cfgTitle">Treino</h2>
+        <div class="setrow"><div><b>Duração de cada treino</b></div><div class="chips" id="pDur"></div></div>
+        <div class="setrow"><div><b>Dificuldade</b><div class="muted small">Automática sobe conforme o seu nível.</div></div><div class="chips" id="tierChips"></div></div>
+        <div class="setrow"><div><b>Aula antes de movimento novo</b><div class="muted small">O boneco mostra devagar e a voz explica.</div></div><div class="chips" id="explainChips"></div></div>
+      </section>
+      <section class="card" aria-labelledby="vozTitle">
+        <h2 class="h2s" id="vozTitle">Voz</h2>
+        <div class="setrow"><div><b>Seu nome ou apelido</b><div class="muted small">A voz usa esse nome para falar com você.</div></div><input id="nameIn" class="field" type="text" maxlength="30" placeholder="Seu nome ou apelido" autocomplete="nickname"></div>
+        <div class="setrow"><div><b>Como a voz fala com você</b><div class="muted small">Muda palavras como “pronta” ou “pronto”.</div></div><div class="chips" id="tratChips"></div></div>
+        <div class="setrow"><div style="min-width:0;flex:1 1 220px"><b>Voz de incentivo</b><div class="muted small" id="voiceInfo">Fala o exercício, explica os movimentos e anima você.</div></div><button class="switch" id="voiceToggle" role="switch" aria-checked="true" aria-label="Voz de incentivo"><i></i></button></div>
+        <div class="setrow"><div><b>Escolha a voz</b><div class="muted small">As marcadas como “natural” soam mais humanas.</div></div><div class="chips"><select id="voiceSel" class="field" aria-label="Voz"></select><button class="btn2" id="voiceTest">Ouvir</button></div></div>
+      </section>
+      <section class="card" aria-labelledby="dadosTitle">
+        <h2 class="h2s" id="dadosTitle">Seus dados</h2>
+        <p class="muted small" style="margin:0">Ficam só neste aparelho e neste navegador. Salve uma cópia de vez em quando para não perder se trocar de celular ou limpar o navegador.</p>
+        <div class="btnrow"><button class="btn2" id="bkSave">Salvar cópia</button><button class="btn2" id="bkLoad">Restaurar cópia</button><input type="file" id="bkFile" accept="application/json,.json" hidden></div>
+        <div id="bkMsg" class="muted small" aria-live="polite"></div>
+        <div class="setrow"><div><b>Apagar progresso</b><div class="muted small">Zera nível, histórico e calendário.</div></div><div id="resetBox"><button class="btn2 danger" id="resetBtn">Apagar</button></div></div>
+      </section>
+      <section class="card soft" aria-labelledby="segTitle">
+        <h2 class="h2s" id="segTitle">Treine com segurança</h2>
+        <p class="small" style="margin:0">Cansaço e ardência no músculo são esperados. Pare se sentir dor aguda ou na articulação, tontura, dor no peito ou falta de ar fora do normal. Se você tem alguma condição de saúde, lesão ou está grávida, converse com um profissional de saúde antes.</p>
+      </section>
+    </section>
+  </main>
 </div>
+
+<!-- PRIMEIRO ACESSO -->
+<div class="onb" id="onb" hidden role="dialog" aria-modal="true" aria-label="Primeiro acesso"></div>
 
 <div class="overlay" id="player" hidden>
   <div class="pl">
@@ -211,7 +211,7 @@
         <div class="stat"><b id="dnStreak">0</b><span>dias seguidos</span></div>
       </div>
     </div>
-    <button class="go" id="dnBack">Voltar ao início</button>
+    <button class="go" id="dnBack">Voltar para Hoje</button>
   </div>
 </div>
 
@@ -230,17 +230,6 @@
 </div>
 
 
-<div class="modal" id="welcome" hidden>
-  <div class="card mcard welcome" role="dialog" aria-modal="true" aria-labelledby="wTitle">
-    <div class="eyebrow">Boas-vindas</div>
-    <h2 id="wTitle">Que bom ter você no Casa Forte</h2>
-    <p class="muted" style="margin:0">Três perguntas rápidas para o app falar do seu jeito. Dá para mudar depois em Ajustes.</p>
-    <label class="wq"><b>Qual é o seu nome ou apelido?</b><input id="wName" class="field" type="text" maxlength="30" placeholder="Seu nome ou apelido" autocomplete="nickname"></label>
-    <div class="wq"><b>Como prefere que a voz fale com você?</b><div class="chips" id="wTrat"></div></div>
-    <div class="wq"><b>Quantos dias por semana quer treinar?</b><div class="chips" id="wMeta"></div><span class="muted small">Comece com o que cabe na sua rotina. Constância vale mais que intensidade.</span></div>
-    <button class="go" id="wGo">Começar</button>
-  </div>
-</div>
 
 <script src="js/vendor/three.min.js"></script>
 <script src="js/engine.js"></script>
@@ -255,6 +244,7 @@
 <script src="js/mannequin.js"></script>
 <script src="js/ritmo.js"></script>
 <script src="js/aula.js"></script>
+<script src="js/plano.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

@@ -94,7 +94,7 @@ function build(dayIdx,tier,dur,opt={}){
     steps.push({k:'cool',s:60,it:YOGA.breathY,label:'Relaxamento final'});
   } else {
     const warm=WARM[P.warm],ex=P.ex.map(f=>resolve(f,tier));
-    const warmS=[45,30,30],coolS=[40,40,40];
+    const warmS=[45,30,30],coolS=COOL.map(it=>it.sw?40:30);
     const base=8+warmS.reduce((a,b)=>a+b)+15+10+coolS.reduce((a,b)=>a+b);
     const per=ex.length*tp.w+(ex.length-1)*tp.r;
     const R=Math.max(2,Math.min(8,Math.round((target-base+tp.rr)/(per+tp.rr))));
