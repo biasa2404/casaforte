@@ -24,6 +24,7 @@ const FAM={
   mt_chute:{m:['gluteos','abdomen','posteriores'],k:'luta',v:[v('Chute circular baixo','kickLow','Gire o pé de apoio e chute com a canela. Troque na metade',{sw:1,q:'muay thai chute circular iniciante'}),v('Chute circular médio','kickMid','Braço do mesmo lado desce para dar impulso. Troque na metade',{sw:1,q:'muay thai chute circular'}),v('Chute circular alto','kickHigh','Gire todo o quadril. Troque na metade',{sw:1,q:'muay thai chute alto'})]},
   mt_cotovelo:{m:['ombros','abdomen','costas'],k:'luta',v:[v('Cotovelada','elbow','Cotovelo na altura do queixo, gire o tronco',{q:'muay thai cotovelada'}),v('Cotovelada alternada','elbow','Alterne os lados mantendo a guarda',{q:'muay thai cotovelada'}),v('Cotovelada rápida','elbow','Rápido e curto, sempre voltando à guarda',{q:'muay thai cotovelada'})]},
   d_marcha:{m:['cardio','quadriceps'],k:'aero',v:[v('Marcha com braços','danceMarch','Siga o ritmo e solte o corpo',{q:'aula de dança aeróbica em casa iniciante'}),v('Marcha com braços','danceMarch','Joelhos mais altos',{q:'aula de dança aeróbica em casa'}),v('Marcha com braços','danceMarch','Acelere o ritmo',{q:'aula de dança aeróbica em casa'})]},
+  // reservado para a futura aula de dança com música (não entra nos treinos por enquanto)
   d_hiphop:{m:['cardio','quadriceps','gluteos'],k:'aero',v:[v('Hip hop','hiphop','Siga o balanço, passos pequenos',{q:'aula de hip hop iniciante em casa'}),v('Hip hop','hiphop','Mais balanço no quadril e nos braços',{q:'aula de hip hop em casa'}),v('Hip hop','hiphop','Passos mais amplos e com energia',{q:'aula de hip hop dança cardio'})]},
   d_soco:{m:['cardio','ombros','quadriceps'],k:'aero',v:[v('Socos para cima no agachamento','dancePunch','Desça um pouco e solte os braços no alto',{q:'dança aeróbica socos para cima'}),v('Socos para cima no agachamento','dancePunch','Agache mais fundo',{q:'dança aeróbica socos para cima'}),v('Socos para cima no agachamento','dancePunch','Rápido, sem perder o ritmo',{q:'dança aeróbica socos para cima'})]},
   d_chute:{m:['cardio','abdomen','quadriceps'],k:'aero',v:[v('Chute de dança alternado','danceKick','Chute para a frente e bata palma',{q:'dança aeróbica chute alternado'}),v('Chute de dança alternado','danceKick','Chute mais alto',{q:'dança aeróbica chute alternado'}),v('Chute de dança alternado','danceKick','Pequeno salto a cada troca',{q:'dança aeróbica chute alternado'})]},
@@ -55,8 +56,8 @@ const PLANS={
   2:{nome:'Muay Thai em casa',tipo:'Muay Thai',warm:'luta',ex:['mt_jab','mt_joelho','mt_teep','mt_chute','mt_cotovelo','escal']},
   3:{nome:'Peito, ombros e tríceps',tipo:'Força',warm:'forca',ex:['flexao','ombro','triceps','prancha','abd']},
   4:{nome:'Yoga e alongamento',tipo:'Yoga',flow:['catcow','dog','warrior','chair','tree','cobra','child','seatfold','quad']},
-  5:{nome:'Costas, glúteos e abdômen',tipo:'Força',warm:'forca',ex:['superman','passaro','ponte','bomdia','abd','prancha']},
-  6:{nome:'Aeróbico e dança',tipo:'Dança e cardio',warm:'aero',ex:['d_marcha','d_hiphop','d_soco','d_chute','d_boxe','d_bumbum','burpee']},
+  5:{nome:'Glúteos, lombar, abdômen e peito',tipo:'Força',warm:'forca',ex:['superman','flexao','passaro','ponte','bomdia','abd']},
+  6:{nome:'Aeróbico e dança',tipo:'Dança e cardio',warm:'aero',ex:['d_marcha','d_soco','d_chute','d_boxe','d_bumbum','burpee']},
   0:{nome:'Yoga leve e mobilidade',tipo:'Recuperação',flow:['breathY','catcow','child','cobra','dog','bridgeY','seatfold']},
 };
 const DAYS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];

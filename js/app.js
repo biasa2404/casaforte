@@ -153,7 +153,7 @@ const VIDS=[
   ['Alongamento completo','Para fazer depois do treino','alongamento completo pós treino'],
   ['Dança aeróbica em casa','Aulas para suar dançando','aula de dança aeróbica em casa'],
   ['Treino de glúteos sem equipamento','Força para pernas e glúteos','treino de glúteos em casa sem equipamento'],
-  ['Hipertrofia sem equipamento','Como ganhar massa em casa','hipertrofia em casa sem equipamento explicação'],
+  ['Hipertrofia sem equipamento','O que a ciência diz sobre treinar em casa','hipertrofia em casa sem equipamento ciência explicação'],
 ];
 $('vids').innerHTML=VIDS.map(([t,s,q])=>`<a href="${yt(q)}" target="_blank" rel="noopener">${esc(t)}<small>${esc(s)}</small></a>`).join('');
 
@@ -298,7 +298,10 @@ function enterStep(announce){
   const s=cur();P.rem=s.s*1000;P.lastSec=null;P.anim0=performance.now();P.frozen=null;
   if(P.aula){P.aula.parar();P.aula=null;}
   const it=s.it||s.nx,isRest=!s.it,isLearn=s.k==='learn';
-  if(it){plStage.setAnim(AN[it.a],it.a);}
+  const rit=s.k==='work'&&s.it?ritmoDe(s.it.a,P.tier):null;
+  if(it){plStage.setAnim(rit?ritmoAnim(AN[it.a],it.a,P.tier):AN[it.a],it.a);}
+  plStage.tempo=rit;
+  $('plTempo').hidden=!rit;$('plTempo').textContent=rit?'Ritmo: '+rit.txt:'';
   plStage.guides=S.prefs.guides&&(isLearn||s.k==='work'||isRest);
   $('plLabel').textContent=s.label;
   $('plBadge').textContent=s.k==='prep'?'Prepare-se':(isLearn?'Aprenda':(isRest?(s.soft?'Próxima postura':'Descanso'):(s.k==='warm'?'Aquecimento':(s.k==='cool'?'Volta à calma':'Agora é com você'))));
@@ -326,7 +329,10 @@ function enterStep(announce){
     else say(line('descanso',{ex}));
   } else {
     const learnedBefore=P.steps[P.i-1]&&P.steps[P.i-1].k==='learn';
-    say(learnedBefore?line('depoisDeAprender',{ex:s.it.n}):line('inicio',{ex:s.it.n,seg:s.s}));
+    const l1=learnedBefore?line('depoisDeAprender',{ex:s.it.n}):line('inicio',{ex:s.it.n,seg:s.s});
+    // explica o ritmo na primeira vez que ele aparece no treino
+    if(rit&&!P.ritmoDito){P.ritmoDito=true;sayQ([l1,RITMO_FALA[Math.max(0,Math.min(2,P.tier|0))]]);}
+    else say(l1);
   }
 }
 function go(delta){

@@ -234,11 +234,11 @@ class Stage{
       const fit=this.char.use(k2,clip);
       if(this.mcOn!=='real'){this.mcOn='real';this.bb=fit.bb;this.fitMat(fit.bb);}
       this.char.visible=true;this.showBody(false);
-      j={J3:this.char.joints(ms/1000*(MOCAP_RATE[k2]||1))};
+      j={J3:this.char.joints(this.clipSec(ms,this.char.dur,k2))};
     } else if(mc){
       if(this.char) this.char.visible=false;this.showBody(true);
       if(!this.mcOn){this.mcOn=true;this.bb=mc.bb;this.fitMat(mc.bb);}
-      const J=mocapJoints(mc,ms/1000*(MOCAP_RATE[k2]||1));J.sh=J.shJ0.map((x,i)=>(x+J.shJ1[i])/2);j={J3:J};this.pose3(J);
+      const J=mocapJoints(mc,this.clipSec(ms,mc.frames.length/mc.fps,k2));J.sh=J.shJ0.map((x,i)=>(x+J.shJ1[i])/2);j={J3:J};this.pose3(J);
     } else {if(this.char) this.char.visible=false;this.showBody(true);j=solve(poseAt(this.an,ms));this.pose(j);}
     this.j=j;
     if(this.yawTarget!=null) this.yaw+=(this.yawTarget-this.yaw)*0.06;
@@ -261,6 +261,10 @@ class Stage{
     ctx.fillStyle=cs.getPropertyValue('--accent').trim()||'#0B7A5E';ctx.globalAlpha=.95;ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y,w,h,12):ctx.rect(x,y,w,h);ctx.fill();ctx.globalAlpha=1;
     ctx.fillStyle=cs.getPropertyValue('--accent-ink').trim()||'#fff';ctx.textAlign='center';
     lines.forEach((l,i)=>ctx.fillText(l,this._w/2,y+25+i*21));ctx.textAlign='start';
+  }
+  clipSec(ms,dur,k){ // tempo do movimento gravado; com ritmo do nível, se houver
+    if(this.tempo&&typeof MOCAP_PTS!=='undefined'&&MOCAP_PTS[k]) return ritmoClip(ms,dur,MOCAP_PTS[k],this.tempo);
+    return ms/1000*(MOCAP_RATE[k]||1);
   }
   cycleMs(){
     const k=this.key2,rate=(k&&MOCAP_RATE[k])||1;

@@ -31,10 +31,15 @@
     <p id="helloLine"></p>
   </section>
 
+  <section class="card safety" aria-label="Treine com segurança">
+    <h2>Treine com segurança</h2>
+    <p class="muted">Cansaço e ardência no músculo são esperados. Pare se sentir dor aguda ou na articulação, tontura, dor no peito ou falta de ar fora do normal. Se você tem alguma condição de saúde, lesão ou está grávida, converse com um profissional de saúde antes.</p>
+  </section>
+
   <section class="card" aria-label="Movimentos reais">
     <h2>Novo: movimentos reais</h2>
     <p class="muted">Gravados com captura de movimento de uma pessoa de verdade. Toque para ver.</p>
-    <div class="chips"><button class="chip" data-ver="squat">Agachamento livre</button><button class="chip" data-ver="hiphop">Hip hop</button></div>
+    <div class="chips"><button class="chip" data-ver="squat">Agachamento livre</button></div>
   </section>
 
   <section class="card" aria-label="Seu nível">
@@ -164,6 +169,7 @@
         <div style="min-width:0">
           <div class="plname" id="plName"></div>
           <div class="pltip" id="plTip"></div>
+          <div class="pltempo" id="plTempo" hidden></div>
         </div>
         <div class="ring" id="plRing">
           <svg viewBox="0 0 120 120"><circle class="bgc" cx="60" cy="60" r="52" stroke-width="10" fill="none"/><circle class="fgc" id="plArc" cx="60" cy="60" r="52" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="0"/></svg>
@@ -247,6 +253,7 @@
 <script src="js/mocap.js"></script>
 <script src="js/real.js"></script>
 <script src="js/mannequin.js"></script>
+<script src="js/ritmo.js"></script>
 <script src="js/aula.js"></script>
 <script src="js/app.js"></script>
 </body>

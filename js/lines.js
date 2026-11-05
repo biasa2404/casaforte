@@ -7,28 +7,28 @@
 const VOZ={nome:'pt-BR-FranciscaNeural',rate:'+5%',pitch:'+3%',calma:{rate:'+0%',pitch:'+0%'}};
 
 const ROTEIRO={
-  boasVindas:['Oi, {nome}! Que bom te ver. Bora cuidar de você hoje?','{nome}, chegou a sua hora. {vamosJuntas}','Oi, {nome}! Hoje o treino é leve no começo e forte no final. Vamos lá?'],
-  boasVindasSemNome:['Oi! Que bom te ver. Bora cuidar de você hoje?','Chegou a sua hora. {vamosJuntas}','Oi! Hoje o treino é leve no começo e forte no final. Vamos lá?'],
+  boasVindas:['Oi, {nome}! Que bom te ver. Bora cuidar de você hoje?','{nome}, chegou a sua hora. {vamosJuntas}','Oi, {nome}! Hoje a gente começa leve e vai aumentando aos poucos. Vamos lá?'],
+  boasVindasSemNome:['Oi! Que bom te ver. Bora cuidar de você hoje?','Chegou a sua hora. {vamosJuntas}','Oi! Hoje a gente começa leve e vai aumentando aos poucos. Vamos lá?'],
   primeiro:['Vamos começar aquecendo o corpo. Primeiro: {ex}.','Respira fundo e solta. Começamos com {ex}.'],
   primeiroYoga:['Vamos começar com calma. Primeira postura: {ex}.'],
-  inicio:['{ex}. Vamos lá, vai!','Agora é {ex}. No seu ritmo, com capricho.','Sua vez: {ex}. Bora!'],
-  depoisDeAprender:['Agora é com você: {ex}. Vai!','Sua vez! {ex}, no seu ritmo.'],
+  inicio:['{ex}. Vamos lá, vai!','Agora é {ex}. Com calma e boa postura.','Sua vez: {ex}. Bora!'],
+  depoisDeAprender:['Agora é com você: {ex}. Vai!','Sua vez! {ex}, com boa postura.'],
   aprender:['Vamos aprender: {ex}.'],
   descanso:['Descansa. Respira fundo. O próximo é {ex}.','Boa! Pausa para recuperar. Depois vem {ex}.','Isso! Bebe uma água se precisar. Já já tem {ex}.'],
   proximaPostura:['Próxima postura: {ex}.'],
   calma:['Muito bem! Agora vamos desacelerar com carinho. Próximo: {ex}.'],
   fimRodada:['Rodada completa! Faltam {n} rodadas.','Mais uma rodada no bolso. Você está indo muito bem.'],
   penultimaRodada:['Última rodada chegando. Guarda energia para ela!'],
-  fim:['Treino concluído, {nome}! Você apareceu para você hoje, e isso muda tudo.','Acabou! Que orgulho. Agora é água, comida boa e descanso.','Mais um dia cuidando de você. Amanhã tem mais!'],
-  fimSemNome:['Treino concluído! Você apareceu para você hoje, e isso muda tudo.','Acabou! Que orgulho. Agora é água, comida boa e descanso.','Mais um dia cuidando de você. Amanhã tem mais!'],
-  nivel:['Parabéns, {nome}! Você chegou ao nível {n}. Seu corpo está ficando mais forte.','Nível {n}! Os próximos treinos vão ficar um pouco mais desafiadores, {pronta}.'],
-  nivelSemNome:['Parabéns! Você chegou ao nível {n}. Seu corpo está ficando mais forte.','Nível {n}! Os próximos treinos vão ficar um pouco mais desafiadores, {pronta}.'],
+  fim:['Treino concluído, {nome}! Você apareceu para você hoje, e isso faz diferença.','Acabou! Que orgulho. Agora é água, comida boa e descanso.','Mais um dia cuidando de você. Amanhã tem mais!'],
+  fimSemNome:['Treino concluído! Você apareceu para você hoje, e isso faz diferença.','Acabou! Que orgulho. Agora é água, comida boa e descanso.','Mais um dia cuidando de você. Amanhã tem mais!'],
+  nivel:['Parabéns, {nome}! Você chegou ao nível {n}. A sua constância está construindo força.','Nível {n}! Os próximos treinos vão ficar um pouco mais desafiadores, {pronta}.'],
+  nivelSemNome:['Parabéns! Você chegou ao nível {n}. A sua constância está construindo força.','Nível {n}! Os próximos treinos vão ficar um pouco mais desafiadores, {pronta}.'],
   trocaLado:['Troca de lado!'],
   pausa:['Pausa feita. Respira, eu te espero.'],
   volta:['Bora voltar? Vamos lá!'],
   teste:['Oi! Essa vai ser a minha voz nos seus treinos. Bora começar?'],
   incentivo:{
-    forca:['Metade! Mantém a postura, está lindo.','Cada repetição conta. Continua!','Seu corpo está ficando mais forte agora.','Falta pouco. Capricha nessas últimas!','Desce com controle, sobe com força.'],
+    forca:['Metade! Mantém a postura, está lindo.','Cada repetição conta. Continua!','Termine sentindo que só conseguiria mais duas ou três repetições.','Falta pouco. Capricha nessas últimas!','Desce com controle, sobe com força.'],
     luta:['Mãos na guarda!','Gira o quadril, a força vem daí.','Solta o golpe e volta rápido.','Solta o ar a cada golpe!','Mais forte, você consegue!'],
     aero:['Isso, no ritmo!','Solta o corpo e sorri!','Não para agora, está quase!','Que energia boa!','Mexe esse corpo!'],
     yoga:['Respira fundo... e solta devagar.','Solta os ombros, relaxa o rosto.','Sinta o alongamento, sem dor.','Cada respiração te leva um pouquinho mais longe.','Fica aí, com calma. Você está indo muito bem.'],
@@ -82,6 +82,7 @@ function todasAsFalas(nome){
   }
   Object.keys(COMO).forEach(a=>explicacao(a).forEach(t=>add(t,'explica')));
   if(typeof AULA!=='undefined'){Object.values(AULA).forEach(l=>l.forEach(p=>add(p.fala,'explica')));add(AULA_FIM,'explica');}
+  if(typeof RITMO_FALA!=='undefined') RITMO_FALA.forEach(t=>add(t,'explica'));
   return out; // Map texto -> estilo
 }
 if(typeof module!=='undefined') module.exports={VOZ,ROTEIRO,fala,hashFala,todasAsFalas,explicacao,CALMAS};
