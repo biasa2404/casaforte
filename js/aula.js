@@ -91,6 +91,46 @@ const AULA={
     {t:0.15,yaw:1.3,cola:'Braço cruzado no peito',fala:'Cruze um braço na frente do peito e segure com a outra mão, acima do cotovelo.'},
     {t:0.2,yaw:1.3,cola:'Sem dor',fala:'Ombros longe das orelhas. Segure e respire. Alongamento é sem dor. Depois, troque de lado.'},
   ],
+  kickLow:[
+    {t:0,yaw:1.2,cola:'Base de luta',fala:'Base de luta, mãos na guarda.'},
+    {t:0.25,yaw:0.6,cola:'Gire na ponta do pé de apoio',fala:'Gire na ponta do pé da frente, com o calcanhar virando para o alvo, e comece a girar o quadril.',guias:[{t:'dot',j:'ball1',label:'Ponta do pé de apoio'}]},
+    {t:0.42,yaw:0.6,cola:'Canela na altura da coxa',fala:'Chute com a canela na altura da coxa do adversário. O braço do mesmo lado desce para dar impulso.',guias:[{t:'dot',j:'knee0',label:'Canela'}]},
+    {t:0.8,yaw:1.2,cola:'Volte para a base',fala:'Volte a perna e as mãos para a guarda. Troque de lado na metade do tempo.'},
+  ],
+  kickHigh:[
+    {t:0,yaw:1.2,cola:'Base de luta',fala:'Base de luta, mãos na guarda. O chute alto só depois de aquecer bem.'},
+    {t:0.18,yaw:0.6,cola:'Gire o corpo todo',fala:'Gire na ponta do pé de apoio e leve o quadril para cima e para a frente.',guias:[{t:'dot',j:'ball1',label:'Ponta do pé de apoio'}]},
+    {t:0.3,yaw:0.6,cola:'Canela na altura da cabeça',fala:'A canela sobe até a altura da cabeça, só até onde for confortável. O braço do mesmo lado desce, a outra mão protege o rosto.',guias:[{t:'dot',j:'knee0',label:'Canela'}]},
+    {t:0.72,yaw:1.2,cola:'Volte com equilíbrio',fala:'Volte a perna com controle e retorne à base. Se perder o equilíbrio, chute mais baixo. Troque de lado na metade.'},
+  ],
+  hookLead:[
+    {t:0,yaw:1.2,cola:'Base e guarda',fala:'Base de luta, mãos na guarda.'},
+    {t:0.15,yaw:0.9,cola:'Gire o pé da frente',fala:'Gire o pé da frente e o quadril para dentro. É daí que vem a força do gancho.',guias:[{t:'dot',j:'ankle1',label:'Gire o pé da frente'}]},
+    {t:0.25,yaw:0.9,cola:'Cotovelo na altura do punho',fala:'A mão da frente faz um arco, com o cotovelo dobrado e na altura do punho. A outra mão protege o rosto.',guias:[{t:'dot',j:'elbow1',label:'Cotovelo'}]},
+    {t:0.65,yaw:1.2,cola:'Volte para a guarda',fala:'Volte rápido para a guarda e solte o ar a cada golpe.'},
+  ],
+  upperRear:[
+    {t:0,yaw:1.2,cola:'Base e guarda',fala:'Base de luta, mãos na guarda.'},
+    {t:0.2,yaw:0.7,cola:'Dobre os joelhos',fala:'Dobre um pouco os joelhos, sem baixar a mão.'},
+    {t:0.33,yaw:0.7,cola:'De baixo para cima',fala:'Suba o soco de trás de baixo para cima, girando o quadril e o pé de trás, com o cotovelo dobrado.',guias:[{t:'dot',j:'hand0',label:'Uppercut'},{t:'dot',j:'ankle0',label:'Gire o pé de trás'}]},
+    {t:0.7,yaw:1.2,cola:'Volte para a guarda',fala:'Volte rápido para a guarda. A mão da frente fica protegendo o rosto o tempo todo.'},
+  ],
+  hookRear:[
+    {t:0,yaw:1.2,cola:'Base e guarda',fala:'Base de luta, mãos na guarda.'},
+    {t:0.25,yaw:0.8,cola:'Gire o pé de trás',fala:'Gire o pé de trás e o quadril, levando o peso para a frente.',guias:[{t:'dot',j:'ankle0',label:'Gire o pé de trás'}]},
+    {t:0.37,yaw:0.8,cola:'Arco com o cotovelo dobrado',fala:'A mão de trás faz um arco com o cotovelo dobrado. Não abra o braço demais.',guias:[{t:'dot',j:'elbow0',label:'Cotovelo'}]},
+    {t:0.7,yaw:1.2,cola:'Volte para a guarda',fala:'Volte para a guarda e solte o ar a cada golpe.'},
+  ],
+  boxWarm:[
+    {t:0,yaw:1.3,cola:'Corpo solto',fala:'Em pé, corpo solto. Vamos aquecer as articulações.'},
+    {t:0.2,yaw:1.3,cola:'Solte braços e ombros',fala:'Balance os braços e gire os ombros, sem forçar.'},
+    {t:0.75,yaw:1.0,cola:'Solte o tronco',fala:'Gire e incline o tronco devagar, respirando solto.'},
+  ],
+  pikeWalk:[
+    {t:0,yaw:0.2,cola:'Prancha alta',fala:'Comece em prancha alta, mãos abaixo dos ombros e corpo reto.',guias:[{t:'line',j:['sh','hip','ankle0'],tol:6,label:'Corpo reto'}]},
+    {t:0.35,yaw:0.2,cola:'Quadril alto',fala:'Caminhe levando o quadril para cima, até formar um V invertido. Pode dobrar os joelhos.'},
+    {t:0.85,yaw:0.2,cola:'Volte à prancha',fala:'Caminhe com as mãos de volta até a prancha, com o abdômen firme.'},
+  ],
   hiphop:[
     {t:0,yaw:1.3,cola:'Pés afastados, joelhos soltos',fala:'Abra bem os pés e deixe os joelhos soltos, levemente dobrados.',guias:[{t:'link',j:['ankle0','ankle1'],label:'Base larga'}]},
     {t:0.17,yaw:1.3,cola:'Braços em onda',fala:'Os braços passam na frente do peito, um de cada vez, como uma onda.'},
