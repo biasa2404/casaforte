@@ -10,6 +10,8 @@ function carregar(o){
      quiz:o.quiz||null,plano:o.plano||null,humor:o.humor||{},troca:o.troca||{}};
 }
 try{const raw=localStorage.getItem(KEY); if(raw) carregar(JSON.parse(raw));}catch(e){}
+// planos antigos punham uma yoga opcional no domingo, que parecia um dia a mais: refaz com as mesmas respostas
+try{if(S.quiz&&S.plano&&Object.keys(S.plano.opc||{}).length){S.plano=gerarPlano(S.quiz);localStorage.setItem(KEY,JSON.stringify(S));}}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const hoje=()=>ymd(new Date());
@@ -106,7 +108,7 @@ function greeting(){
   const st=streak(),n=S.hist.length,feito=treinou(hoje());
   let txt;
   if(feito) txt='Treino de hoje feito. Agora é descansar, comer bem e se orgulhar.';
-  else if(!n) txt='Hoje é o primeiro passo. O boneco ensina cada movimento com calma antes de você fazer.';
+  else if(!n) txt='Hoje é o primeiro passo. A Sophie ensina cada movimento com calma antes de você fazer.';
   else if(st>=2) txt=`São ${st} treinos em sequência. Bora manter?`;
   else txt='Que bom te ver. O melhor treino é o que cabe no seu dia.';
   return [hi,txt];
@@ -188,20 +190,22 @@ function renderHoje(){
 /* ---------- Detalhe do treino ---------- */
 let sel=null,trItems=[]; // {plan,tier,dur,origem}
 function abrirTreino(plan,o={}){
-  sel={plan:+plan,tier:o.tier!=null&&o.tier!==''?+o.tier:baseTier(),dur:o.dur?+o.dur:S.prefs.dur,origem:o.origem&&o.origem!=='treino'?o.origem:'hoje'};
+  sel={plan:+plan,tier:o.tier!=null&&o.tier!==''?+o.tier:baseTier(),dur:o.dur?+o.dur:S.prefs.dur,origem:o.origem&&o.origem!=='treino'?o.origem:'hoje',coreo:o.coreo!=null&&o.coreo!==''?+o.coreo:null};
   irPara('treino');
 }
 function renderTreino(){
   if(!sel) return irPara('hoje');
-  const P=PLANS[sel.plan],steps=build(sel.plan,sel.tier,sel.dur,{learn:needLearn}),tt=Math.round(total(steps)/60);
+  const P=PLANS[sel.plan],steps=build(sel.plan,sel.tier,sel.dur,{learn:needLearn,coreo:sel.coreo}),tt=Math.round(total(steps)/60);
   $('trName').textContent=P.nome;
   const works=steps.filter(s=>s.k==='work').length,R=P.flow?0:works/P.ex.length;
   $('trTags').innerHTML=[`${tt} min`,P.tipo,TIERS[sel.tier],'Sem equipamento'].map(t=>`<span class="tag">${esc(t)}</span>`).join('');
   const r=P.flow||P.mt||P.coreo?null:(P.ex.map(f=>ritmoDe(resolve(f,sel.tier).a,sel.tier)).find(Boolean));
   $('trRitmo').hidden=!r&&!P.mt&&!P.coreo;
-  if(r) $('trRitmo').innerHTML=`Ritmo de hoje: <b>${esc(r.txt)}</b>. O boneco faz nesse tempo para você acompanhar.`;
+  if(r) $('trRitmo').innerHTML=`Ritmo de hoje: <b>${esc(r.txt)}</b>. A Sophie faz nesse tempo para você acompanhar.`;
   else if(P.mt) $('trRitmo').innerHTML='Como numa aula de Muay Thai: <b>aquecimento, técnica e sequência de golpes</b> em rounds. A voz fala cada sequência e a boneca faz junto.';
-  else if(P.coreo) $('trRitmo').innerHTML=`Coreografia <b>${esc(steps.coreo.n)}</b>, com batida própria a <b>${steps.coreo.bpm} batidas por minuto</b>. Prefere sua playlist? Abaixe a batida no treino e procure músicas com cerca de ${steps.coreo.bpm} BPM no Spotify.`;
+  else if(P.coreo) $('trRitmo').innerHTML=`Coreografia <b>${esc(steps.coreo.n)}</b>, com música própria a <b>${steps.coreo.bpm} batidas por minuto</b>. Prefere sua playlist? Desligue a música no treino e procure músicas com cerca de ${steps.coreo.bpm} BPM no Spotify.`;
+  if(!P.coreo){const m=musicaDoPasso(sel.plan,steps.find(x=>x.k==='work')||steps[0]),MT={forca:'batida firme e constante, para manter o ritmo das repetições',luta:'percussão de luta, para dar energia nos rounds',calma:'acordes calmos, sem batida, para respirar e soltar o corpo'};
+    if(m&&MT[m.estilo]){$('trRitmo').hidden=false;$('trRitmo').innerHTML=($('trRitmo').innerHTML&&r||P.mt?$('trRitmo').innerHTML+'<br>':'')+`Música própria do treino: <b>${MT[m.estilo]}</b>. Dá para desligar no botão Música.`;}}
   $('durChips').innerHTML=[20,30,40,50].map(d=>`<button class="chip" data-trdur="${d}" aria-pressed="${sel.dur===d}">${d} min</button>`).join('');
   // blocos
   const learnSet=new Set(steps.filter(s=>s.k==='learn').map(s=>s.it.a));
@@ -249,6 +253,15 @@ function renderPlano(){
     const sub=p==null?'Caminhada leve, se quiser':`${PLANS[p].tipo}${opcional(d)?', opcional':''}`;
     return `<button class="pday${kk===k?' today':''}${p==null?' rest':''}" ${p!=null?`data-abrir="${p}"`:'disabled'}><span class="pdate"><small>${DAYS[d.getDay()].toUpperCase()}</small><b>${d.getDate()}</b></span><span class="pbar ${p==null?'desc':cor[PLANS[p].tipo]||'forca'}"></span><span class="pnm"><b>${p==null?'Descanso':esc(PLANS[p].nome)}</b><small>${esc(sub)}</small></span><span class="pst${feito?' ok':''}">${st}</span></button>`;}).join('');
   $('planWhy').innerHTML=pl.porque.map(t=>`<li>${esc(t)}</li>`).join('');
+  // todas as aulas, para fazer fora do plano
+  const cor2={'Força':'forca','Muay Thai':'luta','Yoga':'yoga','Dança e cardio':'aero','Recuperação':'yoga'};
+  const ic=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>`;
+  const linha=(attrs,nome,sub,tipo)=>`<button class="pday" ${attrs}><span class="pbar ${cor2[tipo]||'forca'}"></span><span class="pnm"><b>${esc(nome)}</b><small>${esc(sub)}</small></span>${ic}</button>`;
+  const grupos=[['Força',[1,3,5]],['Muay Thai',[2]],['Yoga e alongamento',[4,0]]];
+  let h=grupos.map(([g,ps])=>`<h3 class="aulah">${g}</h3><div class="planlist">${ps.map(p=>linha(`data-abrir="${p}"`,PLANS[p].nome,PLANS[p].flow?'Posturas com respiração':(PLANS[p].mt?'Aquecimento, técnica e sequências de golpes':PLANS[p].ex.length+' movimentos'),PLANS[p].tipo)).join('')}</div>`).join('');
+  const sem=coreoDaSemana();
+  h+=`<h3 class="aulah">Dança aeróbica: coreografias</h3><div class="planlist">${COREOS.map((c,i)=>linha(`data-abrir="6" data-coreo="${i}"`,'Coreografia '+c.n+(c===sem?' (da semana)':''),`${c.bpm} BPM · ${c.b.map(k=>PASSO[k].n).slice(0,3).join(', ')}…`,'Dança e cardio')).join('')}</div>`;
+  $('aulasList').innerHTML=h;
 }
 
 /* ---------- Movimentos ---------- */
@@ -314,7 +327,7 @@ function renderPerfil(){
   $('pfSub').textContent=`Nível ${lv} · ${TIERS[autoTier(lv)]}`+(primeiro?` · treinando desde ${new Date(primeiro.ts).toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}`:'');
   const q=S.quiz;
   $('objChips').innerHTML=q?[
-    ...q.obj.map(v=>[NOME_OP('obj',v),1]),[`${q.dias[0]} dias · ${S.prefs.dur} min`,0],[q.gosta.map(v=>NOME_OP('gosta',v)).join(', '),0],
+    ...q.obj.map(v=>[NOME_OP('obj',v),1]),[`${diasEscolhidos(q).map(d=>DAYS[d]).join(', ')} · ${S.prefs.dur} min`,0],[q.gosta.map(v=>NOME_OP('gosta',v)).join(', '),0],
     [q.cuidado.includes('nada')||!q.cuidado.length?'Sem restrições':'Cuidado: '+q.cuidado.map(v=>NOME_OP('cuidado',v)).join(', '),0]
   ].filter(x=>x[0]).map(([t,a])=>`<span class="chip${a?' on':''}">${esc(t)}</span>`).join(''):'<span class="muted small">Você ainda não respondeu às perguntas.</span>';
   $('redoQuiz').textContent=q?'Refazer as perguntas':'Responder às perguntas';
@@ -357,14 +370,15 @@ $('bkFile').onchange=async e=>{
 
 /* ---------- Primeiro acesso: boas-vindas e perguntas ---------- */
 let qz=null; // {passo, resp}
-function abrirQuiz(passo=0){
-  qz={passo,resp:JSON.parse(JSON.stringify(S.quiz||QUIZ_PADRAO)),nome:S.prefs.name,trat:S.prefs.trat};
+function abrirQuiz(passo=0,opt={}){
+  qz={passo,resp:JSON.parse(JSON.stringify(S.quiz||QUIZ_PADRAO)),nome:S.prefs.name,trat:S.prefs.trat,so:opt.so};
   if(!S.quiz) Object.keys(qz.resp).forEach(k=>qz.resp[k]=[]);
+  else if(!qz.resp.dsem) qz.resp.dsem=diasEscolhidos(qz.resp).map(String);
   $('onb').hidden=false;document.body.style.overflow='hidden';renderQuiz();
 }
 const NQ=QUIZ.length; // passos: 0 boas-vindas, 1 nome, 2..NQ+1 perguntas, NQ+2 resultado
-function renderQuiz(){
-  const p=qz.passo,o=$('onb');
+function renderQuiz(manter){
+  const p=qz.passo,o=$('onb'),y=o.scrollTop;
   if(p===0){
     o.className='onb hero-onb';
     o.innerHTML=`<div class="onbin"><div class="brand inv"><svg viewBox="0 0 40 40" aria-hidden="true"><rect x="2" y="2" width="36" height="36" rx="9" fill="#fff"/><circle cx="20" cy="11" r="4" fill="var(--accent)"/><path d="M20 15v11M20 18l-8 4M20 18l8-6M20 26l-6 8M20 26l7 8" stroke="var(--accent)" stroke-width="3.2" stroke-linecap="round" fill="none"/></svg><span class="brandname">Casa Forte</span></div>
@@ -383,7 +397,7 @@ function renderQuiz(){
     const Q=QUIZ[p-2],cur=qz.resp[Q.id]||[];
     o.className='onb';
     o.innerHTML=qHead(p)+`<h1>${esc(Q.titulo)}</h1><p class="muted">${esc(Q.dica)}</p>
-      <div class="qops">${Q.op.map(([k,l])=>`<button class="qop" data-qop="${k}" aria-pressed="${cur.includes(k)}"><span>${esc(l)}</span><i></i></button>`).join('')}</div>`+qFoot(cur.length>0);
+      <div class="qops">${Q.op.map(([k,l])=>`<button class="qop" data-qop="${k}" aria-pressed="${cur.includes(k)}"><span>${esc(l)}</span><i></i></button>`).join('')}</div>`+(Q.min&&cur.length&&cur.length<Q.min?`<p class="muted small">Escolha pelo menos ${Q.min}.</p>`:'')+qFoot(cur.length>=(Q.min||1));
   } else {
     const pl=gerarPlano(qz.resp);
     o.className='onb';
@@ -392,9 +406,10 @@ function renderQuiz(){
       <ul class="why">${pl.porque.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`+
       `<div class="qfoot"><button class="go" id="qFim">Ver meu dia</button></div></div>`;
   }
-  const nx=$('qNext');if(nx) nx.onclick=()=>{if(nx.disabled) return;qz.passo++;renderQuiz();};
-  const bk=$('qBack');if(bk) bk.onclick=()=>{if(qz.passo<=1&&S.prefs.onboarded){fecharQuiz();return;}qz.passo=Math.max(0,qz.passo-1);renderQuiz();};
+  const nx=$('qNext');if(nx) nx.onclick=()=>{if(nx.disabled) return;qz.passo=qz.so?NQ+2:qz.passo+1;renderQuiz();};
+  const bk=$('qBack');if(bk) bk.onclick=()=>{if((qz.passo<=1||qz.so)&&S.prefs.onboarded){fecharQuiz();return;}qz.passo=Math.max(0,qz.passo-1);renderQuiz();};
   const fim=$('qFim');if(fim) fim.onclick=concluirQuiz;
+  if(manter){o.scrollTop=y;return;}
   const foco=o.querySelector('h1');foco&&foco.setAttribute('tabindex','-1');foco&&foco.focus({preventScroll:true});o.scrollTop=0;
 }
 function qHead(p){const tot=NQ+2;return `<div class="onbin"><div class="qtop"><button class="back" id="qBack" aria-label="Voltar"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><span class="muted small">${p<=NQ+1?`Passo ${p} de ${NQ+1}`:'Pronto'}</span><span style="width:44px"></span></div><div class="qbar"><i style="width:${Math.min(100,p/tot*100)}%"></i></div>`;}
@@ -404,14 +419,14 @@ function concluirQuiz(){
   const r=qz.resp;
   S.quiz=r;S.plano=gerarPlano(r);
   S.prefs.name=qz.nome.trim().slice(0,30);S.prefs.trat=qz.trat;
-  S.prefs.dur=+r.tempo[0]||40;S.prefs.meta=+r.dias[0]||4;
+  S.prefs.dur=+r.tempo[0]||40;S.prefs.meta=diasEscolhidos(r).length;r.dias=[String(S.prefs.meta)];
   S.prefs.tierMin=r.exp[0]==='2'?1:0;
   if(!S.prefs.onboarded){S.prefs.onboarded=true;unlockAudio();setTimeout(()=>say(nmLine('boasVindas')),300);}
   save();fecharQuiz();irPara('hoje');
 }
 $('onb').addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b||!qz) return;
-  if(b.dataset.qtrat){qz.trat=b.dataset.qtrat;renderQuiz();}
+  if(b.dataset.qtrat){qz.trat=b.dataset.qtrat;renderQuiz(1);}
   else if(b.dataset.qop){
     const Q=QUIZ[qz.passo-2],v=b.dataset.qop;let cur=(qz.resp[Q.id]||[]).slice();
     if(Q.max===1) cur=[v];
@@ -421,7 +436,7 @@ $('onb').addEventListener('click',e=>{
       cur.push(v);if(cur.length>Q.max) cur.shift();
       if(Q.id==='cuidado'&&v==='nada') cur=['nada'];
     }
-    qz.resp[Q.id]=cur;renderQuiz();
+    qz.resp[Q.id]=cur;renderQuiz(1);
   }
 });
 
@@ -430,7 +445,8 @@ document.addEventListener('click',e=>{
   const t=e.target.closest('button'); if(!t||t.closest('#onb')) return;
   const d=t.dataset;
   if(d.tab){irPara(d.tab);}
-  else if(d.abrir!=null){abrirTreino(d.abrir,{tier:d.tier,dur:d.dur,origem:aba});}
+  else if(d.abrir!=null){abrirTreino(d.abrir,{tier:d.tier,dur:d.dur,origem:aba,coreo:d.coreo});}
+  else if(d.mudardias!=null){abrirQuiz(2+QUIZ.findIndex(q=>q.id==='dsem'),{so:1});}
   else if(d.humor!=null){const k=hoje();S.humor[k]=+d.humor;save();renderHoje();}
   else if(d.remarcar!=null){S.troca[d.para]=+d.remarcar;save();renderHoje();}
   else if(d.trdur){sel.dur=+d.trdur;renderTreino();}
@@ -455,8 +471,12 @@ let plStage=null,pvStage=null;
 /* ---------- Prévia / Como fazer ---------- */
 let pvItem=null,pvT0=0;
 function howHTML(it){
-  const c=como(it.a);if(!c) return `<p>${esc(it.tip)}</p>`;
-  return `<ol class="how"><li><b>Posição inicial</b>${esc(c[0])}</li><li><b>Movimento</b>${esc(c[1])}</li><li><b>Atenção</b>${esc(c[2])}</li></ol>`;
+  const c=como(it.a);let h=c?`<ol class="how"><li><b>Posição inicial</b>${esc(c[0])}</li><li><b>Movimento</b>${esc(c[1])}</li><li><b>Atenção</b>${esc(c[2])}</li></ol>`:`<p>${esc(it.tip)}</p>`;
+  // explicação completa: os passos da aula em câmera lenta, por escrito
+  const A=AULA[it.a];
+  if(A&&A.length) h+=`<details class="full"><summary>Explicação completa, passo a passo</summary><ol class="steps">${A.map(x=>`<li><b>${esc(x.cola)}</b> ${esc(x.fala)}</li>`).join('')}</ol></details>`;
+  if(it.combo&&it.g) h=`<p><b>Sequência:</b> ${esc(it.g)}.</p>`+h;
+  return h;
 }
 function openPreview(it){
   pvItem=it;pvT0=performance.now();
@@ -517,6 +537,7 @@ function tts(t,done){if(!hasTTS){done();return;}try{const u=utter(t);u.onend=don
 function sayQ(list,force,done){
   if(!S.prefs.voice&&!force){done&&done();return;}
   pararFala();const job=falaJob;
+  Batida.fala(true);const fim=done;done=()=>{if(job===falaJob) Batida.fala(false);fim&&fim();};
   const next=i=>{
     if(job!==falaJob) return;
     if(i>=list.length){done&&done();return;}
@@ -545,7 +566,7 @@ let P=null,wake=null;
 async function keepAwake(){try{wake=await navigator.wakeLock?.request('screen');}catch(e){wake=null;}}
 function startWorkout(){
   unlockAudio();
-  const tier=sel.tier,steps=build(sel.plan,tier,sel.dur,{learn:needLearn});
+  const tier=sel.tier,steps=build(sel.plan,tier,sel.dur,{learn:needLearn,coreo:sel.coreo});
   preCarregar(steps.map(x=>(x.it||x.nx||{}).a).filter(Boolean));
   P={steps,i:0,rem:steps[0].s*1000,run:true,last:performance.now(),lastSec:null,anim0:performance.now(),day:sel.plan,tier,doneMs:0,frozen:null,showHow:false};
   $('player').hidden=false;$('quitBox').hidden=true;document.body.style.overflow='hidden';
@@ -557,7 +578,9 @@ $('startBtn').onclick=startWorkout;
 const cur=()=>P.steps[P.i];
 function setHow(show){
   P.showHow=show;const s=cur(),it=s.it||s.nx;
-  $('plHow').hidden=!show||!it;$('plHow').innerHTML=it?howHTML(it):'';
+  $('plHow').hidden=!show||!it;$('plHow').innerHTML=it?howHTML(it)+'<button class="btn2" id="plAula">Ver a aula em câmera lenta</button>':'';
+  const b=$('plAula');if(b) b.onclick=()=>{if(P.run) setPause(false);openPreview(it);};
+  const d=$('plHow').querySelector('details');if(d) d.open=true;
   $('howBtn').setAttribute('aria-pressed',show);
 }
 function enterStep(announce){
@@ -568,10 +591,10 @@ function enterStep(announce){
   if(it){if(it.seq&&!isRest) plStage.setSeq(it.seq,AN[it.a]||AN.danceMarch);else plStage.setAnim(rit?ritmoAnim(AN[it.a],it.a,P.tier):AN[it.a],it.a);}
   // batida própria nas coreografias
   const bpm=s.it&&s.it.danca&&s.k==='work'?s.it.bpm:0;
-  if(bpm&&S.prefs.musica&&P.run){if(!Batida.on||Batida.bpm!==bpm) Batida.start(actx,bpm);} else if(!bpm) Batida.stop();
+  tocarMusica();
   plStage.tempo=rit;
   $('plTempo').hidden=!rit&&!bpm;$('plTempo').textContent=rit?'Ritmo: '+rit.txt:(bpm?`Música: ${bpm} batidas por minuto`:'');
-  $('plMusic').hidden=!(P.steps.coreo);
+  $('plMusic').hidden=false;
   plStage.guides=S.prefs.guides&&(isLearn||s.k==='work'||isRest);
   $('plLabel').textContent=s.label;
   $('plBadge').textContent=s.k==='prep'?'Prepare-se':(isLearn?'Aprenda':(isRest?(s.soft?'Próxima postura':'Descanso'):(s.k==='warm'?'Aquecimento':(s.k==='cool'?'Volta à calma':'Agora é com você'))));
@@ -660,7 +683,7 @@ function setPause(run){
   $('pauseBtn').setAttribute('aria-label',run?'Pausar':'Continuar');
   $('pauseIco').innerHTML=run?'<rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/>':'<path d="M7 4.5v15l13-7.5z" fill="currentColor"/>';
   if(!run){pararFala();Batida.stop();}
-  else{const st=cur();if(st.it&&st.it.danca&&st.k==='work'&&S.prefs.musica) Batida.start(actx,st.it.bpm);if(P.aula) P.aula.falou=true;}
+  else{tocarMusica();if(P.aula) P.aula.falou=true;}
 }
 $('pauseBtn').onclick=()=>{unlockAudio();setPause(!P.run);say(line(P.run?'volta':'pausa'));};
 $('nextBtn').onclick=()=>go(1);
@@ -668,7 +691,13 @@ $('prevBtn').onclick=()=>{if(P.rem<(cur().s*1000-3000)) enterStep(true); else go
 $('plVoice').onclick=()=>{S.prefs.voice=!S.prefs.voice;save();syncBtns();if(!S.prefs.voice){pararFala();}};
 $('guideBtn').onclick=()=>{S.prefs.guides=!S.prefs.guides;save();syncBtns();if(plStage)plStage.guides=S.prefs.guides;};
 $('howBtn').onclick=()=>setHow(!P.showHow);
-$('plMusic').onclick=()=>{S.prefs.musica=!S.prefs.musica;save();syncBtns();const st=cur();if(S.prefs.musica&&st.it&&st.it.danca&&st.k==='work'&&P.run) Batida.start(actx,st.it.bpm);else Batida.stop();};
+$('plMusic').onclick=()=>{S.prefs.musica=!S.prefs.musica;save();syncBtns();tocarMusica();};
+/* Música própria do tipo de treino; na aula de um movimento ela fica bem baixinha */
+function tocarMusica(){
+  if(!P||!P.run||!S.prefs.musica){Batida.stop();return;}
+  const m=musicaDoPasso(P.day,cur());if(!m){Batida.stop();return;}
+  if(!Batida.on||Batida.bpm!==m.bpm||Batida.estilo!==m.estilo) Batida.start(actx,m.bpm,m.estilo);
+}
 function syncBtns(){
   $('plVoice').setAttribute('aria-pressed',S.prefs.voice);$('plVoice').setAttribute('aria-label',S.prefs.voice?'Desligar voz':'Ligar voz');
   $('guideBtn').setAttribute('aria-pressed',S.prefs.guides);
@@ -747,3 +776,4 @@ window.addEventListener('hashchange',verPorLink);
 if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){
   window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
+$('plName').onclick=()=>setHow(true);

@@ -84,31 +84,71 @@ function itemPasso(k,bpm,tempos){
 }
 function coreoDaSemana(){const d=new Date(),w=Math.floor((d-new Date(d.getFullYear(),0,1))/604800000);return COREOS[w%COREOS.length];}
 
-/* ---------- Batida própria (Web Audio): bumbo, palma, chimbal e baixo ---------- */
+/* ---------- Música própria (Web Audio), uma para cada tipo de treino ----------
+   Feita aqui, por código, sem direitos autorais. Estilos:
+   danca  = pop de academia (bumbo, palma, chimbal e baixo), no BPM da coreografia
+   forca  = batida firme e constante, bumbo em todo tempo, para ritmo de repetição
+   luta   = percussão de luta: tambores graves, címbalo curto e marcação seca
+   calma  = acordes longos e suaves, sem batida, para yoga e volta à calma */
+const ESTILOS={danca:{n:'Dança',vol:0.5},forca:{n:'Força',vol:0.45},luta:{n:'Luta',vol:0.5},calma:{n:'Calma',vol:0.55}};
 const Batida={
-  ctx:null,on:false,bpm:120,next:0,n:0,timer:null,vol:null,
-  start(ctx,bpm){
-    if(!ctx) return;this.stop();this.ctx=ctx;this.bpm=bpm;this.on=true;this.n=0;this.next=ctx.currentTime+0.06;
-    this.vol=ctx.createGain();this.vol.gain.value=0.5;this.vol.connect(ctx.destination);
+  ctx:null,on:false,bpm:120,estilo:'danca',next:0,n:0,timer:null,vol:null,base:0.5,
+  start(ctx,bpm,estilo='danca'){
+    if(!ctx) return;this.stop();this.ctx=ctx;this.bpm=bpm;this.estilo=estilo;this.on=true;this.n=0;this.next=ctx.currentTime+0.06;
+    this.base=(ESTILOS[estilo]||ESTILOS.danca).vol;
+    this.vol=ctx.createGain();this.vol.gain.value=this.falando?this.base*0.3:this.base;this.vol.connect(ctx.destination);
     this.timer=setInterval(()=>this.agenda(),25);
   },
   stop(){this.on=false;clearInterval(this.timer);this.timer=null;if(this.vol){const v=this.vol;try{v.gain.setTargetAtTime(0,this.ctx.currentTime,0.05);setTimeout(()=>v.disconnect(),400);}catch(e){}this.vol=null;}},
   duck(x){if(this.vol&&this.ctx) try{this.vol.gain.setTargetAtTime(x,this.ctx.currentTime,0.08);}catch(e){}},
+  fala(on){this.falando=on;this.duck(on?this.base*0.3:this.base);}, // abaixa enquanto a voz fala
   agenda(){
     if(!this.on) return;const c=this.ctx,step=60/this.bpm/2; // colcheias
     while(this.next<c.currentTime+0.12){
-      const t=this.next,i=this.n%16,beat=i%2===0,b4=(i/2)%4;
-      if(beat&&(b4===0||b4===2)) this.kick(t);
-      if(beat&&(b4===1||b4===3)) this.clap(t);
-      this.hat(t,beat?0.05:0.09);
-      if(beat) this.bass(t,[55,55,65.4,49][Math.floor(i/4)%4]);
+      const t=this.next,i=this.n%16,beat=i%2===0,b4=(i/2)%4,bar=Math.floor(this.n/16);
+      if(this.estilo==='forca'){
+        if(beat) this.kick(t,1);
+        if(beat&&(b4===1||b4===3)) this.clap(t);
+        if(!beat) this.hat(t,0.1);
+        if(!beat) this.bass(t,[55,55,49,41.2][bar%4],'sawtooth',0.1);
+      } else if(this.estilo==='luta'){
+        // tambor grave no 1 e no "e" do 2; tambor agudo nos contratempos; címbalo alternando aberto e fechado
+        if(i===0||i===5||i===8) this.tom(t,i===8?90:70,0.7);
+        if(i===3||i===11||i===14) this.tom(t,150,0.45);
+        if(beat) this.ching(t,b4%2===0);
+        if(i===12&&bar%2===1) this.tom(t,120,0.5);
+      } else if(this.estilo==='calma'){
+        if(this.n%16===0){const ac=[[261.6,329.6,392,493.9],[220,261.6,329.6,392],[174.6,220,261.6,329.6],[196,246.9,293.7,392]][bar%4];this.pad(t,ac,step*16);}
+        if(this.n%16===10&&bar%2===0) this.sino(t,[784,659.3,587.3,523.3][bar%4]);
+      } else {
+        if(beat&&(b4===0||b4===2)) this.kick(t);
+        if(beat&&(b4===1||b4===3)) this.clap(t);
+        this.hat(t,beat?0.05:0.09);
+        if(beat) this.bass(t,[55,55,65.4,49][Math.floor(i/4)%4]);
+      }
       this.next+=step;this.n++;
     }
   },
-  kick(t){const c=this.ctx,o=c.createOscillator(),g=c.createGain();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(45,t+0.12);g.gain.setValueAtTime(0.9,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.25);o.connect(g).connect(this.vol);o.start(t);o.stop(t+0.26);},
+  kick(t,v=0.9){const c=this.ctx,o=c.createOscillator(),g=c.createGain();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(45,t+0.12);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.25);o.connect(g).connect(this.vol);o.start(t);o.stop(t+0.26);},
   ruido(t,d,f,v,type){const c=this.ctx,b=c.createBuffer(1,Math.ceil(c.sampleRate*d),c.sampleRate),x=b.getChannelData(0);for(let i=0;i<x.length;i++)x[i]=Math.random()*2-1;
     const s=c.createBufferSource(),fl=c.createBiquadFilter(),g=c.createGain();s.buffer=b;fl.type=type;fl.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);s.connect(fl).connect(g).connect(this.vol);s.start(t);},
   clap(t){this.ruido(t,0.18,1500,0.45,'bandpass');},
   hat(t,v){this.ruido(t,0.04,8000,v,'highpass');},
-  bass(t,f){const c=this.ctx,o=c.createOscillator(),g=c.createGain();o.type='triangle';o.frequency.value=f;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.22,t+0.01);g.gain.exponentialRampToValueAtTime(0.001,t+0.22);o.connect(g).connect(this.vol);o.start(t);o.stop(t+0.24);},
+  bass(t,f,type='triangle',v=0.22){const c=this.ctx,o=c.createOscillator(),g=c.createGain(),fl=c.createBiquadFilter();o.type=type;o.frequency.value=f;fl.type='lowpass';fl.frequency.value=600;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(v,t+0.01);g.gain.exponentialRampToValueAtTime(0.001,t+0.22);o.connect(fl).connect(g).connect(this.vol);o.start(t);o.stop(t+0.24);},
+  tom(t,f,v){const c=this.ctx,o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.setValueAtTime(f*1.6,t);o.frequency.exponentialRampToValueAtTime(f,t+0.08);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.35);o.connect(g).connect(this.vol);o.start(t);o.stop(t+0.36);this.ruido(t,0.03,2000,v*0.25,'bandpass');},
+  ching(t,aberto){const c=this.ctx,g=c.createGain(),d=aberto?0.45:0.06;g.gain.setValueAtTime(0.09,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);g.connect(this.vol);
+    [2637,3951,5274].forEach(f=>{const o=c.createOscillator();o.type='sine';o.frequency.value=f;o.connect(g);o.start(t);o.stop(t+d+0.02);});},
+  pad(t,notas,d){const c=this.ctx;notas.forEach((f,k)=>{const o=c.createOscillator(),o2=c.createOscillator(),g=c.createGain();o.type='sine';o2.type='triangle';o.frequency.value=f;o2.frequency.value=f*1.003;
+    g.gain.setValueAtTime(0.0001,t);g.gain.linearRampToValueAtTime(0.05,t+d*0.3);g.gain.linearRampToValueAtTime(0.035,t+d*0.8);g.gain.linearRampToValueAtTime(0.0001,t+d*1.15);
+    o.connect(g);o2.connect(g);g.connect(this.vol);o.start(t);o2.start(t);o.stop(t+d*1.2);o2.stop(t+d*1.2);});},
+  sino(t,f){const c=this.ctx,o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.06,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+2.5);o.connect(g).connect(this.vol);o.start(t);o.stop(t+2.6);},
 };
+/* Qual música combina com cada parte do treino */
+function musicaDoPasso(plan,s){
+  const P=PLANS[plan];if(!P||!s) return null;
+  if(s.k==='cool'||P.flow) return {estilo:'calma',bpm:60};
+  if(s.it&&s.it.danca&&s.k==='work') return {estilo:'danca',bpm:s.it.bpm};
+  if(P.coreo) return {estilo:'danca',bpm:120};
+  if(P.mt) return {estilo:'luta',bpm:126};
+  return {estilo:'forca',bpm:s.k==='warm'?110:118};
+}

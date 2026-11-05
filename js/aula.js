@@ -41,13 +41,13 @@ const AULA={
     {t:1.48,yaw:0.4,cola:'Salte e aterrisse suave',fala:'Fique em pé e salte com os braços para cima. Aterrisse suave, com os joelhos dobrados.',guias:[{t:'dot',j:'ankle0',label:'Aterrisse suave'}]},
   ],
   jabcross:[
-    {t:0,yaw:1.2,cola:'Base de luta',fala:'Base de luta: pé esquerdo à frente, pés afastados, joelhos soltos. Mãos na altura do queixo e cotovelos fechados.',guias:[{t:'link',j:['ankle0','ankle1'],label:'Base'}]},
+    {t:0,yaw:1.2,cola:'Base de luta',fala:'Base de luta: pé esquerdo à frente, pés afastados, joelhos soltos. Guarda alta, como no Muay Thai: mãos na altura da testa e cotovelos fechados.',guias:[{t:'link',j:['ankle0','ankle1'],label:'Base'}]},
     {t:0.2,yaw:0.6,cola:'Jab: braço da frente',fala:'Jab: estique rápido o braço da frente e volte para a guarda.',guias:[{t:'dot',j:'hand1',label:'Jab'}]},
     {t:0.35,yaw:0.6,cola:'Direto: gire o pé e o quadril',fala:'Direto: gire o pé de trás e o quadril e estique o braço de trás. A força vem do giro.',guias:[{t:'dot',j:'hand0',label:'Direto'},{t:'dot',j:'ankle0',label:'Gire o pé de trás'}]},
     {t:0.75,yaw:1.2,cola:'Volte para a guarda',fala:'Depois de cada golpe, a mão volta para proteger o rosto. Solte o ar a cada soco.'},
   ],
   shadowbox:[
-    {t:0.1,yaw:1.2,cola:'Guarda alta',fala:'Base de luta, mãos na guarda protegendo o queixo.'},
+    {t:0.1,yaw:1.2,cola:'Guarda alta',fala:'Base de luta e guarda alta: mãos na altura da testa, protegendo a cabeça.'},
     {t:0.3,yaw:0.6,cola:'Jab',fala:'Solte o jab com o braço da frente.',guias:[{t:'dot',j:'hand1',label:'Jab'}]},
     {t:0.4,yaw:0.6,cola:'Direto',fala:'Em seguida o direto, girando o quadril.',guias:[{t:'dot',j:'hand0',label:'Direto'}]},
     {t:0.62,yaw:0.8,cola:'Vai rápido, volta rápido',fala:'Repita a sequência num ritmo constante. O braço vai rápido e volta rápido para a guarda.'},
@@ -72,7 +72,7 @@ const AULA={
   ],
   mtBounce:[
     {t:0,yaw:1.2,cola:'Pés afastados, joelhos soltos',fala:'Pés afastados, um à frente do outro, joelhos soltos e peso na frente dos pés.',guias:[{t:'link',j:['ankle0','ankle1'],label:'Base'}]},
-    {t:0.3,yaw:0.7,cola:'Mãos na guarda',fala:'Mãos na altura do queixo e cotovelos fechados, protegendo o corpo.'},
+    {t:0.3,yaw:0.7,cola:'Mãos na guarda',fala:'Mãos altas, na altura da testa, e cotovelos fechados, protegendo a cabeça e o corpo.'},
     {t:0.6,yaw:0.7,cola:'Balanço leve',fala:'Faça um balanço leve e solto, respirando pelo nariz.'},
   ],
   jacks:[

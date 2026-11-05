@@ -261,7 +261,21 @@ class Stage{
       if(this.char) this.char.visible=false;this.showBody(true);
       if(!this.mcOn){this.mcOn=true;this.bb=mc.bb;this.fitMat(mc.bb);}
       const J=mocapJoints(mc,sq?sq.t%(mc.frames.length/mc.fps):this.clipSec(ms,mc.frames.length/mc.fps,k2));J.sh=J.shJ0.map((x,i)=>(x+J.shJ1[i])/2);j={J3:J};this.pose3(J);
-    } else {if(this.char) this.char.visible=false;this.showBody(true);j=solve(poseAt(this.an,ms));this.pose(j);}
+    } else {
+      j=solve(poseAt(this.an,ms));
+      // poses montadas: a Sophie também faz, girando os ossos dela para cada pose
+      if(this.real!==false&&HAS3D){try{realLoad();}catch(e){}
+        if(REAL.ok&&!this.char){try{this.char=new RealChar(this.scene);}catch(e){console.warn(e);this.real=false;}}}
+      if(this.char&&this.real!==false){
+        try{this.char.poseJ(j);this.char.visible=true;this.showBody(false);
+          if(this.mcOn!=='pose'){this.mcOn='pose';const b=bbox(this.an);this.bb={x0:b.x0-6,x1:b.x1+6,y1:b.y1+10};this.fitMat(this.bb);}}
+        catch(e){console.warn(e);this.real=false;this.char.visible=false;this.showBody(true);this.pose(j);}
+      } else if(this.real!==false&&!REAL.err&&!REAL.ok&&performance.now()-(this.tSet||0)<10000){
+        this.showBody(false);this.r.setClearColor(0x000000,0);this.r.clear();this.j=null;
+        if(this.ov){const ctx=this.ov.getContext('2d'),d=this.ov.width/this._w;ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,this._w,this._h);}
+        return;
+      } else {if(this.char) this.char.visible=false;this.showBody(true);this.pose(j);}
+    }
     this.j=j;
     if(this.yawTarget!=null) this.yaw+=(this.yawTarget-this.yaw)*0.06;
     const b=this.bb,cx=(b.x0+b.x1)/2,cy=Math.max(b.y1,40)/2+2;

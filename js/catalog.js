@@ -117,7 +117,7 @@ function build(dayIdx,tier,dur,opt={}){
       }
     } else {
       // coreografia: primeiro cada passo devagar no ritmo, depois tudo junto
-      const C=coreoDaSemana(),bt=60/C.bpm,bS=Math.round(32*bt);
+      const C=(opt.coreo!=null&&COREOS[opt.coreo])||coreoDaSemana(),bt=60/C.bpm,bS=Math.round(32*bt);
       C.b.forEach((k,i)=>{
         const it=itemPasso(k,C.bpm,64);
         if(learn(k)) steps.push({k:'learn',s:10,it:{...it,seq:null},label:'Aprenda o passo',fase:'Aprenda os passos'});

@@ -71,11 +71,12 @@
     <section class="view" id="v-plano" aria-labelledby="plTitle" hidden>
       <header class="vhead">
         <div><h1 id="plTitle">Seu plano</h1><span class="muted small" id="plSub"></span></div>
-        <button class="btn2" data-tab="perfil">Ajustar plano</button>
+        <button class="btn2" data-mudardias="1">Mudar os dias</button>
       </header>
       <p class="muted small" style="margin:0">Toque em um dia para ver o treino. Dá para fazer qualquer um deles hoje.</p>
       <div class="planlist" id="planList"></div>
       <section class="card soft" aria-labelledby="whyTitle"><h2 class="h2s" id="whyTitle">Por que o plano é assim</h2><ul class="why" id="planWhy"></ul></section>
+      <section aria-labelledby="aulasTitle"><h2 class="h2s" id="aulasTitle">Todas as aulas</h2><p class="muted small" style="margin:2px 0 8px">Faça qualquer aula quando quiser, mesmo fora do plano. As coreografias de dança ficam aqui.</p><div id="aulasList"></div></section>
     </section>
 
     <!-- MOVIMENTOS -->
@@ -167,7 +168,7 @@
       <div id="quitBox" hidden></div>
       <div class="plinfo">
         <div style="min-width:0">
-          <div class="plname" id="plName"></div>
+          <button class="plname linkish" id="plName" title="Ver explicação completa"></button>
           <div class="pltip" id="plTip"></div>
           <div class="pltempo" id="plTempo" hidden></div>
         </div>
@@ -185,9 +186,9 @@
         <button class="cb" id="nextBtn" aria-label="Pular exercício"><svg viewBox="0 0 24 24"><path d="M18 5v14M5 5l10 7-10 7z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
       </div>
       <div class="ctrls small">
-        <button class="pillbtn" id="howBtn" aria-pressed="false">Como fazer</button>
+        <button class="pillbtn" id="howBtn" aria-pressed="false">Explicação completa</button>
         <button class="pillbtn" id="guideBtn" aria-pressed="true">Guias de postura</button>
-        <button class="pillbtn" id="plVoice" aria-pressed="true">Voz</button><button class="pillbtn" id="plMusic" aria-pressed="true" hidden>Batida</button>
+        <button class="pillbtn" id="plVoice" aria-pressed="true">Voz</button><button class="pillbtn" id="plMusic" aria-pressed="true">Música</button>
         <a class="pillbtn" id="plVideo" href="#" target="_blank" rel="noopener">Vídeo</a>
       </div>
     </div>
