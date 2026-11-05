@@ -6,6 +6,9 @@
 <title>Casa Forte</title>
 <meta name="description" content="Treinos em casa sem equipamento: força, Muay Thai, yoga, alongamento e dança, com boneco 3D que ensina cada movimento e voz de incentivo.">
 <meta name="theme-color" content="#0B7A5E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect x='2' y='2' width='36' height='36' rx='9' fill='%230B7A5E'/%3E%3Ccircle cx='20' cy='11' r='4' fill='white'/%3E%3Cpath d='M20 15v11M20 18l-8 4M20 18l8-6M20 26l-6 8M20 26l7 8' stroke='white' stroke-width='3.2' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -42,6 +45,7 @@
       <div class="stat"><b id="stCount">0</b><span>treinos feitos</span></div>
       <div class="stat"><b id="stMin">0</b><span>minutos no total</span></div>
     </div>
+    <div class="weekgoal"><div class="wg-dots" id="wgDots"></div><span id="wgText"></span></div>
   </section>
 
   <section class="card today" aria-label="Treino escolhido">
@@ -100,8 +104,16 @@
   <section class="card" aria-label="Ajustes">
     <h3>Ajustes</h3>
     <div class="setrow">
-      <div><b>Como quer ser chamado?</b><div class="muted small">A voz usa esse nome para falar com você.</div></div>
+      <div><b>Qual é o seu nome ou apelido?</b><div class="muted small">A voz usa esse nome para falar com você.</div></div>
       <input id="nameIn" class="field" type="text" maxlength="30" placeholder="Seu nome ou apelido" autocomplete="nickname">
+    </div>
+    <div class="setrow">
+      <div><b>Como a voz fala com você</b><div class="muted small">Muda palavras como “pronta” ou “pronto”.</div></div>
+      <div class="chips" id="tratChips"></div>
+    </div>
+    <div class="setrow">
+      <div><b>Meta da semana</b><div class="muted small">Quantos dias por semana você quer treinar.</div></div>
+      <div class="chips" id="metaChips"></div>
     </div>
     <div class="setrow">
       <div style="min-width:0;flex:1 1 240px"><b>Voz de incentivo</b><div class="muted small" id="voiceInfo">Fala o exercício, explica os movimentos e anima você.</div></div>
@@ -205,10 +217,24 @@
   </div>
 </div>
 
+
+<div class="modal" id="welcome" hidden>
+  <div class="card mcard welcome" role="dialog" aria-modal="true" aria-labelledby="wTitle">
+    <div class="eyebrow">Boas-vindas</div>
+    <h2 id="wTitle">Que bom ter você no Casa Forte</h2>
+    <p class="muted" style="margin:0">Três perguntas rápidas para o app falar do seu jeito. Dá para mudar depois em Ajustes.</p>
+    <label class="wq"><b>Qual é o seu nome ou apelido?</b><input id="wName" class="field" type="text" maxlength="30" placeholder="Seu nome ou apelido" autocomplete="nickname"></label>
+    <div class="wq"><b>Como prefere que a voz fale com você?</b><div class="chips" id="wTrat"></div></div>
+    <div class="wq"><b>Quantos dias por semana quer treinar?</b><div class="chips" id="wMeta"></div><span class="muted small">Comece com o que cabe na sua rotina. Constância vale mais que intensidade.</span></div>
+    <button class="go" id="wGo">Começar</button>
+  </div>
+</div>
+
 <script src="js/vendor/three.min.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/teach.js"></script>
 <script src="js/catalog.js"></script>
+<script src="js/lines.js"></script>
 <script src="js/mannequin.js"></script>
 <script src="js/app.js"></script>
 </body>

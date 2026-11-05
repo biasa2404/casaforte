@@ -8,6 +8,7 @@ O Mixamo é gratuito e só pede uma conta da Adobe.
    - Format: **FBX Binary (.fbx)**
    - Skin: **With Skin** só no primeiro arquivo; nos outros, **Without Skin**
    - Frames per second: **30**
+   - Keyframe Reduction: **none**
    - Marque **In Place** quando aparecer essa opção
 4. Envie os arquivos aqui na conversa (pode ser em um .zip).
 

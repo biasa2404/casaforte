@@ -3,7 +3,7 @@
 
 /* ---------- Estado salvo ---------- */
 const KEY='casaforte.v1';
-let S={hist:[],xp:0,learned:{},prefs:{dur:40,voice:true,tier:'auto',name:'',voiceName:'',explain:'first',guides:true}};
+let S={hist:[],xp:0,learned:{},prefs:{dur:40,voice:true,tier:'auto',name:'',voiceName:'',explain:'first',guides:true,trat:'n',meta:4,onboarded:false}};
 try{const raw=localStorage.getItem(KEY); if(raw){const o=JSON.parse(raw); S={...S,...o,learned:o.learned||{},prefs:{...S.prefs,...(o.prefs||{})}};}}catch(e){}
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -20,6 +20,7 @@ function streak(){
   return n;
 }
 let selDay=new Date().getDay();
+let gravados=new Set(); // áudios gravados disponíveis (audio/manifest.json)
 const $=id=>document.getElementById(id);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -55,6 +56,18 @@ function bodySVG(lv){
 }
 
 /* ---------- Boas-vindas ---------- */
+const TRATS=[['f','No feminino'],['m','No masculino'],['n','De forma neutra']];
+const tratChips=v=>TRATS.map(([k,l])=>`<button class="chip" data-trat="${k}" aria-pressed="${v===k}">${l}</button>`).join('');
+const metaChips=v=>[2,3,4,5,6].map(n=>`<button class="chip" data-meta="${n}" aria-pressed="${v===n}">${n} dias</button>`).join('');
+function weekCount(){
+  const now=new Date(),mon=new Date(now);mon.setHours(0,0,0,0);mon.setDate(now.getDate()-((now.getDay()+6)%7));
+  return new Set(S.hist.filter(h=>h.ts>=mon.getTime()).map(h=>h.day)).size;
+}
+function openWelcome(){
+  $('wName').value=S.prefs.name;$('wTrat').innerHTML=tratChips(S.prefs.trat);$('wMeta').innerHTML=metaChips(S.prefs.meta);
+  $('welcome').hidden=false;setTimeout(()=>$('wName').focus(),50);
+}
+$('wGo').onclick=()=>{S.prefs.name=$('wName').value.trim().slice(0,30);S.prefs.onboarded=true;save();$('welcome').hidden=true;renderHome();unlockAudio();say(nmLine('boasVindas'));};
 function greeting(){
   const h=new Date().getHours(),nm=S.prefs.name.trim();
   const hi=(h<12?'Bom dia':(h<18?'Boa tarde':'Boa noite'))+(nm?', '+nm:'')+'!';
@@ -114,6 +127,11 @@ function renderHome(){
   $('tierChips').innerHTML=[['auto','Automática'],['0','Iniciante'],['1','Intermediário'],['2','Avançado']].map(([k,l])=>`<button class="chip" data-tier="${k}" aria-pressed="${String(S.prefs.tier)===k}">${l}</button>`).join('');
   $('explainChips').innerHTML=[['first','Nas primeiras vezes'],['always','Sempre'],['never','Nunca']].map(([k,l])=>`<button class="chip" data-explain="${k}" aria-pressed="${S.prefs.explain===k}">${l}</button>`).join('');
   if(document.activeElement!==$('nameIn')) $('nameIn').value=S.prefs.name;
+  $('tratChips').innerHTML=tratChips(S.prefs.trat);
+  $('metaChips').innerHTML=metaChips(S.prefs.meta);
+  const wk=weekCount(),meta=S.prefs.meta;
+  $('wgDots').innerHTML=Array.from({length:meta},(_,i)=>`<i class="${i<wk?'on':''}"></i>`).join('');
+  $('wgText').textContent=wk>=meta?`Meta da semana batida: ${wk} treinos!`:`${wk} de ${meta} treinos nesta semana`;
   queueThumbs();
 }
 let thumbJob=0;
@@ -147,10 +165,12 @@ document.addEventListener('click',e=>{
   else if(t.dataset.energy!=null&&t.dataset.energy!==''){energy=+t.dataset.energy;renderHome();}
   else if(t.dataset.explain){S.prefs.explain=t.dataset.explain;save();renderHome();}
   else if(t.dataset.pv){openPreview(homeItems[+t.dataset.pv]);}
+  else if(t.dataset.trat){S.prefs.trat=t.dataset.trat;save();if(!$('welcome').hidden) $('wTrat').innerHTML=tratChips(S.prefs.trat);else renderHome();}
+  else if(t.dataset.meta){S.prefs.meta=+t.dataset.meta;save();if(!$('welcome').hidden) $('wMeta').innerHTML=metaChips(S.prefs.meta);else renderHome();}
 });
 $('nameIn').addEventListener('input',e=>{S.prefs.name=e.target.value.slice(0,30);save();const [hi]=greeting();$('hello').textContent=hi;});
 $('voiceToggle').onclick=()=>{S.prefs.voice=!S.prefs.voice;save();renderHome();};
-$('voiceTest').onclick=()=>{unlockAudio();say(`Oi${S.prefs.name?', '+S.prefs.name:''}! Eu vou te acompanhar em cada treino. Vamos juntos?`,true);};
+$('voiceTest').onclick=()=>{unlockAudio();sayQ([nmLine('boasVindas'),line('teste')],true);};
 function resetHandler(){
   $('resetBox').innerHTML='<div class="chips"><button class="btn2" id="rsNo">Cancelar</button><button class="btn2 danger" id="rsYes">Apagar tudo</button></div>';
   const restore=()=>{$('resetBox').innerHTML='<button class="btn2 danger" id="resetBtn">Apagar</button>';$('resetBtn').onclick=resetHandler;};
@@ -181,9 +201,9 @@ function openPreview(it){
   pvStage.guides=S.prefs.guides;pvStage.applyColors();pvStage.setAnim(AN[it.a],it.a);
   $('pvClose').focus();
 }
-function closePreview(){$('preview').hidden=true;pvItem=null;try{speechSynthesis.cancel()}catch(e){}}
+function closePreview(){$('preview').hidden=true;pvItem=null;pararFala();}
 $('pvClose').onclick=closePreview;
-$('pvListen').onclick=()=>{unlockAudio();if(pvItem){const c=como(pvItem.a);sayQ(c?[pvItem.n+'.', 'Posição inicial. '+c[0],'Movimento. '+c[1],'Atenção. '+c[2]]:[pvItem.tip],true);}};
+$('pvListen').onclick=()=>{unlockAudio();if(pvItem){const c2=explicacao(pvItem.a);sayQ([line('aprender',{ex:pvItem.n}),...(c2||[pvItem.tip])],true);}};
 $('preview').addEventListener('click',e=>{if(e.target.id==='preview') closePreview();});
 
 /* ---------- Voz e som ---------- */
@@ -208,32 +228,42 @@ function loadVoices(){
     sel.disabled=false;
   } else {sel.innerHTML='<option>Nenhuma voz em português encontrada</option>';sel.disabled=true;}
   const best=voices[0]&&scoreVoice(voices[0])>=90;
+  if(gravados.size){syncVoiceInfo();return;}
   $('voiceInfo').textContent=best?'Encontramos uma voz natural neste aparelho.':'Para uma voz mais humana, abra o site no Microsoft Edge (vozes Francisca e Thalita “Natural”) ou no Google Chrome.';
 }
 if(hasTTS){loadVoices();try{speechSynthesis.addEventListener('voiceschanged',loadVoices);}catch(e){}setTimeout(loadVoices,800);}
 else {$('voiceInfo').textContent='Este navegador não tem voz. Os bipes de contagem continuam funcionando.';$('voiceSel').disabled=true;}
-$('voiceSel').onchange=e=>{S.prefs.voiceName=e.target.value;save();loadVoices();unlockAudio();say('Oi! Essa vai ser a minha voz nos seus treinos.',true);};
+$('voiceSel').onchange=e=>{S.prefs.voiceName=e.target.value;save();loadVoices();unlockAudio();say(line('teste'),true);};
 function utter(t){const u=new SpeechSynthesisUtterance(t);u.lang='pt-BR';if(voice)u.voice=voice;u.rate=voice&&scoreVoice(voice)>=90?1.0:0.98;u.pitch=1.0;return u;}
-function say(t,force){
-  if(!hasTTS||(!S.prefs.voice&&!force)) return;
-  try{speechSynthesis.cancel();speechSynthesis.speak(utter(t));}catch(e){}
-}
+/* Áudios gravados (gerados na Azure por tools/gerar-audios.mjs); sem áudio, usa a voz do navegador */
+fetch('audio/manifest.json').then(r=>r.ok?r.json():{arquivos:[]}).then(m=>{gravados=new Set(m.arquivos||[]);syncVoiceInfo();}).catch(()=>{});
+const audioEl=new Audio();audioEl.preload='auto';
+let falaJob=0;
+function pararFala(){falaJob++;try{audioEl.pause();}catch(e){}try{hasTTS&&speechSynthesis.cancel()}catch(e){}}
+function tts(t,done){if(!hasTTS){done();return;}try{const u=utter(t);u.onend=done;u.onerror=done;speechSynthesis.speak(u);}catch(e){done();}}
 function sayQ(list,force){
-  if(!hasTTS||(!S.prefs.voice&&!force)) return;
-  try{speechSynthesis.cancel();list.forEach(t=>speechSynthesis.speak(utter(t)));}catch(e){}
+  if(!S.prefs.voice&&!force) return;
+  pararFala();const job=falaJob;
+  const next=i=>{
+    if(job!==falaJob||i>=list.length) return;
+    const t=list[i],h=hashFala(t),go=()=>next(i+1);
+    if(gravados.has(h)){
+      audioEl.onended=go;audioEl.onerror=()=>{if(job===falaJob)tts(t,go);};
+      audioEl.src='audio/'+h+'.mp3';audioEl.play().catch(()=>{if(job===falaJob)tts(t,go);});
+    } else tts(t,go);
+  };
+  next(0);
 }
+const say=(t,force)=>sayQ([t],force);
+const line=(cat,vars={})=>fala(pick(ROTEIRO[cat]),{trat:S.prefs.trat,...vars});
+const nmLine=(cat,vars={})=>{const nm=S.prefs.name.trim();return nm?line(cat,{nome:nm,...vars}):line(cat+'SemNome',vars);};
+function syncVoiceInfo(){if(gravados.size) $('voiceInfo').textContent='Voz gravada ativa. A voz do navegador só entra se faltar algum áudio.';}
 function unlockAudio(){try{if(!actx) actx=new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==='suspended') actx.resume();}catch(e){}}
 function beep(f=880,d=.12,vol=.16){
   if(!actx) return; try{const t=actx.currentTime,o=actx.createOscillator(),g=actx.createGain();
   o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(vol,t+.01);g.gain.exponentialRampToValueAtTime(.0001,t+d);
   o.connect(g).connect(actx.destination);o.start(t);o.stop(t+d+.02);}catch(e){}
 }
-const CHEER={
-  forca:['Falta pouco, continua!','Mantém a postura, está ficando lindo.','Respira e segue.','Você é mais forte do que imagina.','Cada repetição conta.','Isso, com controle.','Seu corpo está ficando mais forte agora.'],
-  luta:['Mãos na guarda!','Gira o quadril!','Solta o golpe e volta.','Mais forte!','Solta o ar no golpe.','Isso, com técnica!'],
-  aero:['Isso, no ritmo!','Solta o corpo!','Não para agora, está quase.','Mais energia!','Sorria, você está indo muito bem.'],
-  yoga:['Respire fundo.','Solte os ombros.','Relaxe o rosto.','Sinta o alongamento, sem dor.','Devagar, com carinho pelo seu corpo.'],
-};
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 
 /* ---------- Player ---------- */
@@ -272,22 +302,20 @@ function enterStep(announce){
   $('plNext').innerHTML=isLearn?'Assista e imite junto, sem pressa. Depois é a sua vez.':(isRest?'Respire e beba água se precisar.':(nx?'Depois: <b>'+esc(nx.it.n)+'</b>':'Último exercício!'));
   setHow(isLearn||P.showHow&&!isRest);
   if(!announce) return;
-  const nm=S.prefs.name.trim();
-  if(s.k==='prep') say(`Vamos começar${nm?', '+nm:''}! Hoje é ${PLANS[P.day].nome}. Primeiro: ${it?it.n:''}.`);
+  const ex=it?it.n:'';
+  if(s.k==='prep') sayQ([nmLine('boasVindas'),line(PLANS[P.day].flow?'primeiroYoga':'primeiro',{ex})]);
   else if(isLearn){
-    const c=como(s.it.a);
-    sayQ(c?[`Vamos aprender: ${s.it.n}.`,'Posição inicial. '+c[0],'Movimento. '+c[1],'Atenção. '+c[2]]:[s.it.n+'. '+s.it.tip]);
+    const c=explicacao(s.it.a);
+    sayQ([line('aprender',{ex:s.it.n}),...(c||[s.it.tip])]);
   }
   else if(isRest){
-    if(s.round) say(`Fim da rodada ${s.r} de ${s.R}. Você está indo muito bem. Respire. Próximo: ${it?it.n:''}.`);
-    else if(s.soft) say('Próxima postura: '+(it?it.n:'')+'.');
-    else say((s.label==='Volta à calma'?'Muito bem! Agora vamos desacelerar com carinho. ':'Descanse. ')+'Próximo: '+(it?it.n:'')+'.');
+    if(s.round) sayQ([s.R-s.r===1?line('penultimaRodada'):line('fimRodada',{n:s.R-s.r}),line('descanso',{ex})]);
+    else if(s.soft) say(line('proximaPostura',{ex}));
+    else if(s.label==='Volta à calma') say(line('calma',{ex}));
+    else say(line('descanso',{ex}));
   } else {
-    let t=`${s.it.n}. ${s.s} segundos.`;
     const learnedBefore=P.steps[P.i-1]&&P.steps[P.i-1].k==='learn';
-    if(learnedBefore) t='Sua vez! '+t;
-    else if(s.first||s.k!=='work') t+=' '+s.it.tip+'.';
-    say(t);
+    say(learnedBefore?line('depoisDeAprender',{ex:s.it.n}):line('inicio',{ex:s.it.n,seg:s.s}));
   }
 }
 function go(delta){
@@ -308,8 +336,8 @@ function tick(now){
         P.lastSec=sec;
         if(sec<=3&&sec>=1&&s.k!=='learn') beep(sec===1?990:780,.11);
         if(s.it&&s.k==='work'&&s.s>=30){
-          if(sec===Math.floor(s.s/2)) say(s.it.sw?'Troque de lado!':'Metade! '+pick(CHEER[s.it.k]||CHEER.forca));
-          else if(sec===10&&!s.it.sw) say(pick(CHEER[s.it.k]||CHEER.forca));
+          if(sec===Math.floor(s.s/2)) say(s.it.sw?line('trocaLado'):pick(ROTEIRO.incentivo[s.it.k]||ROTEIRO.incentivo.forca));
+          else if(sec===10&&!s.it.sw) say(pick(ROTEIRO.incentivo[s.it.k]||ROTEIRO.incentivo.forca));
         }
       }
       if(P.rem<=0){beep(1320,.22,.2);go(1);if(!P){requestAnimationFrame(tick);return;}}
@@ -335,12 +363,12 @@ function setPause(run){
   if(run){P.anim0=performance.now()-(P.frozen||0);P.frozen=null;}
   $('pauseBtn').setAttribute('aria-label',run?'Pausar':'Continuar');
   $('pauseIco').innerHTML=run?'<rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/>':'<path d="M7 4.5v15l13-7.5z" fill="currentColor"/>';
-  if(!run){try{speechSynthesis.cancel()}catch(e){}}
+  if(!run){pararFala();}
 }
-$('pauseBtn').onclick=()=>{unlockAudio();setPause(!P.run);if(P.run)say('Vamos lá!');};
+$('pauseBtn').onclick=()=>{unlockAudio();setPause(!P.run);say(line(P.run?'volta':'pausa'));};
 $('nextBtn').onclick=()=>go(1);
 $('prevBtn').onclick=()=>{if(P.rem<(cur().s*1000-3000)) enterStep(true); else go(-1);};
-$('plVoice').onclick=()=>{S.prefs.voice=!S.prefs.voice;save();syncBtns();if(!S.prefs.voice){try{speechSynthesis.cancel()}catch(e){}}};
+$('plVoice').onclick=()=>{S.prefs.voice=!S.prefs.voice;save();syncBtns();if(!S.prefs.voice){pararFala();}};
 $('guideBtn').onclick=()=>{S.prefs.guides=!S.prefs.guides;save();syncBtns();if(plStage)plStage.guides=S.prefs.guides;};
 $('howBtn').onclick=()=>setHow(!P.showHow);
 function syncBtns(){
@@ -361,7 +389,7 @@ function finish(record){
   const p=P;P=null;
   try{wake&&wake.release();}catch(e){}
   $('player').hidden=true;document.body.style.overflow='';
-  if(!record){try{speechSynthesis.cancel()}catch(e){} renderHome();return;}
+  if(!record){pararFala(); renderHome();return;}
   const min=Math.max(1,Math.round(p.doneMs/60000));
   const today=ymd(new Date()),firstToday=!S.hist.some(h=>h.day===today);
   const lvBefore=level(S.xp);
@@ -375,7 +403,7 @@ function finish(record){
   $('dnFill').style.width=((S.xp%XP_LVL)/XP_LVL*100)+'%';$('dnXp').textContent=`${S.xp%XP_LVL} de ${XP_LVL} pontos para o nível ${lv+1}`;
   $('dnMin').textContent=min;$('dnGain').textContent='+'+gain;$('dnStreak').textContent=st;
   $('done').hidden=false;startConfetti();
-  say(up?`Parabéns${nm?', '+nm:''}! Você subiu para o nível ${lv}!`:`Treino concluído${nm?', '+nm:''}! Você mandou muito bem. Hidrate-se e descanse.`);
+  say(up?nmLine('nivel',{n:lv}):nmLine('fim'));
 }
 $('dnBack').onclick=()=>{$('done').hidden=true;renderHome();window.scrollTo(0,0);};
 
@@ -402,3 +430,8 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&P&&!wake) keepAwake();});
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readCol();plStage&&plStage.applyColors();pvStage&&pvStage.applyColors();setTimeout(queueThumbs,50);});}catch(e){}
 renderHome();
+if(!S.prefs.onboarded) openWelcome();
+/* Instalar no celular e funcionar sem internet */
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){
+  window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}

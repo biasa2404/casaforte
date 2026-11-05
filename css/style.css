@@ -199,3 +199,11 @@ select.field{max-width:240px}
   .pl{flex:none;min-height:100%}
   .stage{flex:none;height:min(52vh,460px)}
 }
+/* ---------- v3: boas-vindas e meta ---------- */
+.welcome{max-width:560px;display:flex;flex-direction:column;gap:14px}
+.welcome h2{font-size:2rem}
+.wq{display:flex;flex-direction:column;gap:8px}
+.weekgoal{display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap;font-size:.92rem;color:var(--muted)}
+.wg-dots{display:flex;gap:6px}
+.wg-dots i{width:16px;height:16px;border-radius:50%;border:2px solid var(--accent)}
+.wg-dots i.on{background:var(--accent)}
