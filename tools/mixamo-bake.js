@@ -24,6 +24,9 @@ function assar(buf,fps=30){return new Promise((ok,fail)=>{const obj=new THREE.FB
   const N=Math.max(2,Math.round(clip.duration*fps)),fr=[];let minY=1e9;
   for(let i=0;i<N;i++) fr.push(raw(clip.duration*i/N));
   fr.forEach(p=>['RightToeBase','LeftToeBase','RightToe_End','LeftToe_End'].forEach(n=>minY=Math.min(minY,p[n].y)));
+  // movimento que anda (ex.: corrida): tira o deslocamento para ficar no lugar
+  const pN=raw(clip.duration),dx=pN.Hips.x-p0.Hips.x,dz=pN.Hips.z-p0.Hips.z,anda=Math.hypot(dx,dz)>5;
+  if(anda) fr.forEach((p,i)=>{const k=i/N;Object.values(p).forEach(v=>{v.x-=dx*k;v.z-=dz*k;});});
   const off=[-p0.Hips.x,-minY,-p0.Hips.z],r1=x=>Math.round(x*10)/10;
   const frames=fr.map(p=>NOMES.flatMap(k=>{const v=p[OSSO[k]];return [r1((v.x+off[0])*s),r1((v.y+off[1])*s+1.6),r1((v.z+off[2])*s)];}));
   ok({fps:N/clip.duration,dur:clip.duration,keys:NOMES,frames});
@@ -34,6 +37,9 @@ function clipJSON(buf){
   const obj=new THREE.FBXLoader().parse(buf,'');const clip=obj.animations[0];
   const j=THREE.AnimationClip.toJSON(clip);
   j.tracks=j.tracks.filter(t=>/quaternion$/.test(t.name)||/Hips\.position$/.test(t.name));
+  const hp=j.tracks.find(t=>/Hips\.position$/.test(t.name));
+  if(hp&&hp.values.length>=6){const v=hp.values,n=v.length/3,T=hp.times[n-1]||1,dx=v[(n-1)*3]-v[0],dz=v[(n-1)*3+2]-v[2];
+    if(Math.hypot(dx,dz)>5) for(let i=0;i<n;i++){const k=hp.times[i]/T;v[i*3]-=dx*k;v[i*3+2]-=dz*k;}}
   j.tracks.forEach(t=>{t.times=t.times.map(x=>Math.round(x*1000)/1000);t.values=t.values.map(x=>Math.round(x*(t.name.endsWith('position')?100:10000))/(t.name.endsWith('position')?100:10000));});
   return j;
 }

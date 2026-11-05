@@ -20,8 +20,9 @@ const RITMO_FALA=[
 // movimentos com fase de descida e subida (saltos, pranchas, luta, dança e yoga ficam no ritmo natural)
 const RITMO_MOV=new Set(['squat','squatLight','lunge','bulgarian','bridge','bridge1','calf','goodmorning',
   'pushKnee','pushFull','pushDecl','dip1','dip2','dip3','pike','pikeElev','superman','supermanTop','crunch','legraise']);
-// pontos do movimento gravado: b = embaixo, e = fim da subida (o resto é a pausa natural em pé)
-const MOCAP_PTS={squat:{b:0.44,e:0.82}};
+// pontos do movimento gravado (fração do clipe, pode passar de 1): s = em cima, b = embaixo,
+// e = de volta em cima. O trecho de e até s+1 é a pausa natural que o clipe já tem.
+const MOCAP_PTS={squat:{s:0,b:0.44,e:0.82},pushFull:{s:0.5,b:1,e:1.5}};
 const TOPO=0.3; // segundos parado em cima
 
 function ritmoDe(key,tier){
@@ -48,10 +49,10 @@ function ritmoAnim(an,key,tier){
 }
 /* Tempo do movimento gravado (s) para o instante ms, com o ritmo do nível */
 function ritmoClip(ms,dur,pts,r){
-  const T=(1-pts.e)*dur,R=(r.D+r.P+r.U)*1000+T*1000;let x=((ms%R)+R)%R/1000,f;
-  if(x<r.D) f=pts.b*x/r.D;
+  const T=Math.max(0,1-(pts.e-pts.s))*dur,R=(r.D+r.P+r.U+T)*1000;let x=((ms%R)+R)%R/1000,f;
+  if(x<r.D) f=pts.s+(pts.b-pts.s)*x/r.D;
   else if((x-=r.D)<r.P) f=pts.b;
   else if((x-=r.P)<r.U) f=pts.b+(pts.e-pts.b)*x/r.U;
-  else f=pts.e+(1-pts.e)*Math.min(1,(x-r.U)/T);
+  else f=pts.e+(T?(1-(pts.e-pts.s))*Math.min(1,(x-r.U)/T):0);
   return f*dur;
 }

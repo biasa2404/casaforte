@@ -6,12 +6,35 @@
 
 const MOCAP={
   squat:'assets/mixamo/squat.json',
+  pushFull:'assets/mixamo/pushFull.json',
+  highPlank:'assets/mixamo/highPlank.json',
+  situp:'assets/mixamo/situp.json',
+  burpee:'assets/mixamo/burpee.json',
+  bicycle:'assets/mixamo/bicycle.json',
+  jabcross:'assets/mixamo/jabcross.json',
+  shadowbox:'assets/mixamo/shadowbox.json',
+  elbow:'assets/mixamo/elbow.json',
+  knee:'assets/mixamo/knee.json',
+  snapKick:'assets/mixamo/snapKick.json',
+  kickMid:'assets/mixamo/kickMid.json',
+  mtBounce:'assets/mixamo/mtBounce.json',
+  jog:'assets/mixamo/jog.json',
+  jacks:'assets/mixamo/jacks.json',
   hiphop:'assets/mixamo/hiphop.json',
+  salsa:'assets/mixamo/salsa.json',
+  samba:'assets/mixamo/samba.json',
+  belly:'assets/mixamo/belly.json',
+  armStretch:'assets/mixamo/armStretch.json',
+  breathIdle:'assets/mixamo/breathIdle.json',
 };
 // velocidade de reprodução (1 = velocidade real); um pouco mais lento ajuda a aprender
-const MOCAP_RATE={squat:0.8};
+const MOCAP_RATE={squat:0.8,bicycle:0.55};
 // enquanto o arquivo carrega (ou sem internet), mostra um movimento parecido
-if(typeof AN!=='undefined'&&!AN.hiphop) AN.hiphop=AN.danceMarch;
+if(typeof AN!=='undefined'){
+  const alias={hiphop:'danceMarch',salsa:'danceMarch',samba:'danceMarch',belly:'danceMarch',situp:'crunch',bicycle:'crunch',
+    snapKick:'teep',jog:'highknees',jacks:'danceMarch',armStretch:'circles',breathIdle:'breath'};
+  for(const k in alias) if(!AN[k]) AN[k]=AN[alias[k]];
+}
 const _mc={};
 
 function mocapFor(key){

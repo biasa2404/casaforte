@@ -459,6 +459,8 @@ function verPorLink(){return verMov((location.hash.match(/^#ver=(\w+)/)||[])[1])
 function verMov(k){
   if(!k||!AN[k]) return false;
   for(const f in FAM){const t=FAM[f].v.findIndex(x=>x.a===k);if(t>=0){openPreview(resolve(f,t));return true;}}
+  const outros=[...Object.values(WARM).flat(),...COOL,...Object.values(YOGA)].find(x=>x.a===k);
+  if(outros){openPreview(outros);return true;}
   return false;
 }
 if(!verPorLink()&&!S.prefs.onboarded) openWelcome();
