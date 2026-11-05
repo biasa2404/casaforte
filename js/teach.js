@@ -63,6 +63,7 @@ const COMO={
   tree:['Em pé, peso num pé só.','Apoie a sola do outro pé na parte interna da canela ou da coxa e junte as mãos acima da cabeça.','Nunca apoie o pé em cima do joelho. Olhe para um ponto fixo. Troque na metade.'],
   catcow:['De quatro, mãos abaixo dos ombros, joelhos abaixo do quadril.','Inspire afundando as costas e olhando para a frente. Solte o ar arredondando as costas.','Movimento acompanha a respiração.'],
   seatfold:['Sente, pernas estendidas à frente.','Inspire alongando a coluna e, soltando o ar, incline o tronco à frente em direção aos pés.','Joelhos podem dobrar. Leve o umbigo em direção às coxas, não a cabeça aos joelhos.'],
+  hiphop:['Em pé, joelhos soltos e levemente dobrados.','Copie o balanço do boneco: passos laterais, ombros e braços acompanhando a batida.','Não precisa ser perfeito, o importante é manter o corpo em movimento.'],
   danceMarch:['Em pé, corpo solto.','Marche no lugar no ritmo, alternando os braços para o alto.','Sorria e solte o quadril.'],
   dancePunch:['Pés afastados, joelhos levemente dobrados.','Desça um pouco e solte socos para o alto alternando os braços.','Ritmo constante e animado.'],
   danceKick:['Em pé.','Chute uma perna à frente e bata palma acima. Volte e troque.','Chute até onde for confortável.'],

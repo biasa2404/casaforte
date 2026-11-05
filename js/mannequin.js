@@ -13,19 +13,19 @@ function jointMap(j){
     knee0:j.legs[0][0],ankle0:j.legs[0][1],toe0:j.legs[0][2],knee1:j.legs[1][0],ankle1:j.legs[1][1],toe1:j.legs[1][2]};
 }
 const zOf=name=>/0$/.test(name)?(/elbow|hand/.test(name)?11:5.5):(/1$/.test(name)?(/elbow|hand/.test(name)?-11:-5.5):0);
-function angAt(a,b,c){
-  const v1=[a[0]-b[0],a[1]-b[1]],v2=[c[0]-b[0],c[1]-b[1]];
-  const d=(v1[0]*v2[0]+v1[1]*v2[1])/((Math.hypot(...v1)*Math.hypot(...v2))||1);
+const vsub=(a,b)=>a.map((x,i)=>x-b[i]),vdot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0),vlen=a=>Math.hypot(...a);
+function angAt(a,b,c){ // funciona em 2D e 3D
+  const v1=vsub(a,b),v2=vsub(c,b),d=vdot(v1,v2)/((vlen(v1)*vlen(v2))||1);
   return Math.acos(Math.max(-1,Math.min(1,d)))/RAD;
 }
 function devFromLine(a,b,c){ // distância de b até a reta a-c
-  const dx=c[0]-a[0],dy=c[1]-a[1],L2=Math.hypot(dx,dy)||1;
-  return Math.abs(dy*(b[0]-a[0])-dx*(b[1]-a[1]))/L2;
+  const u=vsub(c,a),w=vsub(b,a),k=vdot(w,u)/(vdot(u,u)||1);
+  return vlen(w.map((x,i)=>x-u[i]*k));
 }
 
 /* Guias de técnica por movimento */
 const GUIDES={
-  squat:[{t:'ang',j:['hip','knee0','ankle0'],goal:90,tol:15,label:'Joelho'},{t:'plumb',j:'toe0',label:'Ponta do pé'}],
+  squat:[{t:'ang',j:['hip','knee0','ankle0'],goal:80,tol:22,label:'Joelho'},{t:'plumb',j:'toe0',label:'Ponta do pé'}],
   squatPause:[{t:'ang',j:['hip','knee0','ankle0'],goal:90,tol:15,label:'Joelho'},{t:'plumb',j:'toe0',label:'Ponta do pé'}],
   squatJump:[{t:'ang',j:['hip','knee0','ankle0'],goal:90,tol:15,label:'Joelho'}],
   squatLight:[{t:'ang',j:['hip','knee0','ankle0'],goal:120,tol:15,label:'Joelho'}],
@@ -119,8 +119,9 @@ class Stage{
     el.addEventListener('dblclick',()=>{this.yaw=this.opt.yaw??0.5;this.pitch=0.16;});
   }
   setAnim(an,key){
-    if(this.an===an) return; this.an=an;this.key2=key;
-    const b=bbox(an);this.bb=b;
+    if(this.an===an) return; this.an=an;this.key2=key;this.mcOn=false;
+    if(key) mocapFor(key); // começa a carregar o movimento gravado, se houver
+    const b=bbox(an);this.bb=b;this.fitMat(b);
     this.mat.scale.x=Math.max(70,b.x1-b.x0+40);this.mat.position.x=(b.x0+b.x1)/2;
     // objetos (cadeira)
     while(this.props.children.length) this.props.remove(this.props.children[0]);
@@ -134,6 +135,7 @@ class Stage{
       g.position.x=p.x;this.props.add(g);
     });
   }
+  fitMat(b){this.mat.scale.x=Math.max(70,b.x1-b.x0+40);this.mat.position.x=(b.x0+b.x1)/2;}
   resize(){
     const w=this.c.clientWidth,h=this.c.clientHeight;if(!w||!h) return false;
     if(this._w!==w||this._h!==h){this._w=w;this._h=h;this.r.setSize(w,h,false);this.cam.aspect=w/h;this.cam.updateProjectionMatrix();
@@ -185,9 +187,50 @@ class Stage{
       so.position.set(fc[0]-nrm[0]*1.6,fc[1]-nrm[1]*1.6,lz);
     }
   }
+  /* veste o boneco a partir das juntas 3D do movimento gravado */
+  pose3(J){
+    const V=a=>new THREE.Vector3(...a),M=new THREE.Matrix4();
+    const orient=(me,up,lat)=>{ // eixo y = para cima, z = lateral (lado direito), x = frente
+      const u=up.clone().normalize(),l=lat.clone().addScaledVector(u,-lat.dot(u)).normalize(),f=new THREE.Vector3().crossVectors(u,l);
+      M.makeBasis(f,u,l);me.quaternion.setFromRotationMatrix(M);return f;};
+    const hip=V(J.hip),nk=V(J.nk),hR=V(J.hipJ0),hL=V(J.hipJ1),sR=V(J.shJ0),sL=V(J.shJ1);
+    const tu=nk.clone().sub(hip).normalize(),latH=hR.clone().sub(hL),latS=sR.clone().sub(sL);
+    const pel=this.parts.pelvis;pel.position.copy(hip).addScaledVector(tu,2);pel.scale.set(6.6,7.2,9.6);orient(pel,tu,latH);
+    const chC=V(J.chest).lerp(nk,0.25),cu=nk.clone().sub(V(J.spine)).normalize();
+    const ch=this.parts.chest;ch.position.copy(chC).addScaledVector(cu,-2);ch.scale.set(7,11.5,10.6);orient(ch,cu,latS);
+    this.place('waist',pel.position.toArray(),ch.position.toArray());this.parts.waist.scale.set(6.2,this.parts.waist.scale.y,8.4);orient(this.parts.waist,ch.position.clone().sub(pel.position),latH.clone().add(latS));
+    const hb=V(J.headB),ht=V(J.top),hn=ht.clone().sub(hb).normalize(),hc=hb.clone().lerp(ht,0.48);
+    this.place('neck',nk.toArray(),hb.toArray());
+    const hd=this.parts.head;hd.position.copy(hc);hd.scale.set(7.4,8.2,7.2);const face=orient(hd,hn,latS);
+    const hair=this.parts.hair;hair.position.copy(hc).addScaledVector(face,-1.6).addScaledVector(hn,0.9);hair.scale.set(7.4,7.6,7.6);hair.quaternion.copy(hd.quaternion);
+    const bun=this.parts.bun;bun.position.copy(hc).addScaledVector(face,-8.2).addScaledVector(hn,3);bun.scale.setScalar(3.4);
+    const band=this.parts.band;band.position.copy(hc).addScaledVector(hn,3.6).addScaledVector(face,-0.4);band.scale.set(1,0.98,1);
+    band.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),hn);
+    const upW=new THREE.Vector3(0,1,0);
+    for(const i of [0,1]){
+      const sh=J['shJ'+i],el=J['elbow'+i],ha=J['hand'+i];
+      this.ball('shJ'+i,sh,3.7);this.place('ua'+i,sh,el);this.ball('elJ'+i,el,2.75);this.place('fa'+i,el,ha);
+      const hdir=V(ha).sub(V(el)).normalize(),hand=this.parts['hand'+i];
+      hand.position.copy(V(ha)).addScaledVector(hdir,2.2);hand.scale.set(2.4,2.9,2.1);hand.quaternion.setFromUnitVectors(upW,hdir);
+      const hp=J['hipJ'+i],kn=J['knee'+i],an=J['ankle'+i],to=J['toe'+i];
+      this.ball('hipJ'+i,hp,5.4);this.place('th'+i,hp,kn);this.ball('knJ'+i,kn,3.75);
+      this.place('sh'+i,kn,an);this.ball('anJ'+i,an,2.4);
+      const A=V(an),fd=V(to).sub(A),fl=fd.length()||1;fd.normalize();
+      const nrm=upW.clone().addScaledVector(fd,-upW.dot(fd)).normalize();
+      const fc=A.clone().addScaledVector(fd,fl*0.4).addScaledVector(nrm,-1.2);
+      const ft=this.parts['foot'+i];ft.position.copy(fc);ft.scale.set(3.0,Math.max(6.2,fl*0.62),3.3);ft.quaternion.setFromUnitVectors(upW,fd);
+      const so=this.parts['sole'+i];so.position.copy(fc).addScaledVector(nrm,-1.6);so.scale.set(2.8,ft.scale.y*0.97,3.1);so.quaternion.copy(ft.quaternion);
+    }
+  }
   frame(ms){
     if(!this.an||!this.resize()) return;
-    const j=solve(poseAt(this.an,ms));this.j=j;this.pose(j);
+    const mc=this.key2&&MOCAP[this.key2]?mocapFor(this.key2):null;
+    let j;
+    if(mc){
+      if(!this.mcOn){this.mcOn=true;this.bb=mc.bb;this.fitMat(mc.bb);}
+      const J=mocapJoints(mc,ms/1000);J.sh=J.shJ0.map((x,i)=>(x+J.shJ1[i])/2);j={J3:J};this.pose3(J);
+    } else {j=solve(poseAt(this.an,ms));this.pose(j);}
+    this.j=j;
     const b=this.bb,cx=(b.x0+b.x1)/2,cy=Math.max(b.y1,40)/2+2;
     const half=Math.max((b.x1-b.x0)/2+14,(Math.max(b.y1,50))/2*(this.cam.aspect)+10);
     const vh=Math.max(b.y1/2+12,half/this.cam.aspect);
@@ -204,7 +247,7 @@ class Stage{
     ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,this._w,this._h);
     const list=this.guides?GUIDES[this.key2]:null;if(!list) return;
     const cs=getComputedStyle(document.documentElement),ok=cs.getPropertyValue('--accent').trim(),ink=cs.getPropertyValue('--ink').trim(),srf=cs.getPropertyValue('--surface').trim();
-    const J=jointMap(j),P=n=>this.proj([J[n][0],J[n][1],zOf(n)+(n.match(/0$/)?6:0)]);
+    const J=j.J3||jointMap(j),P=j.J3?(n=>this.proj(J[n])):(n=>this.proj([J[n][0],J[n][1],zOf(n)+(n.match(/0$/)?6:0)]));
     const pill=(x,y,txt,good)=>{
       ctx.font='700 13px "Atkinson Hyperlegible",system-ui,sans-serif';const w=ctx.measureText(txt).width+16;
       x=Math.max(4,Math.min(this._w-w-4,x));y=Math.max(4,Math.min(this._h-26,y));
@@ -228,10 +271,10 @@ class Stage{
         ctx.beginPath();ctx.moveTo(A[0],A[1]);ctx.lineTo(C[0],C[1]);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
         pill(12,12+34*row++ +28,g.label+(good?' ✓':''),good);
       } else if(g.t==='plumb'){
-        const p=J[g.j],z0=zOf(g.j)+6,A=this.proj([p[0],0,z0]),B=this.proj([p[0],p[1]+46,z0]);
+        const p=J[g.j],z0=j.J3?p[2]:zOf(g.j)+6,A=this.proj([p[0],0,z0]),B=this.proj([p[0],p[1]+46,z0]);
         ctx.strokeStyle=ink;ctx.globalAlpha=.45;ctx.lineWidth=2;ctx.setLineDash([3,6]);
         ctx.beginPath();ctx.moveTo(A[0],A[1]);ctx.lineTo(B[0],B[1]);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=.8;
-        ctx.font='600 12px "Atkinson Hyperlegible",system-ui,sans-serif';ctx.fillStyle=ink;ctx.fillText(g.label,B[0]+6,B[1]+4);
+        ctx.font='600 12px "Atkinson Hyperlegible",system-ui,sans-serif';ctx.fillStyle=ink;ctx.fillText(g.label,A[0]+8,A[1]+14);
       }
       ctx.restore();
     });

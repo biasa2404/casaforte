@@ -430,7 +430,14 @@ document.addEventListener('keydown',e=>{
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&P&&!wake) keepAwake();});
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readCol();plStage&&plStage.applyColors();pvStage&&pvStage.applyColors();setTimeout(queueThumbs,50);});}catch(e){}
 renderHome();
-if(!S.prefs.onboarded) openWelcome();
+/* Link direto para ver um movimento: #ver=squat */
+function verPorLink(){
+  const k=(location.hash.match(/^#ver=(\w+)/)||[])[1];if(!k||!AN[k]) return false;
+  for(const f in FAM){const t=FAM[f].v.findIndex(x=>x.a===k);if(t>=0){openPreview(resolve(f,t));return true;}}
+  return false;
+}
+if(!verPorLink()&&!S.prefs.onboarded) openWelcome();
+window.addEventListener('hashchange',verPorLink);
 /* Instalar no celular e funcionar sem internet */
 if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){
   window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));

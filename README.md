@@ -51,3 +51,15 @@ sw.js, manifest.webmanifest, icons/  instalação no celular e uso sem internet
 ```
 
 Aviso: o conteúdo é educativo e não substitui orientação de profissional de educação física ou de saúde.
+
+## Movimentos gravados (Mixamo)
+
+Os movimentos do Mixamo ficam em `assets/mixamo/<chave>.json`, com a posição 3D das juntas quadro a quadro.
+Para converter um arquivo novo baixado do Mixamo (.fbx):
+
+```
+npm i playwright && npx playwright install chromium
+node tools/converter-mixamo.mjs ~/Downloads/Air_Squat.fbx squat
+```
+
+Depois acrescente a chave em `MOCAP` no arquivo `js/mocap.js`. Sem o arquivo, o boneco usa o movimento desenhado à mão.

@@ -6,7 +6,7 @@ O Mixamo é gratuito e só pede uma conta da Adobe.
 2. Na aba **Characters**, escolha um personagem com roupa de treino (por exemplo "Kaya", "Jody", "Remy" ou outro de sua preferência).
 3. Na aba **Animations**, pesquise cada nome da lista abaixo, clique na animação e depois em **Download** com estas opções:
    - Format: **FBX Binary (.fbx)**
-   - Skin: **With Skin** só no primeiro arquivo; nos outros, **Without Skin**
+   - Skin: **Without Skin** (o site usa só o movimento e veste o boneco do app; com pele o arquivo fica até 70 vezes maior)
    - Frames per second: **30**
    - Keyframe Reduction: **none**
    - Marque **In Place** quando aparecer essa opção
