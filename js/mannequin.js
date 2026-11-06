@@ -60,6 +60,9 @@ const GUIDES={
   teep:[{t:'line',j:['hip','knee0','ankle0'],tol:5,label:'Perna estendida no chute'}],
 };
 
+/* Movimentos de luta em que as mãos voltam para a guarda alta (altura da testa) */
+const GUARDA_ALTA=new Set(['mtBounce','jabcross','hookLead','hookRear','upperRear','elbow','teep','kickLow','kickMid','kickHigh','dodge','bodyJab','shadowbox']);
+
 class Stage{
   constructor(canvas,overlay,opt={}){
     this.c=canvas;this.ov=overlay;this.opt=opt;this.yaw=opt.yaw??0.5;this.pitch=0.16;this.guides=opt.guides??true;
@@ -257,6 +260,7 @@ class Stage{
       else if(sq){const b=this.bb,f=fit.bb;if(f.x0<b.x0||f.x1>b.x1||f.y1>b.y1){this.bb={x0:Math.min(b.x0,f.x0),x1:Math.max(b.x1,f.x1),y1:Math.max(b.y1,f.y1)};this.fitMat(this.bb);}}
       this.char.visible=true;this.showBody(false);
       j={J3:this.char.joints(sq?sq.t:this.clipSec(ms,this.char.dur,k2))};this.char.blendStep();
+      if(GUARDA_ALTA.has(k2)) this.char.guardaAlta(k2==='mtBounce');
     } else if(mc){
       if(this.char) this.char.visible=false;this.showBody(true);
       if(!this.mcOn){this.mcOn=true;this.bb=mc.bb;this.fitMat(mc.bb);}

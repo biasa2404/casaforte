@@ -118,6 +118,10 @@ AN.pikeElev=A([[{hip:[0,66],t:24,hk:[30,0],ep:[-1,0.8],fk:[[-22,31],[-24,31]],kp
 // Costas e core
 {const lie={hip:[0,4],t:90,hd:90,ar:[[90,90],[90,90]],lg:[[-90,-90],[-90,-90]],to:[-90,-90]};
  AN.superman=A([[lie,900],[{...lie,t:104,hd:110,ar:[[112,112],[106,106]],lg:[[-102,-102],[-99,-99]]},1300],[{...lie,t:104,hd:110,ar:[[112,112],[106,106]],lg:[[-102,-102],[-99,-99]]},900]]);
+ // puxada deitada: braços estendidos à frente (Y) e depois cotovelos puxados para trás (W), peito um pouco elevado
+ {const Y={...lie,t:100,hd:104,ar:[[112,112],[110,110]]},Wp={...lie,t:100,hd:104,ar:[[-118,76],[-116,78]]};
+  AN.pronePull=A([[Y,700],[Wp,700],[Wp,300]]);
+  AN.pronePullPause=A([[Y,800],[Wp,800],[Wp,1600]]);}
  AN.supermanTop=A([[lie,900],[{...lie,t:104,hd:110,ar:[[112,112],[106,106]]},1100]]);
  const s1={...lie,t:102,hd:106,ar:[[118,118],[98,98]],lg:[[-92,-92],[-104,-104]]},s2={...lie,t:102,hd:106,ar:[[98,98],[118,118]],lg:[[-104,-104],[-92,-92]]};
  AN.swimmer=A([[s1,600],[s2,600]]);}

@@ -103,6 +103,32 @@ class RealChar{
       aim(s2+'Arm',s2+'ForeArm',sub(B2,A));aim(s2+'ForeArm',s2+'Hand',sub(A.clone().addScaledVector(u,d),B2));
     });
   }
+  /* Leva a mão do lado s ('Right'/'Left') até o ponto T (mundo), dobrando ombro e cotovelo (IK de dois ossos) */
+  reach(s,Tt){
+    const T=THREE,B=this.B,W=n=>B[n].getWorldPosition(new T.Vector3());
+    const rot=(n,dq)=>{const b=B[n];const pq=b.parent.getWorldQuaternion(new T.Quaternion()),wq=b.getWorldQuaternion(new T.Quaternion());b.quaternion.copy(pq.invert().multiply(dq.multiply(wq)));b.updateMatrixWorld(true);};
+    const aim=(n,c,d)=>{const cur=W(c).sub(W(n)).normalize();if(d.lengthSq()<1e-6) return;rot(n,new T.Quaternion().setFromUnitVectors(cur,d.clone().normalize()));};
+    const A=W(s+'Arm'),Bp=W(s+'ForeArm'),C=W(s+'Hand'),a=A.distanceTo(Bp),b=Bp.distanceTo(C);
+    const dv=Tt.clone().sub(A),d=Math.min(dv.length(),a+b-0.01);if(d<Math.abs(a-b)+0.01) return;
+    const u=dv.normalize(),ab=Bp.clone().sub(A),pe=ab.clone().addScaledVector(u,-ab.dot(u));if(pe.lengthSq()<1e-6) pe.set(0,0,1).cross(u);pe.normalize();
+    const ca=(a*a+d*d-b*b)/(2*a*d),sa=Math.sqrt(Math.max(0,1-ca*ca)),B2=A.clone().addScaledVector(u,a*ca).addScaledVector(pe,a*sa);
+    aim(s+'Arm',s+'ForeArm',B2.clone().sub(A));aim(s+'ForeArm',s+'Hand',A.clone().addScaledVector(u,d).sub(B2));
+  }
+  /* Guarda do Muay Thai: quando a mão está perto do rosto, ela sobe até a altura da testa */
+  guardaAlta(parado){
+    const T=THREE,W=n=>this.B[n].getWorldPosition(new T.Vector3());
+    if(!this.B.Head||!this.B.HeadTop_End) return;
+    const hd=W('Head'),top=W('HeadTop_End'),alvoY=hd.y+(top.y-hd.y)*0.35;
+    if(parado){ // só a base: as duas luvas na frente do rosto, na altura da testa
+      [['Right',1],['Left',-1]].forEach(([s,z])=>{const h=W(s+'Hand');this.reach(s,new T.Vector3(hd.x+10,alvoY+(h.y-hd.y)*0.15,hd.z+z*5));});
+      return;
+    }
+    ['Right','Left'].forEach(s=>{
+      const h=W(s+'Hand'),dist=Math.hypot(h.x-hd.x,h.z-hd.z,Math.min(0,h.y-hd.y)*0.6),w=Math.max(0,Math.min(1,(26-dist)/10));
+      if(w<=0||h.y>=alvoY) return;
+      this.reach(s,new T.Vector3(h.x,h.y+(alvoY-h.y)*w,h.z));
+    });
+  }
   use(key,clip){
     if(this.key===key) return this.fits[key];
     this.snap();this.key=key;this.mixer.stopAllAction();this.action=this.mixer.clipAction(clip);this.action.play();
