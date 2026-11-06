@@ -46,6 +46,7 @@
       </section>
       <section class="hero" id="todayCard" aria-live="polite"></section>
       <button class="rowlink" id="nextRow"></button>
+      <button class="rowlink" id="medeRow" hidden></button>
       <section class="card cuidado" id="cuidadoNote" hidden></section>
     </section>
 
@@ -96,6 +97,7 @@
     <section class="view" id="v-prog" aria-labelledby="pgTitle" hidden>
       <header class="vhead"><div><h1 id="pgTitle">Progresso</h1></div></header>
       <div class="tiles" id="progTiles"></div>
+      <section aria-labelledby="corpoTitle"><h2 class="h2s" id="corpoTitle">Corpo e saúde</h2><p class="muted small" style="margin:2px 0 8px">O que mostra resultado de verdade: medidas com fita, testes de força e como você dorme e se sente.</p><div class="corpo" id="corpo"></div></section>
       <section class="card" aria-labelledby="chTitle">
         <h2 class="h2s" id="chTitle">Minutos ativos por semana</h2>
         <p class="muted small" style="margin:2px 0 10px">Linha tracejada: 150 minutos, o mínimo que a OMS recomenda por semana.</p>
@@ -212,8 +214,13 @@
         <div class="stat"><b id="dnStreak">0</b><span>dias seguidos</span></div>
       </div>
     </div>
+    <div class="esf" id="dnEsf"></div>
     <button class="go" id="dnBack">Voltar para Hoje</button>
   </div>
+</div>
+
+<div class="modal" id="regModal" hidden>
+  <div class="card mcard" role="dialog" aria-modal="true" aria-labelledby="regTitle" id="regBox"></div>
 </div>
 
 <div class="modal" id="preview" hidden>

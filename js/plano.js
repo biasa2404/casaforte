@@ -71,6 +71,8 @@ function gerarPlano(q){
   if(usados.has(2)) porque.push('Muay Thai ensina técnica e ainda conta como exercício aeróbico.');
   if(usados.has(6)) porque.push('O dia de dança aeróbica ajuda o fôlego e a disposição.');
   if(usados.has(4)) porque.push('Yoga e alongamento trabalham mobilidade e ajudam a desacelerar.');
+  const min=n*(+((q.tempo||['40'])[0])||40);
+  if(min<150) porque.push(`São ${min} minutos de treino por semana. A OMS recomenda pelo menos 150 minutos de atividade moderada: caminhadas de 10 minutos ou mais nos outros dias completam a conta.`);
   porque.push('Nos dias livres, se quiser se mexer, a tela Hoje oferece uma yoga leve. Não é obrigatória.');
   return {semana,opc:{},porque};
 }

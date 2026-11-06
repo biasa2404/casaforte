@@ -256,7 +256,7 @@ class Stage{
       if(this.mcOn!=='real'){this.mcOn='real';this.bb={...fit.bb};this.fitMat(this.bb);}
       else if(sq){const b=this.bb,f=fit.bb;if(f.x0<b.x0||f.x1>b.x1||f.y1>b.y1){this.bb={x0:Math.min(b.x0,f.x0),x1:Math.max(b.x1,f.x1),y1:Math.max(b.y1,f.y1)};this.fitMat(this.bb);}}
       this.char.visible=true;this.showBody(false);
-      j={J3:this.char.joints(sq?sq.t:this.clipSec(ms,this.char.dur,k2))};
+      j={J3:this.char.joints(sq?sq.t:this.clipSec(ms,this.char.dur,k2))};this.char.blendStep();
     } else if(mc){
       if(this.char) this.char.visible=false;this.showBody(true);
       if(!this.mcOn){this.mcOn=true;this.bb=mc.bb;this.fitMat(mc.bb);}
@@ -267,7 +267,7 @@ class Stage{
       if(this.real!==false&&HAS3D){try{realLoad();}catch(e){}
         if(REAL.ok&&!this.char){try{this.char=new RealChar(this.scene);}catch(e){console.warn(e);this.real=false;}}}
       if(this.char&&this.real!==false){
-        try{this.char.poseJ(j);this.char.visible=true;this.showBody(false);
+        try{this.char.poseJ(j,this.key2||this.an);this.char.blendStep();this.char.visible=true;this.showBody(false);
           if(this.mcOn!=='pose'){this.mcOn='pose';const b=bbox(this.an);this.bb={x0:b.x0-6,x1:b.x1+6,y1:b.y1+10};this.fitMat(this.bb);}}
         catch(e){console.warn(e);this.real=false;this.char.visible=false;this.showBody(true);this.pose(j);}
       } else if(this.real!==false&&!REAL.err&&!REAL.ok&&performance.now()-(this.tSet||0)<10000){
@@ -278,7 +278,10 @@ class Stage{
     }
     this.j=j;
     if(this.yawTarget!=null) this.yaw+=(this.yawTarget-this.yaw)*0.06;
-    const b=this.bb,cx=(b.x0+b.x1)/2,cy=Math.max(b.y1,40)/2+2;
+    // câmera desliza até o novo enquadramento, sem pulo
+    if(!this.bbS) this.bbS={...this.bb};
+    else{const f=0.08;for(const k of ['x0','x1','y1']) this.bbS[k]+=(this.bb[k]-this.bbS[k])*f;}
+    const b=this.bbS,cx=(b.x0+b.x1)/2,cy=Math.max(b.y1,40)/2+2;
     const half=Math.max((b.x1-b.x0)/2+14,(Math.max(b.y1,50))/2*(this.cam.aspect)+10);
     const vh=Math.max(b.y1/2+12,half/this.cam.aspect);
     const dist=vh/Math.tan(this.cam.fov*RAD/2)*1.04;

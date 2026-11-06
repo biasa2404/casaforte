@@ -340,3 +340,22 @@ details.full{margin-top:10px;border-top:1px solid var(--line2);padding-top:8px}
 details.full summary{cursor:pointer;font-weight:700;color:var(--accent)}
 details.full ol.steps{margin:8px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 #plHow .btn2{margin-top:10px}
+.esf{display:flex;flex-direction:column;gap:6px;width:100%;text-align:left}.esf:empty{display:none}.esf .chips{margin:4px 0}
+/* Corpo e saúde */
+.corpo{display:grid;gap:12px}
+@media(min-width:900px){.corpo{grid-template-columns:repeat(3,1fr)}}
+.regcard{display:flex;flex-direction:column;gap:8px}
+.reglist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.reglist li{display:grid;grid-template-columns:1fr auto;gap:0 10px;align-items:baseline;border-top:1px solid var(--line2);padding-top:6px}
+.reglist li:first-child{border-top:0;padding-top:0}
+.reglist small{grid-column:1/-1;color:var(--muted);font-size:.8rem}
+.rf{display:flex;flex-direction:column;gap:4px;margin:10px 0}
+.rf>span:first-child{font-weight:700}
+.rin{display:flex;align-items:center;gap:8px}.rin input{max-width:140px}.rin em{font-style:normal;color:var(--muted)}
+#regBox{max-height:88vh;overflow:auto;width:min(560px,100%)}
+.tblwrap{overflow-x:auto}
+.tbl{border-collapse:collapse;font-size:.88rem;width:100%}
+.tbl th,.tbl td{padding:6px 8px;border-bottom:1px solid var(--line2);text-align:right;white-space:nowrap}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl th{font-size:.75rem;color:var(--muted);font-weight:700}
+.lnk{background:none;border:0;color:var(--accent);font-weight:700;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:6px 4px}

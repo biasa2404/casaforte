@@ -46,8 +46,20 @@ class RealChar{
   set visible(v){this.root.visible=v;}
   /* Veste a Sophie com uma pose do boneco antigo (vista lateral, juntas 2D):
      cada osso é girado para apontar na direção do segmento correspondente. */
-  poseJ(j){
-    if(this.key!=='~pose'){this.mixer.stopAllAction();this.key='~pose';}
+  /* Transição suave: guarda a pose atual e, nos próximos instantes, mistura com a nova */
+  snap(){
+    if(!this.shown) return;const q={};for(const n in this.rest) q[n]=[this.B[n].quaternion.clone(),this.B[n].position.clone()];
+    this.blend={q,root:this.root.position.clone(),t0:performance.now(),d:280};
+  }
+  blendStep(){
+    this.shown=true;const b=this.blend;if(!b) return;
+    let k=(performance.now()-b.t0)/b.d;if(k>=1){this.blend=null;return;}
+    k=k*k*(3-2*k);
+    for(const n in b.q){const B=this.B[n];B.quaternion.copy(b.q[n][0].clone().slerp(B.quaternion,k));B.position.copy(b.q[n][1].clone().lerp(B.position,k));}
+    this.root.position.copy(b.root.clone().lerp(this.root.position,k));this.root.updateMatrixWorld(true);
+  }
+  poseJ(j,id){
+    if(this.key!=='~pose'||this.poseId!==id){this.snap();this.mixer.stopAllAction();this.key='~pose';this.poseId=id;}
     const B=this.B,T=THREE,W=n=>B[n].getWorldPosition(new T.Vector3());
     for(const n in this.rest){B[n].quaternion.copy(this.rest[n].q);B[n].position.copy(this.rest[n].p);}
     this.root.position.set(0,0,0);this.root.updateMatrixWorld(true);
@@ -93,7 +105,7 @@ class RealChar{
   }
   use(key,clip){
     if(this.key===key) return this.fits[key];
-    this.key=key;this.mixer.stopAllAction();this.action=this.mixer.clipAction(clip);this.action.play();
+    this.snap();this.key=key;this.mixer.stopAllAction();this.action=this.mixer.clipAction(clip);this.action.play();
     this.dur=clip.duration;
     if(!this.fits[key]){ // posição: quadril no centro do tapete e pés no chão
       this.root.position.set(0,0,0);

@@ -49,7 +49,7 @@ const YOGA={
   breathY:IT('Respiração profunda','breath',[],'Inspire subindo os braços, solte o ar descendo','yoga',{q:'respiração diafragmática relaxamento'}),
 };
 const WARM={
-  forca:[IT('Corrida no lugar','jog',['cardio'],'Passos leves e braços acompanhando','aero'),IT('Lagarta','pikeWalk',['posteriores','ombros'],'Caminhe com as mãos até a prancha e volte','aero',{q:'exercício lagarta inchworm como fazer'}),IT('Agachamento leve','squatLight',['quadriceps'],'Meio agachamento para aquecer os joelhos','aero')],
+  forca:[IT('Corrida no lugar','jog',['cardio'],'Passos leves e braços acompanhando','aero'),IT('Rotação de braços','circles',['ombros'],'Círculos grandes e soltos, para a frente e para trás','aero'),IT('Lagarta','pikeWalk',['posteriores','ombros'],'Caminhe com as mãos até a prancha e volte','aero',{q:'exercício lagarta inchworm como fazer'}),IT('Agachamento leve','squatLight',['quadriceps'],'Meio agachamento para aquecer os joelhos','aero')],
   luta:[IT('Balanço na base','mtBounce',['cardio'],'Balanço leve, mãos na guarda','luta',{q:'muay thai base e guarda iniciante'}),IT('Aquecimento de luta','boxWarm',['ombros','cardio'],'Solte braços, ombros e tronco','aero',{q:'aquecimento muay thai em casa'}),IT('Corda imaginária','ropeJump',['cardio','panturrilhas'],'Saltos baixos, punhos girando. Cansou? Só gire os punhos','aero',{q:'pular corda imaginária muay thai aquecimento'})],
   aero:[IT('Marcha com braços','danceMarch',['cardio'],'Comece leve e vá soltando o corpo','aero'),IT('Rotação de braços','circles',['ombros'],'Círculos grandes e soltos','aero'),IT('Polichinelo','jacks',['cardio'],'Aterrisse leve, joelhos soltos','aero',{q:'polichinelo como fazer'})],
 };
@@ -67,6 +67,10 @@ const DAYS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const DAYS_L=['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
 const TIERS=['Iniciante','Intermediário','Avançado'];
 const TP=[{w:30,r:30,rr:60,hold:40},{w:40,r:20,rr:60,hold:50},{w:45,r:15,rr:45,hold:60}];
+/* Tempos do aquecimento (s). Uns 5 minutos de aquecimento geral antes da parte principal. */
+const WARM_S={forca:[90,45,60,60],luta:[60,60,90],aero:[90,45,60]};
+/* Movimentos de um lado só ganham o tempo dobrado: cada lado faz o tempo inteiro */
+const tempoDe=(it,s)=>it&&it.sw?s*2:s;
 const XP_LVL=200;
 const yt=q=>'https://www.youtube.com/results?search_query='+encodeURIComponent(q);
 
@@ -83,8 +87,9 @@ function build(dayIdx,tier,dur,opt={}){
     while(used+hold+tr<=target-coolS||i<poses.length){
       const it=poses[i%poses.length];
       if(cycle===1&&learn(it.a)){steps.push({k:'learn',s:10,it,label:'Aprenda a postura'});used+=10;}
-      steps.push({k:'work',s:hold,it,label:'Sequência '+cycle,ph:'yoga'});
-      used+=hold;
+      const h=tempoDe(it,hold);
+      steps.push({k:'work',s:h,it,label:'Sequência '+cycle,ph:'yoga'});
+      used+=h;
       steps.push({k:'rest',s:tr,label:'Transição',soft:1}); used+=tr;
       i++; if(i%poses.length===0) cycle++;
       if(i>60) break;
@@ -93,17 +98,17 @@ function build(dayIdx,tier,dur,opt={}){
     steps.push({k:'rest',s:tr,label:'Transição',soft:1});
     steps.push({k:'cool',s:60,it:YOGA.breathY,label:'Relaxamento final'});
   } else if(P.mt||P.coreo){
-    const warm=WARM[P.warm],warmS=[45,30,45],coolS=COOL.map(it=>it.sw?40:30),coolT=10+coolS.reduce((a,b)=>a+b);
+    const warm=WARM[P.warm],warmS=WARM_S[P.warm],coolS=COOL.map(it=>it.sw?60:30),coolT=10+coolS.reduce((a,b)=>a+b);
     steps.push({k:'prep',s:8,label:'Prepare-se'});
     warm.forEach((it,i)=>steps.push({k:'warm',s:warmS[i],it,label:'Aquecimento',fase:'Aquecimento'}));
     steps.push({k:'rest',s:15,label:'Prepare-se'});
     let used=total(steps);
     if(P.mt){
       // técnica: cada golpe com aula (na primeira vez) e um tempo para praticar sozinho
-      const tec=P.ex.map(f=>resolve(f,tier)),tS=[60,75,90][tier];
+      const tec=P.ex.slice(0,dur<30?4:P.ex.length).map(f=>resolve(f,tier)),tS=dur<30?45:[60,75,90][tier];
       tec.forEach((it,i)=>{
         if(learn(it.a)) steps.push({k:'learn',s:10,it,label:'Técnica: aprenda',fase:'Técnica'});
-        steps.push({k:'work',s:tS,it,label:'Técnica '+(i+1)+' de '+tec.length,fase:'Técnica'});
+        steps.push({k:'work',s:tempoDe(it,tS),it,label:'Técnica '+(i+1)+' de '+tec.length,fase:'Técnica'});
         steps.push({k:'rest',s:i<tec.length-1?15:45,label:i<tec.length-1?'Descanso':'Prepare-se para as sequências',fase:'Técnica'});
       });
       used=total(steps);
@@ -136,9 +141,9 @@ function build(dayIdx,tier,dur,opt={}){
     COOL.forEach((it,i)=>steps.push({k:'cool',s:coolS[i],it,label:'Volta à calma',fase:'Volta à calma'}));
   } else {
     const warm=WARM[P.warm],ex=P.ex.map(f=>resolve(f,tier));
-    const warmS=[45,30,30],coolS=COOL.map(it=>it.sw?40:30);
+    const warmS=WARM_S[P.warm],coolS=COOL.map(it=>it.sw?60:30);
     const base=8+warmS.reduce((a,b)=>a+b)+15+10+coolS.reduce((a,b)=>a+b);
-    const per=ex.length*tp.w+(ex.length-1)*tp.r;
+    const per=ex.reduce((a,it)=>a+tempoDe(it,tp.w),0)+(ex.length-1)*tp.r;
     const R=Math.max(2,Math.min(8,Math.round((target-base+tp.rr)/(per+tp.rr))));
     steps.push({k:'prep',s:8,label:'Prepare-se'});
     warm.forEach((it,i)=>steps.push({k:'warm',s:warmS[i],it,label:'Aquecimento'}));
@@ -146,7 +151,7 @@ function build(dayIdx,tier,dur,opt={}){
     for(let r=1;r<=R;r++){
       ex.forEach((it,i)=>{
         if(r===1&&learn(it.a)) steps.push({k:'learn',s:10,it,label:'Aprenda o movimento'});
-        steps.push({k:'work',s:tp.w,it,r,R,label:'Rodada '+r+' de '+R,first:r===1});
+        steps.push({k:'work',s:tempoDe(it,tp.w),it,r,R,label:'Rodada '+r+' de '+R,first:r===1});
         if(i<ex.length-1) steps.push({k:'rest',s:tp.r,label:'Descanso',r,R});
         else if(r<R) steps.push({k:'rest',s:tp.rr,label:'Fim da rodada '+r,r,R,round:1});
       });

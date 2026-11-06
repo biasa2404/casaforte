@@ -3,11 +3,12 @@
 
 /* ---------- Estado salvo ---------- */
 const KEY='casaforte.v1';
-const PREFS0={dur:40,voice:true,musica:true,tier:'auto',tierMin:0,name:'',voiceName:'',explain:'first',guides:true,trat:'n',meta:4,onboarded:false};
-let S={hist:[],xp:0,learned:{},prefs:{...PREFS0},quiz:null,plano:null,humor:{},troca:{}};
+const PREFS0={dur:40,voice:true,musica:true,tier:'auto',tierMin:0,name:'',voiceName:'',explain:'first',guides:true,trat:'n',meta:4,onboarded:false,ajuste:0,altura:''};
+let S={hist:[],xp:0,learned:{},prefs:{...PREFS0},quiz:null,plano:null,humor:{},troca:{},medidas:[],saude:[],testes:[]};
 function carregar(o){
   S={hist:Array.isArray(o.hist)?o.hist:[],xp:+o.xp||0,learned:o.learned||{},prefs:{...PREFS0,...(o.prefs||{})},
-     quiz:o.quiz||null,plano:o.plano||null,humor:o.humor||{},troca:o.troca||{}};
+     quiz:o.quiz||null,plano:o.plano||null,humor:o.humor||{},troca:o.troca||{},
+     medidas:Array.isArray(o.medidas)?o.medidas:[],saude:Array.isArray(o.saude)?o.saude:[],testes:Array.isArray(o.testes)?o.testes:[]};
 }
 try{const raw=localStorage.getItem(KEY); if(raw) carregar(JSON.parse(raw));}catch(e){}
 // planos antigos punham uma yoga opcional no domingo, que parecia um dia a mais: refaz com as mesmas respostas
@@ -17,7 +18,7 @@ const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+Stri
 const hoje=()=>ymd(new Date());
 const level=xp=>1+Math.floor(xp/XP_LVL);
 const autoTier=l=>l>=10?2:(l>=5?1:0);
-const baseTier=()=>S.prefs.tier==='auto'?Math.max(S.prefs.tierMin|0,autoTier(level(S.xp))):+S.prefs.tier;
+const baseTier=()=>S.prefs.tier==='auto'?Math.max(0,Math.min(2,Math.max(S.prefs.tierMin|0,autoTier(level(S.xp)))+(S.prefs.ajuste|0))):+S.prefs.tier;
 const needLearn=a=>S.prefs.explain==='always'||(S.prefs.explain==='first'&&(S.learned[a]||0)<2&&!!COMO[a]);
 let gravados=new Set(); // áudios gravados disponíveis (audio/manifest.json)
 const $=id=>document.getElementById(id);
@@ -181,6 +182,10 @@ function renderHoje(){
   const am=new Date(now);am.setDate(am.getDate()+1);const pa=planoDoDia(am);
   $('nextRow').innerHTML=`<span><small>Amanhã</small><b>${pa!=null?esc(PLANS[pa].nome)+(opcional(am)?' (opcional)':''):'Descanso'}</b></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>`;
   $('nextRow').dataset.tab='plano';
+  // lembrete de medir (a cada 4 semanas)
+  const falta=['medidas','testes'].find(t=>{const u=ultimoReg(t);return !u||diasDesde(u.d)>=REG[t].cada;});
+  $('medeRow').hidden=!falta;
+  if(falta){$('medeRow').dataset.reg=falta;$('medeRow').innerHTML=`<span><small>${ultimoReg(falta)?'Já faz 4 semanas':'Para ver seus resultados'}</small><b>${falta==='medidas'?'Registrar medidas do corpo':'Fazer os testes de força e fôlego'}</b></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>`;}
   // cuidados
   const cu=((S.quiz&&S.quiz.cuidado)||[]).filter(x=>CUIDADO_TXT[x]);
   $('cuidadoNote').hidden=!cu.length;
@@ -201,7 +206,7 @@ function renderTreino(){
   $('trTags').innerHTML=[`${tt} min`,P.tipo,TIERS[sel.tier],'Sem equipamento'].map(t=>`<span class="tag">${esc(t)}</span>`).join('');
   const r=P.flow||P.mt||P.coreo?null:(P.ex.map(f=>ritmoDe(resolve(f,sel.tier).a,sel.tier)).find(Boolean));
   $('trRitmo').hidden=!r&&!P.mt&&!P.coreo;
-  if(r) $('trRitmo').innerHTML=`Ritmo de hoje: <b>${esc(r.txt)}</b>. A Sophie faz nesse tempo para você acompanhar.`;
+  if(r) $('trRitmo').innerHTML=`Ritmo de hoje: <b>${esc(r.txt)}</b>. A Sophie faz nesse tempo para você acompanhar.<br>Esforço certo para ganhar músculo: no fim de cada série, deveria sobrar fôlego para só mais 1 a 3 repetições bem feitas.`;
   else if(P.mt) $('trRitmo').innerHTML='Como numa aula de Muay Thai: <b>aquecimento, técnica e sequência de golpes</b> em rounds. A voz fala cada sequência e a boneca faz junto.';
   else if(P.coreo) $('trRitmo').innerHTML=`Coreografia <b>${esc(steps.coreo.n)}</b>, com música própria a <b>${steps.coreo.bpm} batidas por minuto</b>. Prefere sua playlist? Desligue a música no treino e procure músicas com cerca de ${steps.coreo.bpm} BPM no Spotify.`;
   if(!P.coreo){const m=musicaDoPasso(sel.plan,steps.find(x=>x.k==='work')||steps[0]),MT={forca:'batida firme e constante, para manter o ritmo das repetições',luta:'percussão de luta, para dar energia nos rounds',calma:'acordes calmos, sem batida, para respirar e soltar o corpo'};
@@ -226,7 +231,7 @@ function renderTreino(){
     const tp=TP[sel.tier],warm=WARM[P.warm];
     const wS=steps.filter(s=>s.k==='warm').reduce((a,s)=>a+s.s,0),cS=steps.filter(s=>s.k==='cool').reduce((a,s)=>a+s.s,0);
     html+=`<section class="block"><div class="bhead"><h2 class="h2s">Aquecimento</h2><span class="muted small">${Math.round(wS/60)} min</span></div><div class="blist">${warm.map(it=>linha(it,it.tip)).join('')}</div></section>`;
-    html+=`<section class="block"><div class="bhead"><h2 class="h2s">Parte principal</h2><span class="muted small">${R} rodadas</span></div><div class="blist">${P.ex.map(f=>{const it=resolve(f,sel.tier);return linha(it,`${tp.w} s, descanso ${tp.r} s${it.sw?' · troque de lado na metade':''}`);}).join('')}</div></section>`;
+    html+=`<section class="block"><div class="bhead"><h2 class="h2s">Parte principal</h2><span class="muted small">${R} rodadas</span></div><div class="blist">${P.ex.map(f=>{const it=resolve(f,sel.tier);return linha(it,it.sw?`${tp.w} s de cada lado, descanso ${tp.r} s`:`${tp.w} s, descanso ${tp.r} s`);}).join('')}</div></section>`;
     html+=`<section class="block"><div class="bhead"><h2 class="h2s">Volta à calma</h2><span class="muted small">${Math.round(cS/60)} min</span></div><div class="blist">${COOL.map(it=>linha(it,it.tip)).join('')}</div></section>`;
   }
   $('trBlocks').innerHTML=html;
@@ -306,6 +311,7 @@ function renderProg(){
     sem.push({l:i?a.toLocaleDateString('pt-BR',{day:'numeric',month:'numeric'}):'esta',m:S.hist.filter(h=>h.ts>=a.getTime()&&h.ts<b.getTime()).reduce((x,h)=>x+h.min,0)});}
   const top=Math.max(200,...sem.map(s=>s.m));
   $('chart').innerHTML=`<div class="bars" role="img" aria-label="Minutos por semana: ${sem.map(s=>s.l+' '+s.m).join(', ')}"><i class="meta" style="bottom:${150/top*100}%"></i>${sem.map((s,i)=>`<span class="bar${i===7?' cur':''}" style="height:${Math.max(2,s.m/top*100)}%" title="${s.m} min"></span>`).join('')}</div><div class="blabels">${sem.map(s=>`<span>${s.l}</span>`).join('')}</div>`;
+  renderCorpo();
   $('lvlNum').textContent=lv;$('tierName').textContent=`Nível ${lv} · ${TIERS[autoTier(lv)]}`;
   const into=S.xp%XP_LVL;$('xpFill').style.width=(into/XP_LVL*100)+'%';
   $('xpText').textContent=`${into} de ${XP_LVL} pontos para o nível ${lv+1}`+(lv<5?'. Intermediário no nível 5':(lv<10?'. Avançado no nível 10':''));
@@ -730,9 +736,23 @@ function finish(record){
   $('dnLvl').textContent=lv;$('dnTier').textContent=TIERS[autoTier(lv)];
   $('dnFill').style.width=((S.xp%XP_LVL)/XP_LVL*100)+'%';$('dnXp').textContent=`${S.xp%XP_LVL} de ${XP_LVL} pontos para o nível ${lv+1}`;
   $('dnMin').textContent=min;$('dnGain').textContent='+'+gain;$('dnStreak').textContent=st;
+  $('dnEsf').innerHTML=PLANS[p.day].flow?'':`<b>Como foi o esforço?</b><span class="muted small">Para ganhar força e músculo, o ideal é terminar cada série sentindo que daria para fazer só mais 1 a 3 repetições.</span><div class="chips">${['Leve demais','Na medida','Pesado demais'].map((t,i)=>`<button class="chip" data-esforco="${i}">${t}</button>`).join('')}</div><span class="muted small" id="dnEsfMsg"></span>`;
   $('done').hidden=false;startConfetti();
   say(up?nmLine('nivel',{n:lv}):nmLine('fim'));
 }
+/* Esforço: duas vezes "leve demais" no mesmo nível sobe a variação; duas vezes "pesado demais" desce */
+$('dnEsf').addEventListener('click',e=>{
+  const b=e.target.closest('[data-esforco]');if(!b) return;
+  const v=+b.dataset.esforco,h=S.hist[S.hist.length-1];if(!h) return;h.esf=v;
+  $('dnEsf').querySelectorAll('[data-esforco]').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  const ult=S.hist.filter(x=>x.esf!=null&&!PLANS[x.plan].flow).slice(-2);
+  let msg=['Anotado. Na próxima, tente um ritmo mais forte ou mais repetições no mesmo tempo.','Ótimo, é esse o esforço que traz resultado.','Anotado. Na próxima, faça menos repetições com boa técnica e descanse quando precisar.'][v];
+  if(S.prefs.tier==='auto'&&ult.length===2&&ult.every(x=>x.esf===v&&x.tier===h.tier)){
+    if(v===0&&h.tier<2){S.prefs.ajuste=(S.prefs.ajuste|0)+1;msg=`Duas vezes leve demais: a partir do próximo treino, as variações passam para ${TIERS[Math.min(2,h.tier+1)]}.`;}
+    if(v===2&&h.tier>0){S.prefs.ajuste=(S.prefs.ajuste|0)-1;msg=`Duas vezes pesado demais: no próximo treino, as variações voltam para ${TIERS[h.tier-1]}. Sem pressa, a força vem.`;}
+  }
+  save();$('dnEsfMsg').textContent=msg;
+});
 $('dnBack').onclick=()=>{$('done').hidden=true;irPara('hoje');};
 
 /* ---------- Confete ---------- */
@@ -777,3 +797,69 @@ if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){
   window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}));
 }
 $('plName').onclick=()=>setHow(true);
+
+/* ---------- Corpo e saúde: medidas, bem-estar e testes ---------- */
+const REG={
+  medidas:{t:'Medidas do corpo',cada:28,dica:'Meça a cada 2 a 4 semanas, de manhã, antes de comer e de treinar, sempre do mesmo jeito e com a mesma fita. O peso varia 1 a 2 kg de um dia para o outro (água, intestino, ciclo), então vale a tendência de semanas, não um dia. Ganhar músculo e perder gordura ao mesmo tempo pode deixar o peso parado: por isso as medidas com fita contam muito.',
+    campos:[['peso','Peso','kg'],['cintura','Cintura, na altura do umbigo','cm'],['quadril','Quadril, na parte mais larga','cm'],['braco','Braço, no meio, relaxado','cm'],['coxa','Coxa, no meio','cm']]},
+  saude:{t:'Como você está',cada:1,dica:'Leva 30 segundos. Com o tempo, mostra se os treinos estão melhorando sono, disposição e estresse. Os batimentos em repouso costumam baixar quando o fôlego melhora: meça ao acordar, ainda deitada ou deitado, contando 1 minuto.',
+    campos:[['sono','Horas de sono na última noite','h'],['qsono','Qualidade do sono','1 a 5',1],['energia','Disposição hoje','1 a 5',1],['estresse','Estresse hoje','1 a 5',1],['fc','Batimentos em repouso, ao acordar','bpm']]},
+  testes:{t:'Testes de força e fôlego',cada:28,dica:'Faça a cada 4 semanas, depois de aquecer, num dia sem treino pesado, sempre do mesmo jeito. Conte só repetições com boa técnica e pare se sentir dor. O de sentar e levantar da cadeira é um teste usado em estudos de força das pernas.',
+    campos:[['flexoes','Flexões seguidas com boa técnica (anote sempre do mesmo tipo, com ou sem joelhos)','rep.'],['agach','Agachamentos em 60 segundos','rep.'],['cadeira','Sentar e levantar da cadeira em 30 segundos, braços cruzados','rep.'],['prancha','Prancha no antebraço, até perder a postura','s']]},
+};
+const fmtD=d=>new Date(d+'T12:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+const numBR=x=>String(Math.round(x*10)/10).replace('.',',');
+function ultimoReg(tipo){const L=S[tipo];return L.length?L[L.length-1]:null;}
+function diasDesde(d){return Math.round((new Date(hoje()+'T12:00')-new Date(d+'T12:00'))/864e5);}
+function renderCorpo(){
+  const card=tipo=>{
+    const R=REG[tipo],L=S[tipo],u=ultimoReg(tipo);
+    let corpo='';
+    if(!u) corpo=`<p class="muted small">Nenhum registro ainda.</p>`;
+    else{
+      const linhas=R.campos.filter(([k])=>L.some(x=>x[k]!=null)).map(([k,l,un,esc5])=>{
+        const comV=L.filter(x=>x[k]!=null),pr=comV[0],ul=comV[comV.length-1],dv=ul[k]-pr[k];
+        const nome=l.split(',')[0].split(' (')[0];
+        const ch=comV.length>1&&dv!==0?`<small>${dv>0?'+':''}${numBR(dv)} desde ${fmtD(pr.d)}</small>`:'';
+        return `<li><span>${esc(nome)}</span><b>${numBR(ul[k])}${esc5?'/5':' '+un}</b>${ch}</li>`;}).join('');
+      corpo=`<ul class="reglist">${linhas}</ul>`;
+      if(tipo==='medidas'){const alt=parseFloat(String(S.prefs.altura).replace(',','.')),cin=[...L].reverse().find(x=>x.cintura!=null);
+        if(alt>100&&cin){const r=cin.cintura/alt;corpo+=`<p class="small">Cintura dividida pela altura: <b>${numBR(Math.round(r*100)/100)}</b>. Abaixo de 0,5 está associado a menor risco para coração e metabolismo (orientação do NICE, 2022). É um sinal de saúde, não uma nota.</p>`;}}
+      if(tipo==='saude'){const sem=L.filter(x=>diasDesde(x.d)<7&&x.sono!=null);if(sem.length>1) corpo+=`<p class="small">Média de sono nos últimos 7 dias: <b>${numBR(sem.reduce((a,x)=>a+x.sono,0)/sem.length)} h</b>. Para adultos, o recomendado é 7 horas ou mais.</p>`;}
+    }
+    const atras=u?diasDesde(u.d):null,quando=u?(atras===0?'hoje':`há ${atras} ${atras===1?'dia':'dias'}`):'';
+    return `<section class="card regcard"><div class="bhead"><h3 class="h2s">${R.t}</h3>${u?`<span class="muted small">${quando}</span>`:''}</div>${corpo}<div class="chips"><button class="btn2" data-reg="${tipo}">${u&&u.d===hoje()?'Editar o de hoje':'Registrar'}</button>${L.length>1?`<button class="lnk" data-reghist="${tipo}">Ver histórico</button>`:''}</div><div class="reghist" id="rh-${tipo}" hidden></div></section>`;
+  };
+  $('corpo').innerHTML=['medidas','testes','saude'].map(card).join('');
+}
+function abrirReg(tipo){
+  const R=REG[tipo],u=ultimoReg(tipo),atual=u&&u.d===hoje()?u:{};
+  const campo=([k,l,un,esc5])=>esc5?`<div class="rf"><span>${esc(l)}</span><div class="chips">${[1,2,3,4,5].map(n=>`<button type="button" class="chip" data-esc="${k}" data-v="${n}" aria-pressed="${atual[k]===n}">${n}</button>`).join('')}</div><small class="muted">1 = muito ${k==='estresse'?'pouco':'ruim'}, 5 = ${k==='estresse'?'muito alto':'ótimo'}</small></div>`
+    :`<label class="rf"><span>${esc(l)}</span><span class="rin"><input class="field" type="text" inputmode="decimal" data-k="${k}" value="${atual[k]!=null?numBR(atual[k]):''}"><em>${un}</em></span></label>`;
+  $('regBox').innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px;align-items:start"><h3 style="font-size:1.6rem" id="regTitle">${R.t}</h3><button class="btn2" id="regClose">Fechar</button></div>
+    <p class="muted small">${esc(R.dica)}</p>
+    ${tipo==='medidas'?`<label class="rf"><span>Altura (só uma vez)</span><span class="rin"><input class="field" type="text" inputmode="decimal" id="regAlt" value="${esc(S.prefs.altura||'')}"><em>cm</em></span></label>`:''}
+    <form id="regForm">${R.campos.map(campo).join('')}<p class="muted small">Preencha só o que quiser. Fica salvo só neste aparelho e entra na cópia de segurança.</p><button class="go" type="submit">Salvar</button></form>`;
+  $('regModal').hidden=false;$('regClose').focus();
+  $('regClose').onclick=()=>{$('regModal').hidden=true;};
+  $('regForm').addEventListener('click',e=>{const b=e.target.closest('[data-esc]');if(!b) return;b.parentNode.querySelectorAll('[data-esc]').forEach(x=>x.setAttribute('aria-pressed',x===b&&x.getAttribute('aria-pressed')!=='true'?'true':'false'));});
+  $('regForm').onsubmit=e=>{
+    e.preventDefault();const o={d:hoje()};
+    $('regForm').querySelectorAll('[data-k]').forEach(i=>{const v=parseFloat(i.value.replace(',','.'));if(isFinite(v)&&v>0) o[i.dataset.k]=v;});
+    $('regForm').querySelectorAll('[data-esc][aria-pressed="true"]').forEach(b=>o[b.dataset.esc]=+b.dataset.v);
+    if($('regAlt')) S.prefs.altura=$('regAlt').value.trim().slice(0,6);
+    const L=S[tipo],i=L.findIndex(x=>x.d===o.d);
+    if(Object.keys(o).length>1){if(i>=0) L[i]=o;else L.push(o);} else if(i>=0) L.splice(i,1);
+    save();$('regModal').hidden=true;render();
+  };
+}
+function verHist(tipo){
+  const el=$('rh-'+tipo),R=REG[tipo],L=S[tipo];el.hidden=!el.hidden;if(el.hidden) return;
+  const cols=R.campos.filter(([k])=>L.some(x=>x[k]!=null));
+  el.innerHTML=`<div class="tblwrap"><table class="tbl"><thead><tr><th>Data</th>${cols.map(([k,l,un])=>`<th>${esc(l.split(',')[0].split(' (')[0])}${un&&!un.includes('a 5')?' ('+esc(un)+')':''}</th>`).join('')}</tr></thead><tbody>${[...L].reverse().map(x=>`<tr><td>${fmtD(x.d)}</td>${cols.map(([k])=>`<td>${x[k]!=null?numBR(x[k]):'–'}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-reg],[data-reghist]');if(!b) return;
+  if(b.dataset.reg) abrirReg(b.dataset.reg);else verHist(b.dataset.reghist);
+});
+$('regModal').addEventListener('click',e=>{if(e.target.id==='regModal') $('regModal').hidden=true;});
