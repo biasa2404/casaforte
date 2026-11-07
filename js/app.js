@@ -171,7 +171,7 @@ function renderHoje(){
     if(o.tipo==='leve') txt=`O mesmo treino com menos tempo${o.tier<baseTier()?' e variações mais simples':''}. Ainda conta para a sua semana.`;
     else if(o.tipo==='troca') txt=`Hoje o corpo pede recuperação. ${esc(PLANS[o.original].nome)} fica para outro dia.`;
     else if(P.mt){const Rr=Math.max(...steps.map(x=>x.R||0));txt=`Aquecimento com corda, técnica de ${P.ex.length} golpes e ${Rr} rounds de sequências de golpes.`;}
-    else if(P.coreo){const Rr=Math.max(...steps.map(x=>x.R||0));txt=`Coreografia ${steps.coreo.n}: ${steps.coreo.b.length} passos, primeiro um por um e depois tudo junto ${Rr} vezes, com batida de ${steps.coreo.bpm} BPM.`;}
+    else if(P.coreo){const Rr=Math.max(...steps.map(x=>x.R||0));txt=`Coreografia de ${steps.coreo.n}: ${steps.coreo.b.length} passos, primeiro um por um e depois tudo junto ${Rr} vezes, na batida de ${steps.coreo.n.toLowerCase()} a ${steps.coreo.bpm} BPM.`;}
     else txt=P.flow?'Posturas com respiração, no seu tempo.':`Aquecimento, ${P.ex.length} movimentos em ${R} rodadas e alongamento no final.`;
     c.className='hero '+o.tipo;
     c.innerHTML=`<span class="eyebrow">${eyebrow}</span><h2>${esc(P.nome)}</h2><p>${txt}</p><div class="herotags">${tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div>`+
@@ -208,7 +208,7 @@ function renderTreino(){
   $('trRitmo').hidden=!r&&!P.mt&&!P.coreo;
   if(r) $('trRitmo').innerHTML=`Ritmo de hoje: <b>${esc(r.txt)}</b>. A Sophie faz nesse tempo para você acompanhar.<br>Esforço certo para ganhar músculo: no fim de cada série, deveria sobrar fôlego para só mais 1 a 3 repetições bem feitas.`;
   else if(P.mt) $('trRitmo').innerHTML='Como numa aula de Muay Thai: <b>aquecimento, técnica e sequência de golpes</b> em rounds. A voz fala cada sequência e a boneca faz junto.';
-  else if(P.coreo) $('trRitmo').innerHTML=`Coreografia <b>${esc(steps.coreo.n)}</b>, com música própria a <b>${steps.coreo.bpm} batidas por minuto</b>. Prefere sua playlist? Desligue a música no treino e procure músicas com cerca de ${steps.coreo.bpm} BPM no Spotify.`;
+  else if(P.coreo){const C=steps.coreo;$('trRitmo').innerHTML=`Coreografia de <b>${esc(C.n)}</b> (${esc(C.sub)}), com música própria na levada de ${esc(C.n.toLowerCase())}, a <b>${C.bpm} batidas por minuto</b>. Prefere sua playlist? Desligue a música no treino e coloque uma de ${esc(C.n.toLowerCase())} com andamento parecido.<br>Quer dançar com uma coreografia de verdade? <a class="lnk" href="${yt(C.yt)}" target="_blank" rel="noopener">Ver vídeos de ${esc(C.n.toLowerCase())} no YouTube</a>`;}
   if(!P.coreo){const m=musicaDoPasso(sel.plan,steps.find(x=>x.k==='work')||steps[0]),MT={forca:'batida firme e constante, para manter o ritmo das repetições',luta:'percussão de luta, para dar energia nos rounds',calma:'acordes calmos, sem batida, para respirar e soltar o corpo'};
     if(m&&MT[m.estilo]){$('trRitmo').hidden=false;$('trRitmo').innerHTML=($('trRitmo').innerHTML&&r||P.mt?$('trRitmo').innerHTML+'<br>':'')+`Música própria do treino: <b>${MT[m.estilo]}</b>. Dá para desligar no botão Música.`;}}
   $('durChips').innerHTML=[20,30,40,50].map(d=>`<button class="chip" data-trdur="${d}" aria-pressed="${sel.dur===d}">${d} min</button>`).join('');
@@ -265,7 +265,8 @@ function renderPlano(){
   const grupos=[['Força',[1,3,5]],['Muay Thai',[2]],['Yoga e alongamento',[4,0]]];
   let h=grupos.map(([g,ps])=>`<h3 class="aulah">${g}</h3><div class="planlist">${ps.map(p=>linha(`data-abrir="${p}"`,PLANS[p].nome,PLANS[p].flow?'Posturas com respiração':(PLANS[p].mt?'Aquecimento, técnica e sequências de golpes':PLANS[p].ex.length+' movimentos'),PLANS[p].tipo)).join('')}</div>`).join('');
   const sem=coreoDaSemana();
-  h+=`<h3 class="aulah">Dança aeróbica: coreografias</h3><div class="planlist">${COREOS.map((c,i)=>linha(`data-abrir="6" data-coreo="${i}"`,'Coreografia '+c.n+(c===sem?' (da semana)':''),`${c.bpm} BPM · ${c.b.map(k=>PASSO[k].n).slice(0,3).join(', ')}…`,'Dança e cardio')).join('')}</div>`;
+  h+=`<h3 class="aulah">Dança: ritmos brasileiros</h3><div class="planlist">${COREOS.map((c,i)=>linha(`data-abrir="6" data-coreo="${i}"`,c.n+(c===sem?' (da semana)':''),`${c.bpm} BPM · ${c.b.slice(0,3).map(k=>nomePasso(k,c)).join(', ')}…`,'Dança e cardio')).join('')}</div>`;
+  h+=`<h3 class="aulah">Coreografias no YouTube</h3><p class="muted">Para dançar junto com quem faz coreografia de verdade, como a Lore Improta. Abre a busca no YouTube.</p><div class="vids">${VIDS_DANCA.map(([t,s2,q])=>`<a href="${yt(q)}" target="_blank" rel="noopener">${esc(t)}<small>${esc(s2)}</small></a>`).join('')}</div>`;
   $('aulasList').innerHTML=h;
 }
 
@@ -294,7 +295,8 @@ const VIDS=[
   ['Muay Thai em casa para iniciantes','Base, guarda e primeiros golpes','muay thai em casa iniciante treino'],
   ['Yoga para iniciantes','Sequências de 20 a 30 minutos','yoga para iniciantes em casa'],
   ['Alongamento completo','Para fazer depois do treino','alongamento completo pós treino'],
-  ['Dança aeróbica em casa','Aulas para suar dançando','aula de dança aeróbica em casa'],
+  ['Coreografias da Lore Improta','Axé, funk e pagode para dançar junto','Lore Improta coreografia'],
+  ['Aula de ritmos em casa','Forró, axé, funk, samba e sertanejo','aula de ritmos completa em casa'],
   ['Treino de glúteos sem equipamento','Força para pernas e glúteos','treino de glúteos em casa sem equipamento'],
   ['Hipertrofia sem equipamento','O que a ciência diz sobre treinar em casa','hipertrofia em casa sem equipamento ciência explicação'],
 ];
@@ -599,7 +601,7 @@ function enterStep(announce){
   const bpm=s.it&&s.it.danca&&s.k==='work'?s.it.bpm:0;
   tocarMusica();
   plStage.tempo=rit;
-  $('plTempo').hidden=!rit&&!bpm;$('plTempo').textContent=rit?'Ritmo: '+rit.txt:(bpm?`Música: ${bpm} batidas por minuto`:'');
+  $('plTempo').hidden=!rit&&!bpm;$('plTempo').textContent=rit?'Ritmo: '+rit.txt:(bpm?`Música: ${s.it&&s.it.estilo&&ESTILOS[s.it.estilo]?ESTILOS[s.it.estilo].n.toLowerCase()+", ":""}${bpm} batidas por minuto`:'');
   $('plMusic').hidden=false;
   plStage.guides=S.prefs.guides&&(isLearn||s.k==='work'||isRest);
   $('plLabel').textContent=s.label;
@@ -701,7 +703,7 @@ $('plMusic').onclick=()=>{S.prefs.musica=!S.prefs.musica;save();syncBtns();tocar
 /* Música própria do tipo de treino; na aula de um movimento ela fica bem baixinha */
 function tocarMusica(){
   if(!P||!P.run||!S.prefs.musica){Batida.stop();return;}
-  const m=musicaDoPasso(P.day,cur());if(!m){Batida.stop();return;}
+  const m=musicaDoPasso(P.day,cur(),P.steps&&P.steps.coreo);if(!m){Batida.stop();return;}
   if(!Batida.on||Batida.bpm!==m.bpm||Batida.estilo!==m.estilo) Batida.start(actx,m.bpm,m.estilo);
 }
 function syncBtns(){

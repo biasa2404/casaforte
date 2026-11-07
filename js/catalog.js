@@ -61,7 +61,7 @@ const PLANS={
   3:{nome:'Peito, costas, ombros e tríceps',tipo:'Força',warm:'forca',ex:['flexao','puxada','ombro','triceps','prancha','abd']},
   4:{nome:'Yoga e alongamento',tipo:'Yoga',flow:['catcow','dog','warrior','chair','tree','cobra','child','seatfold','quad']},
   5:{nome:'Glúteos, lombar, abdômen e peito',tipo:'Força',warm:'forca',ex:['superman','flexao','passaro','ponte','bomdia','abd']},
-  6:{nome:'Aula de dança aeróbica',tipo:'Dança e cardio',warm:'aero',coreo:1,ex:['d_marcha','d_corda','d_soco','d_chute','d_boxe','d_bumbum','burpee']},
+  6:{nome:'Dança: ritmos brasileiros',tipo:'Dança e cardio',warm:'aero',coreo:1,ex:['d_marcha','d_corda','d_soco','d_chute','d_boxe','d_bumbum','burpee']},
   0:{nome:'Yoga leve e mobilidade',tipo:'Recuperação',flow:['breathY','catcow','child','cobra','dog','bridgeY','seatfold']},
 };
 const DAYS=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -125,7 +125,7 @@ function build(dayIdx,tier,dur,opt={}){
       // coreografia: primeiro cada passo devagar no ritmo, depois tudo junto
       const C=(opt.coreo!=null&&COREOS[opt.coreo])||coreoDaSemana(),bt=60/C.bpm,bS=Math.round(32*bt);
       C.b.forEach((k,i)=>{
-        const it=itemPasso(k,C.bpm,64);
+        const it=itemPasso(k,C.bpm,64,C);
         if(learn(k)) steps.push({k:'learn',s:10,it:{...it,seq:null},label:'Aprenda o passo',fase:'Aprenda os passos'});
         steps.push({k:'work',s:Math.round(64*bt),it,label:'Passo '+(i+1)+' de '+C.b.length,fase:'Aprenda os passos',seguido:i>0});
       });
@@ -133,7 +133,7 @@ function build(dayIdx,tier,dur,opt={}){
       used=total(steps);
       const volta=2*C.b.length*bS,R=Math.max(1,Math.min(12,Math.floor((target-used-coolT+30)/(volta+30))));
       for(let r=1;r<=R;r++){
-        [...C.b,...C.b].forEach((k,i)=>steps.push({k:'work',s:bS,it:itemPasso(k,C.bpm,32),r,R,label:'Coreografia '+r+' de '+R,fase:'Coreografia completa',seguido:i>0}));
+        [...C.b,...C.b].forEach((k,i)=>steps.push({k:'work',s:bS,it:itemPasso(k,C.bpm,32,C),r,R,label:'Coreografia '+r+' de '+R,fase:'Coreografia completa',seguido:i>0}));
         if(r<R) steps.push({k:'rest',s:30,label:'Água e respiração',r,R,round:1,fase:'Coreografia completa'});
       }
       steps.coreo=C;

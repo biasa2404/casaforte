@@ -1,5 +1,5 @@
 'use strict';
-/* Casa Forte: coreografias de dança aeróbica (no ritmo de uma batida própria, sem direitos autorais)
+/* Casa Forte: coreografias de ritmos brasileiros (no ritmo de uma batida própria, sem direitos autorais)
    e sequências de golpes de Muay Thai, montadas emendando os movimentos gravados. */
 
 /* ---------- Muay Thai: trecho útil de cada golpe gravado (segundos) ---------- */
@@ -55,6 +55,7 @@ const PASSO={
   armsUp:{n:'Braços no alto',tip:'Braços para cima, acompanhando a batida.'},
   cabbage:{n:'Braços em círculo',tip:'Braços fazem círculos na frente do peito e os joelhos marcam o tempo.'},
   bootyStep:{n:'Passo com quadril',tip:'Joelhos dobrados, marque o tempo com o quadril.'},
+  rebolado:{n:'Rebolado',tip:'Pés afastados, joelhos dobrados e o quadril desenha o movimento.'},
   samba:{n:'Samba no pé',tip:'Passinhos rápidos na ponta dos pés.'},
   salsa:{n:'Básico de salsa',tip:'Um passo à frente, volta, um passo atrás, volta.'},
   rainbow:{n:'Passo lateral com braços',tip:'Passo para o lado com os braços em arco.'},
@@ -66,21 +67,73 @@ const PASSO={
   armCircle:{n:'Braços em volta',tip:'Os braços desenham um grande círculo enquanto os pés marcam o tempo.'},
   maraschino:{n:'Passo cruzado',tip:'Passos cruzados, com os braços acompanhando.'},
 };
-/* Cada bloco tem 32 tempos (4 vezes 8), como nas aulas de academia */
+/* Coreografias de ritmos brasileiros, como nas aulas de "ritmos" das academias.
+   Cada ritmo tem andamento próximo do real, passos com o jeito daquele ritmo e uma batida própria
+   com a levada característica (zabumba e triângulo no forró, surdo no axé, tamborzão no funk...).
+   nm troca o nome e a dica do passo para o vocabulário daquele ritmo.
+   Cada bloco tem 32 tempos (4 vezes 8), como nas aulas de academia. */
 const COREOS=[
-  {n:'Balanço',bpm:120,b:['stepTouch','jazzSquare','twist','rumba','armCircle']},
-  {n:'Festa',bpm:124,b:['stepTouch','cabbage','bootyStep','samba','armPush']},
-  {n:'Clássica',bpm:126,b:['stepTouch','jazzSquare','maraschino','shuffle','armsUp']},
-  {n:'Mistura',bpm:128,b:['rainbow','salsa','runningMan','rockette','jacks']},
+  {n:'Forró',estilo:'forro',bpm:112,sub:'Dois pra lá, dois pra cá e balanço do xote',
+    yt:'aula de forró passo básico iniciante',
+    b:['stepTouch','salsa','rumba','shuffle','twist'],
+    nm:{stepTouch:['Dois pra lá, dois pra cá','O passo básico do forró: dois passinhos para um lado e dois para o outro, joelhos soltos e corpo leve.'],
+        salsa:['Base para frente e para trás','Um passo à frente e volta, um passo atrás e volta, como a base do forró universitário.'],
+        rumba:['Balanço do xote','Passos curtos e o quadril balança junto, no "dois pra lá, dois pra cá" mais lento do xote.'],
+        shuffle:['Passo lateral arrastado','Os pés arrastam no chão de um lado para o outro, como no forró pé de serra.'],
+        twist:['Giro de quadril','Gire o quadril e os pés juntos, sem perder o compasso da zabumba.']}},
+  {n:'Axé',estilo:'axe',bpm:130,sub:'Passos de bloco, braços no alto e pulinhos',
+    yt:'coreografia axé aula de ritmos',
+    b:['stepTouch','armsUp','jacks','bootyStep','armPush'],
+    nm:{stepTouch:['Passo de bloco com palmas','Passo para o lado e junta, batendo palmas no tempo, como atrás do trio elétrico.'],
+        armsUp:['Mãos para o alto','Braços sobem no ritmo do surdo, como no refrão das músicas de axé.'],
+        jacks:['Pulinho do axé','Pulinhos abrindo e fechando as pernas. Aterrisse leve, com os joelhos soltos.'],
+        bootyStep:['Rebolado do axé','Joelhos dobrados e o quadril marca o tempo.'],
+        armPush:['Braço para o céu','Passo para o lado e um braço sobe esticado, depois o outro.']}},
+  {n:'Funk',estilo:'funk',bpm:130,sub:'Rebolado, quadradinho e passinho no tamborzão',
+    yt:'Lore Improta coreografia funk',
+    b:['rebolado','bootyStep','stepTouch','armCircle','shuffle'],
+    nm:{rebolado:['Rebolado','Pés afastados, joelhos dobrados e o quadril desenha o movimento. Abdômen firme protege a lombar.'],
+        bootyStep:['Quadradinho de leve','Quadril sobe e desce marcando o tamborzão, joelhos sempre dobrados.'],
+        stepTouch:['Passinho de lado','Passo para o lado e junta, com o quadril marcando cada batida do tamborzão.'],
+        armCircle:['Braços em volta','Os braços desenham um círculo grande enquanto os pés marcam o tempo.'],
+        shuffle:['Passo arrastado','Os pés deslizam de um lado para o outro no ritmo do tamborzão.']}},
+  {n:'Samba e pagode',estilo:'samba',bpm:100,sub:'Samba no pé e balanço do pagode',
+    yt:'aula de samba no pé iniciante passo a passo',
+    b:['samba','rumba','stepTouch','armCircle'],
+    nm:{samba:['Samba no pé','Passinhos rápidos trocando o peso de um pé para o outro, na ponta dos pés, três toques por tempo. Cansa mais do que parece.'],
+        rumba:['Balanço do pagode','Passos pequenos, quadril solto e ombros relaxados, no balanço do pagode.'],
+        stepTouch:['Passo lateral do pagode','Passo para o lado e junta, devagar, no balanço do cavaquinho.'],
+        armCircle:['Braços de passista','Braços abertos desenham círculos enquanto os pés continuam no samba.']}},
+  {n:'Sertanejo',estilo:'sertanejo',bpm:104,sub:'Passos de dança de salão e giro',
+    yt:'coreografia sertanejo universitário aula de ritmos',
+    b:['stepTouch','salsa','shuffle','twist','armsUp'],
+    nm:{stepTouch:['Dois pra lá, dois pra cá','O passo base do sertanejo universitário, igual ao do forró, mas no balanço do violão.'],
+        salsa:['Base para frente e para trás','Um passo à frente e volta, um passo atrás e volta.'],
+        shuffle:['Passo lateral','Passos para o lado, arrastando o pé, como no vanerão.'],
+        twist:['Giro de quadril','Gire o quadril e os pés juntos, braços acompanhando.'],
+        armsUp:['Mãos para o alto','Braços para cima no refrão, como num show.']}},
+];
+/* Vídeos de coreografias brasileiras no YouTube (abre a busca, o vídeo é escolha sua) */
+const VIDS_DANCA=[
+  ['Lore Improta','Coreografias de axé, funk e pagode','Lore Improta coreografia'],
+  ['Axé','Coreografias de bloco para suar','coreografia axé para dançar em casa'],
+  ['Funk','Coreografias de funk para treinar','coreografia funk aula de dança fitness'],
+  ['Forró','Passo básico e xote','aula de forró passo básico iniciante'],
+  ['Samba no pé','Aula passo a passo','aula de samba no pé iniciante passo a passo'],
+  ['Pagode','Coreografias de pagode','coreografia pagode dança'],
+  ['Sertanejo','Coreografias de sertanejo','coreografia sertanejo universitário'],
+  ['Aula de ritmos completa','Vários ritmos numa aula só','aula de ritmos completa em casa'],
 ];
 function seqPasso(k,bpm,tempos){
   // ajusta a velocidade para cada repetição do movimento caber num número inteiro de tempos
   const bt=60/bpm,D=DUR_PASSO[k]||4,nb=Math.max(2,Math.round(D/bt/2)*2);
   return [{k,t0:0,len:D,rate:D/(nb*bt),ms:Math.round(tempos*bt*1000)}];
 }
-const DUR_PASSO={stepTouch:7.8,shuffle:5.9,twist:5.43,rumba:2.37,armsUp:1.17,cabbage:3.83,bootyStep:4.9,samba:10.77,salsa:2.6,rainbow:7.33,jacks:1.07,jazzSquare:2.03,runningMan:10.83,rockette:5.43,armPush:2.33,armCircle:2.27,maraschino:3.23};
-function itemPasso(k,bpm,tempos){
-  const p=PASSO[k];return {n:p.n,a:k,m:['cardio','quadriceps','panturrilhas'],tip:p.tip,k:'aero',q:'aula de dança aeróbica '+p.n,seq:seqPasso(k,bpm,tempos),bpm,danca:1};
+const DUR_PASSO={rebolado:4.8,stepTouch:7.8,shuffle:5.9,twist:5.43,rumba:2.37,armsUp:1.17,cabbage:3.83,bootyStep:4.9,samba:10.77,salsa:2.6,rainbow:7.33,jacks:1.07,jazzSquare:2.03,runningMan:10.83,rockette:5.43,armPush:2.33,armCircle:2.27,maraschino:3.23};
+function nomePasso(k,C){const x=C&&C.nm&&C.nm[k];return x?x[0]:(PASSO[k]||{n:k}).n;}
+function itemPasso(k,bpm,tempos,C){
+  const p=PASSO[k]||{n:k,tip:''},x=C&&C.nm&&C.nm[k],n=x?x[0]:p.n;
+  return {n,a:k,m:['cardio','quadriceps','gluteos','panturrilhas'],tip:x?x[1]:p.tip,k:'aero',q:(C?'aula de '+C.n.toLowerCase()+' ':'aula de dança ')+n,seq:seqPasso(k,bpm,tempos),bpm,danca:1,estilo:C&&C.estilo};
 }
 function coreoDaSemana(){const d=new Date(),w=Math.floor((d-new Date(d.getFullYear(),0,1))/604800000);return COREOS[w%COREOS.length];}
 
@@ -90,7 +143,13 @@ function coreoDaSemana(){const d=new Date(),w=Math.floor((d-new Date(d.getFullYe
    forca  = batida firme e constante, bumbo em todo tempo, para ritmo de repetição
    luta   = percussão de luta: tambores graves, címbalo curto e marcação seca
    calma  = acordes longos e suaves, sem batida, para yoga e volta à calma */
-const ESTILOS={danca:{n:'Dança',vol:0.5},forca:{n:'Força',vol:0.45},luta:{n:'Luta',vol:0.5},calma:{n:'Calma',vol:0.55}};
+const ESTILOS={danca:{n:'Dança',vol:0.5},forca:{n:'Força',vol:0.45},luta:{n:'Luta',vol:0.5},calma:{n:'Calma',vol:0.55},
+  forro:{n:'Forró',vol:0.5},axe:{n:'Axé',vol:0.5},funk:{n:'Funk',vol:0.5},samba:{n:'Samba',vol:0.5},sertanejo:{n:'Sertanejo',vol:0.5}};
+/* forro     = levada de baião: zabumba grave no 1 e no "a" do 1, triângulo em semicolcheias aberto no contratempo
+   axe       = samba-reggae: surdos no 1 e no 3, repique nos contratempos e palmas
+   funk      = tamborzão: bumbo em 3-3-2 e palma no 2 e no 4
+   samba     = surdo de marcação forte no 2 e no 4, tamborim e pandeiro com acento no último tempinho
+   sertanejo = bumbo e caixa com o violão batendo no contratempo */
 const Batida={
   ctx:null,on:false,bpm:120,estilo:'danca',next:0,n:0,timer:null,vol:null,base:0.5,
   start(ctx,bpm,estilo='danca'){
@@ -103,32 +162,72 @@ const Batida={
   duck(x){if(this.vol&&this.ctx) try{this.vol.gain.setTargetAtTime(x,this.ctx.currentTime,0.08);}catch(e){}},
   fala(on){this.falando=on;this.duck(on?this.base*0.3:this.base);}, // abaixa enquanto a voz fala
   agenda(){
-    if(!this.on) return;const c=this.ctx,step=60/this.bpm/2; // colcheias
+    if(!this.on) return;const c=this.ctx,step=60/this.bpm/4; // semicolcheias
     while(this.next<c.currentTime+0.12){
-      const t=this.next,i=this.n%16,beat=i%2===0,b4=(i/2)%4,bar=Math.floor(this.n/16);
-      if(this.estilo==='forca'){
-        if(beat) this.kick(t,1);
-        if(beat&&(b4===1||b4===3)) this.clap(t);
-        if(!beat) this.hat(t,0.1);
-        if(!beat) this.bass(t,[55,55,49,41.2][bar%4],'sawtooth',0.1);
-      } else if(this.estilo==='luta'){
-        // tambor grave no 1 e no "e" do 2; tambor agudo nos contratempos; címbalo alternando aberto e fechado
-        if(i===0||i===5||i===8) this.tom(t,i===8?90:70,0.7);
-        if(i===3||i===11||i===14) this.tom(t,150,0.45);
-        if(beat) this.ching(t,b4%2===0);
-        if(i===12&&bar%2===1) this.tom(t,120,0.5);
-      } else if(this.estilo==='calma'){
-        if(this.n%16===0){const ac=[[261.6,329.6,392,493.9],[220,261.6,329.6,392],[174.6,220,261.6,329.6],[196,246.9,293.7,392]][bar%4];this.pad(t,ac,step*16);}
-        if(this.n%16===10&&bar%2===0) this.sino(t,[784,659.3,587.3,523.3][bar%4]);
-      } else {
-        if(beat&&(b4===0||b4===2)) this.kick(t);
-        if(beat&&(b4===1||b4===3)) this.clap(t);
-        this.hat(t,beat?0.05:0.09);
-        if(beat) this.bass(t,[55,55,65.4,49][Math.floor(i/4)%4]);
+      const t=this.next,s16=this.n%16,bar=Math.floor(this.n/16),E=this.estilo;
+      if(E==='forro'){
+        if(s16===0||s16===8) this.tom(t,70,0.8);
+        if(s16===3||s16===11) this.tom(t,80,0.55);
+        if(s16===4||s16===12) this.tom(t,180,0.25); // bacalhau
+        this.triangulo(t,s16%4===2);
+        if(s16===0||s16===8) this.bass(t,[49,49,55,41.2][bar%4]*(s16===8?1.5:1),'triangle',0.2);
+        if(s16===6||s16===14) this.acorde(t,[[196,246.9,293.7],[196,246.9,293.7],[220,277.2,329.6],[164.8,207.7,246.9]][bar%4],0.12,0.035);
+      } else if(E==='axe'){
+        if(s16===0) this.tom(t,95,0.6);
+        if(s16===8) this.tom(t,65,0.85);
+        if(s16===6||s16===10||s16===14) this.tom(t,170,0.35);
+        if(s16===4||s16===12) this.clap(t);
+        if(s16%4===2) this.hat(t,0.08);
+        if(s16===0||s16===8) this.bass(t,[55,49,41.2,49][bar%4],'triangle',0.2);
+      } else if(E==='funk'){
+        if([0,3,6,8,11,14].includes(s16)) this.kick(t,s16%8===0?0.95:0.7);
+        if(s16===4||s16===12) this.clap(t);
+        if([2,10].includes(s16)) this.tom(t,140,0.3);
+        this.hat(t,s16%2?0.025:0.05);
+        if(s16===0||s16===6||s16===11) this.bass(t,[43.7,43.7,49,41.2][bar%4],'sawtooth',0.14);
+      } else if(E==='samba'){
+        if(s16===0||s16===8) this.tom(t,85,0.4);
+        if(s16===4||s16===12) this.tom(t,62,0.85); // surdo de marcação
+        if([0,3,6,8,10,13].includes(s16)) this.tom(t,420,0.16); // tamborim
+        this.hat(t,s16%4===3?0.09:0.035); // pandeiro, acento no último tempinho
+        if(s16===2||s16===10) this.acorde(t,[[261.6,329.6,392],[220,261.6,329.6],[293.7,349.2,440],[196,246.9,293.7]][bar%4],0.1,0.03);
+      } else if(E==='sertanejo'){
+        if(s16===0||s16===8||s16===10) this.kick(t,s16===10?0.6:0.85);
+        if(s16===4||s16===12) this.clap(t);
+        if(s16%2===0) this.hat(t,s16%4?0.07:0.04);
+        if(s16%4===2) this.acorde(t,[[196,246.9,293.7],[293.7,370,440],[329.6,392,493.9],[261.6,329.6,392]][bar%4],0.14,0.04);
+        if(s16%4===0) this.bass(t,[[49,73.4],[73.4,55],[82.4,61.7],[65.4,49]][bar%4][(s16/4)%2],'triangle',0.2);
+      } else if(this.n%2===0){
+        // estilos antigos, em colcheias
+        const m=this.n>>1,i=m%16,beat=i%2===0,b4=(i/2)%4,bar8=Math.floor(m/16),st8=step*2;
+        if(E==='forca'){
+          if(beat) this.kick(t,1);
+          if(beat&&(b4===1||b4===3)) this.clap(t);
+          if(!beat) this.hat(t,0.1);
+          if(!beat) this.bass(t,[55,55,49,41.2][bar8%4],'sawtooth',0.1);
+        } else if(E==='luta'){
+          // tambor grave no 1 e no "e" do 2; tambor agudo nos contratempos; címbalo alternando aberto e fechado
+          if(i===0||i===5||i===8) this.tom(t,i===8?90:70,0.7);
+          if(i===3||i===11||i===14) this.tom(t,150,0.45);
+          if(beat) this.ching(t,b4%2===0);
+          if(i===12&&bar8%2===1) this.tom(t,120,0.5);
+        } else if(E==='calma'){
+          if(i===0){const ac=[[261.6,329.6,392,493.9],[220,261.6,329.6,392],[174.6,220,261.6,329.6],[196,246.9,293.7,392]][bar8%4];this.pad(t,ac,st8*16);}
+          if(i===10&&bar8%2===0) this.sino(t,[784,659.3,587.3,523.3][bar8%4]);
+        } else {
+          if(beat&&(b4===0||b4===2)) this.kick(t);
+          if(beat&&(b4===1||b4===3)) this.clap(t);
+          this.hat(t,beat?0.05:0.09);
+          if(beat) this.bass(t,[55,55,65.4,49][Math.floor(i/4)%4]);
+        }
       }
       this.next+=step;this.n++;
     }
   },
+  triangulo(t,aberto){const c=this.ctx,g=c.createGain(),d=aberto?0.3:0.04;g.gain.setValueAtTime(aberto?0.06:0.03,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);g.connect(this.vol);
+    [1850,4400,6900].forEach(f=>{const o=c.createOscillator();o.type='sine';o.frequency.value=f;o.connect(g);o.start(t);o.stop(t+d+0.02);});},
+  acorde(t,notas,d,v){const c=this.ctx;notas.forEach(f=>{const o=c.createOscillator(),g=c.createGain(),fl=c.createBiquadFilter();o.type='sawtooth';o.frequency.value=f;fl.type='lowpass';fl.frequency.value=2200;
+    g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(v,t+0.008);g.gain.exponentialRampToValueAtTime(0.0001,t+d+0.15);o.connect(fl).connect(g).connect(this.vol);o.start(t);o.stop(t+d+0.2);});},
   kick(t,v=0.9){const c=this.ctx,o=c.createOscillator(),g=c.createGain();o.frequency.setValueAtTime(140,t);o.frequency.exponentialRampToValueAtTime(45,t+0.12);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(0.001,t+0.25);o.connect(g).connect(this.vol);o.start(t);o.stop(t+0.26);},
   ruido(t,d,f,v,type){const c=this.ctx,b=c.createBuffer(1,Math.ceil(c.sampleRate*d),c.sampleRate),x=b.getChannelData(0);for(let i=0;i<x.length;i++)x[i]=Math.random()*2-1;
     const s=c.createBufferSource(),fl=c.createBiquadFilter(),g=c.createGain();s.buffer=b;fl.type=type;fl.frequency.value=f;g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(0.001,t+d);s.connect(fl).connect(g).connect(this.vol);s.start(t);},
@@ -144,11 +243,11 @@ const Batida={
   sino(t,f){const c=this.ctx,o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(0.0001,t);g.gain.exponentialRampToValueAtTime(0.06,t+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t+2.5);o.connect(g).connect(this.vol);o.start(t);o.stop(t+2.6);},
 };
 /* Qual música combina com cada parte do treino */
-function musicaDoPasso(plan,s){
+function musicaDoPasso(plan,s,C){
   const P=PLANS[plan];if(!P||!s) return null;
   if(s.k==='cool'||P.flow) return {estilo:'calma',bpm:60};
-  if(s.it&&s.it.danca&&s.k==='work') return {estilo:'danca',bpm:s.it.bpm};
-  if(P.coreo) return {estilo:'danca',bpm:120};
+  if(s.it&&s.it.danca&&(s.k==='work'||s.k==='learn')) return {estilo:s.it.estilo||'danca',bpm:s.it.bpm};
+  if(P.coreo) return C?{estilo:C.estilo,bpm:C.bpm}:{estilo:'danca',bpm:120};
   if(P.mt) return {estilo:'luta',bpm:126};
   return {estilo:'forca',bpm:s.k==='warm'?110:118};
 }

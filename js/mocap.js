@@ -39,6 +39,7 @@ const MOCAP={
   cabbage:'assets/mixamo/cabbage.json',
   bootyStep:'assets/mixamo/bootyStep.json',
   samba:'assets/mixamo/samba.json',
+  rebolado:'assets/mixamo/rebolado.json',
   salsa:'assets/mixamo/salsa.json',
   rainbow:'assets/mixamo/rainbow.json',
   jazzSquare:'assets/mixamo/jazzSquare.json',
@@ -52,7 +53,7 @@ const MOCAP={
 const MOCAP_RATE={squat:0.8,bicycle:0.55,neckStretch:0.45};
 // enquanto o arquivo carrega (ou sem internet), mostra um movimento parecido
 if(typeof AN!=='undefined'){
-  const alias={hiphop:'danceMarch',salsa:'danceMarch',samba:'danceMarch',belly:'danceMarch',situp:'crunch',bicycle:'crunch',
+  const alias={hiphop:'danceMarch',salsa:'danceMarch',samba:'danceMarch',belly:'danceMarch',rebolado:'danceMarch',situp:'crunch',bicycle:'crunch',
     snapKick:'teep',jog:'highknees',jacks:'danceMarch',armStretch:'circles',breathIdle:'breath',
     hookLead:'jabcross',hookRear:'jabcross',upperRear:'jabcross',boxWarm:'circles',pikeWalk:'dog',dodge:'squat',bodyJab:'jabcross',ropeJump:'highknees',neckStretch:'breath',stepTouch:'danceMarch',shuffle:'danceMarch',twist:'danceMarch',rumba:'danceMarch',armsUp:'danceMarch',cabbage:'danceMarch',bootyStep:'danceMarch',rainbow:'danceMarch',jazzSquare:'danceMarch',runningMan:'danceMarch',rockette:'danceMarch',armPush:'danceMarch',armCircle:'danceMarch',maraschino:'danceMarch'};
   for(const k in alias) if(!AN[k]) AN[k]=AN[alias[k]];

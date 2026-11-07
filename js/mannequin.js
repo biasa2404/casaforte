@@ -284,7 +284,7 @@ class Stage{
     if(this.yawTarget!=null) this.yaw+=(this.yawTarget-this.yaw)*0.06;
     // câmera desliza até o novo enquadramento, sem pulo
     if(!this.bbS) this.bbS={...this.bb};
-    else{const f=0.08;for(const k of ['x0','x1','y1']) this.bbS[k]+=(this.bb[k]-this.bbS[k])*f;}
+    else{const f=0.15;for(const k of ['x0','x1','y1']) this.bbS[k]+=(this.bb[k]-this.bbS[k])*f;}
     const b=this.bbS,cx=(b.x0+b.x1)/2,cy=Math.max(b.y1,40)/2+2;
     const half=Math.max((b.x1-b.x0)/2+14,(Math.max(b.y1,50))/2*(this.cam.aspect)+10);
     const vh=Math.max(b.y1/2+12,half/this.cam.aspect);

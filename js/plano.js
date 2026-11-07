@@ -69,7 +69,7 @@ function gerarPlano(q){
   else porque.push('Com 2 dias por semana, um fica para a força e outro para o que você mais quer aprender. Se der, aumente para 3 dias e coloque mais um de força, que é o mínimo recomendado pela OMS.');
   const usados=new Set(Object.values(semana));
   if(usados.has(2)) porque.push('Muay Thai ensina técnica e ainda conta como exercício aeróbico.');
-  if(usados.has(6)) porque.push('O dia de dança aeróbica ajuda o fôlego e a disposição.');
+  if(usados.has(6)) porque.push('O dia de dança com ritmos brasileiros ajuda o fôlego e a disposição.');
   if(usados.has(4)) porque.push('Yoga e alongamento trabalham mobilidade e ajudam a desacelerar.');
   const min=n*(+((q.tempo||['40'])[0])||40);
   if(min<150) porque.push(`São ${min} minutos de treino por semana. A OMS recomenda pelo menos 150 minutos de atividade moderada: caminhadas de 10 minutos ou mais nos outros dias completam a conta.`);

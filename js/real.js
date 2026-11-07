@@ -12,6 +12,7 @@ const RBONES={hip:'Hips',spine:'Spine1',chest:'Spine2',nk:'Neck',headB:'Head',to
   hipJ0:'RightUpLeg',knee0:'RightLeg',ankle0:'RightFoot',ball0:'RightToeBase',toe0:'RightToe_End',
   hipJ1:'LeftUpLeg',knee1:'LeftLeg',ankle1:'LeftFoot',ball1:'LeftToeBase',toe1:'LeftToe_End'};
 
+const NO_LUGAR=new Set(['samba']);
 function realLoad(){
   if(REAL.started||!window.THREE||!THREE.GLTFLoader||!THREE.SkeletonUtils) return;
   REAL.started=true;
@@ -73,6 +74,8 @@ class RealChar{
     // quadril e tronco: o tronco do boneco é uma reta do quadril ao ombro
     const Mt=basis(up,new T.Vector3(0,0,1)),Mr=basis(sub(W('Spine2'),W('Hips')),sub(W('RightUpLeg'),W('LeftUpLeg')));
     rot('Hips',new T.Quaternion().setFromRotationMatrix(Mt.multiply(Mr.invert())));
+    // curvatura da coluna (cv, em graus): positivo arredonda as costas (gato), negativo arqueia (vaca)
+    if(j.cv){const q=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,0,1),j.cv*RAD/3);['Spine','Spine1','Spine2'].forEach(n=>rot(n,q.clone()));}
     aim('Neck','Head',sub(V(j.head),V(j.nk)));
     const at=(f,z)=>V([j.hip[0]+up.x*f,j.hip[1]+up.y*f],z);
     const pitch=this.footPitch;
@@ -83,8 +86,10 @@ class RealChar{
       aim(s+'UpLeg',s+'Leg',sub(V(kn),V(j.hip)));
       aim(s+'Leg',s+'Foot',sub(V(an),V(kn)));
       // o pé do boneco antigo vai do tornozelo à ponta; o da Sophie, do tornozelo à base dos dedos (mais inclinado)
-      const fd=sub(V(to),V(an)).normalize(),c=Math.cos(-pitch),sn=Math.sin(-pitch);
-      aim(s+'Foot',s+'ToeBase',new T.Vector3(fd.x*c-fd.y*sn,fd.x*sn+fd.y*c,0));
+      // gira para o lado que fica mais perto do chão (em pé: para baixo e à frente; ajoelhada: peito do pé no chão)
+      const fd=sub(V(to),V(an)).normalize(),r1=(g)=>new T.Vector3(fd.x*Math.cos(g)-fd.y*Math.sin(g),fd.x*Math.sin(g)+fd.y*Math.cos(g),0);
+      const fa=r1(-pitch),fb=r1(pitch);
+      aim(s+'Foot',s+'ToeBase',fa.y<=fb.y?fa:fb);
     });
     // posição: quadril no lugar do quadril do boneco, e o ponto mais baixo na mesma altura
     const h=W('Hips'),off=sub(hip,h);this.root.position.copy(off);this.root.updateMatrixWorld(true);
@@ -93,15 +98,27 @@ class RealChar{
     j.arms.forEach(([e,a])=>pts.push(['e',e],['a',a]));j.legs.forEach(([k,a,t])=>pts.push(['k',k],['an',a],['t',t]));
     const r2={e:2.75,a:2.5,k:3.75,an:0,t:0};let mMin=1e9;pts.forEach(([k,p])=>{const y=p[1]-(rm[k]??r2[k]??0);if(y<mMin) mMin=y;});
     this.root.position.y+=Math.max(0,mMin)-sMin;this.root.updateMatrixWorld(true);
-    // mãos apoiadas no chão: braço da Sophie tem outro tamanho, então leva a mão até o chão (IK de dois ossos)
-    [['Right',0],['Left',1]].forEach(([s2,i])=>{
+    // mãos apoiadas no chão: a mão vai até o chão (mais perto do corpo se o braço não alcançar) e fica espalmada
+    [['Right',0,1],['Left',1,-1]].forEach(([s2,i,zs])=>{
       const ha=j.arms[i][1];if(ha[1]>4) return;
-      const A=W(s2+'Arm'),Bp=W(s2+'ForeArm'),C=W(s2+'Hand'),a=A.distanceTo(Bp),b=Bp.distanceTo(C);
-      const Tt=new T.Vector3(ha[0],RAIO.hand0+0.3,C.z),dv=sub(Tt,A),d=Math.min(dv.length(),a+b-0.01);if(d<Math.abs(a-b)+0.01) return;
-      const u=dv.normalize(),pe=sub(Bp,A).addScaledVector(u,-sub(Bp,A).dot(u));if(pe.lengthSq()<1e-6) pe.set(0,0,1).cross(u);pe.normalize();
-      const ca=(a*a+d*d-b*b)/(2*a*d),sa=Math.sqrt(Math.max(0,1-ca*ca)),B2=A.clone().addScaledVector(u,a*ca).addScaledVector(pe,a*sa);
-      aim(s2+'Arm',s2+'ForeArm',sub(B2,A));aim(s2+'ForeArm',s2+'Hand',sub(A.clone().addScaledVector(u,d),B2));
+      const A=W(s2+'Arm'),C=W(s2+'Hand'),Lb=A.distanceTo(W(s2+'ForeArm'))+W(s2+'ForeArm').distanceTo(C)-0.4,y0=1.4;
+      const Tt=new T.Vector3(ha[0],y0,C.z),dy=A.y-y0,dz=A.z-Tt.z,dx=Tt.x-A.x,dd=Math.hypot(dx,dy,dz);
+      if(dd>Lb){const hx=Math.sqrt(Math.max(0,Lb*Lb-dy*dy-dz*dz));Tt.x=A.x+Math.sign(dx||1)*hx;}
+      this.reach(s2,Tt);this.palma(s2,zs,j.hf||(Tt.x>=A.x?1:-1));
     });
+  }
+  /* Mão espalmada no chão: dedos para a frente (dir = +1) ou para trás, palma para baixo */
+  palma(s,zs,dir){
+    const T=THREE,B=this.B,W=n=>B[n].getWorldPosition(new T.Vector3());
+    if(!B[s+'HandMiddle1']||!B[s+'HandIndex1']||!B[s+'HandPinky1']) return;
+    const rot=(n,dq)=>{const b=B[n];const pq=b.parent.getWorldQuaternion(new T.Quaternion()),wq=b.getWorldQuaternion(new T.Quaternion());b.quaternion.copy(pq.invert().multiply(dq.multiply(wq)));b.updateMatrixWorld(true);};
+    const f=new T.Vector3(Math.sign(dir)||1,0,0);
+    const cur=W(s+'HandMiddle1').sub(W(s+'Hand')).normalize();rot(s+'Hand',new T.Quaternion().setFromUnitVectors(cur,f));
+    // gira em volta dos dedos para o polegar ficar do lado de dentro (palma para baixo)
+    const v=W(s+'HandIndex1').sub(W(s+'HandPinky1'));v.addScaledVector(f,-v.dot(f)).normalize();
+    const want=new T.Vector3(0,0,-zs*(Math.sign(dir)||1)).normalize();
+    let ang=Math.acos(Math.max(-1,Math.min(1,v.dot(want))));if(new T.Vector3().crossVectors(v,want).dot(f)<0) ang=-ang;
+    rot(s+'Hand',new T.Quaternion().setFromAxisAngle(f,ang));
   }
   /* Leva a mão do lado s ('Right'/'Left') até o ponto T (mundo), dobrando ombro e cotovelo (IK de dois ossos) */
   reach(s,Tt){
@@ -147,7 +164,10 @@ class RealChar{
     return this.fits[key];
   }
   joints(t){
-    this.mixer.setTime(((t%this.dur)+this.dur)%this.dur);this.root.updateMatrixWorld(true);
+    this.mixer.setTime(((t%this.dur)+this.dur)%this.dur);
+    // passos que andam pelo tapete ficam no lugar (o quadril não se desloca)
+    if(NO_LUGAR.has(this.key)&&this.B.Hips){const hp=this.B.Hips.position;if(!this.p0||this.p0k!==this.key){this.mixer.setTime(0);this.p0=hp.clone();this.p0k=this.key;this.mixer.setTime(((t%this.dur)+this.dur)%this.dur);}hp.x=this.p0.x;hp.z=this.p0.z;}
+    this.root.updateMatrixWorld(true);
     const J={},v=new THREE.Vector3();
     for(const k in RBONES){const b=this.B[RBONES[k]];if(b){b.getWorldPosition(v);J[k]=[v.x,v.y,v.z];}}
     J.sh=J.shJ0.map((x,i)=>(x+J.shJ1[i])/2);
