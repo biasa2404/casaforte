@@ -75,8 +75,11 @@ class RealChar{
     const Mt=basis(up,new T.Vector3(0,0,1)),Mr=basis(sub(W('Spine2'),W('Hips')),sub(W('RightUpLeg'),W('LeftUpLeg')));
     rot('Hips',new T.Quaternion().setFromRotationMatrix(Mt.multiply(Mr.invert())));
     // curvatura da coluna (cv, em graus): positivo arredonda as costas (gato), negativo arqueia (vaca)
+    // inclinação da pelve (pv, graus): na vaca o cóccix sobe, no gato ele encaixa; o tronco acima compensa
+    if(j.pv){const q=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,0,1),j.pv*RAD);rot('Hips',q.clone());rot('Spine',q.clone().invert());}
     if(j.cv){const q=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,0,1),j.cv*RAD/3);['Spine','Spine1','Spine2'].forEach(n=>rot(n,q.clone()));}
     aim('Neck','Head',sub(V(j.head),V(j.nk)));
+    if(j.hp) rot('Head',new T.Quaternion().setFromAxisAngle(new T.Vector3(0,0,1),j.hp*RAD)); // olhar para cima (+) ou para baixo (-)
     const at=(f,z)=>V([j.hip[0]+up.x*f,j.hip[1]+up.y*f],z);
     const pitch=this.footPitch;
     [['Right',0,1],['Left',1,-1]].forEach(([s,i,zs])=>{
@@ -121,23 +124,33 @@ class RealChar{
     rot(s+'Hand',new T.Quaternion().setFromAxisAngle(f,ang));
   }
   /* Leva a mão do lado s ('Right'/'Left') até o ponto T (mundo), dobrando ombro e cotovelo (IK de dois ossos) */
-  reach(s,Tt){
+  reach(s,Tt,pole){
     const T=THREE,B=this.B,W=n=>B[n].getWorldPosition(new T.Vector3());
     const rot=(n,dq)=>{const b=B[n];const pq=b.parent.getWorldQuaternion(new T.Quaternion()),wq=b.getWorldQuaternion(new T.Quaternion());b.quaternion.copy(pq.invert().multiply(dq.multiply(wq)));b.updateMatrixWorld(true);};
     const aim=(n,c,d)=>{const cur=W(c).sub(W(n)).normalize();if(d.lengthSq()<1e-6) return;rot(n,new T.Quaternion().setFromUnitVectors(cur,d.clone().normalize()));};
-    const A=W(s+'Arm'),Bp=W(s+'ForeArm'),C=W(s+'Hand'),a=A.distanceTo(Bp),b=Bp.distanceTo(C);
+    const A=W(s+'Arm'),B0=W(s+'ForeArm'),C=W(s+'Hand'),a=A.distanceTo(B0),b=B0.distanceTo(C),Bp=pole||B0;
     const dv=Tt.clone().sub(A),d=Math.min(dv.length(),a+b-0.01);if(d<Math.abs(a-b)+0.01) return;
     const u=dv.normalize(),ab=Bp.clone().sub(A),pe=ab.clone().addScaledVector(u,-ab.dot(u));if(pe.lengthSq()<1e-6) pe.set(0,0,1).cross(u);pe.normalize();
     const ca=(a*a+d*d-b*b)/(2*a*d),sa=Math.sqrt(Math.max(0,1-ca*ca)),B2=A.clone().addScaledVector(u,a*ca).addScaledVector(pe,a*sa);
     aim(s+'Arm',s+'ForeArm',B2.clone().sub(A));aim(s+'ForeArm',s+'Hand',A.clone().addScaledVector(u,d).sub(B2));
+  }
+  /* Fecha a mão (luva): dobra cada falange dos dedos */
+  punho(s){
+    const T=THREE,ax=new T.Vector3(1,0,0),g=1.4;
+    ['Index','Middle','Ring','Pinky'].forEach(d=>[1,2,3].forEach(i=>{const b=this.B[s+'Hand'+d+i];if(b&&this.rest[s+'Hand'+d+i]){b.quaternion.copy(this.rest[s+'Hand'+d+i].q).multiply(new T.Quaternion().setFromAxisAngle(ax,g));b.updateMatrixWorld(true);}}));
+    const t=this.B[s+'HandThumb2'];if(t&&this.rest[s+'HandThumb2']){t.quaternion.copy(this.rest[s+'HandThumb2'].q).multiply(new T.Quaternion().setFromAxisAngle(ax,g*0.4));t.updateMatrixWorld(true);}
   }
   /* Guarda do Muay Thai: quando a mão está perto do rosto, ela sobe até a altura da testa */
   guardaAlta(parado){
     const T=THREE,W=n=>this.B[n].getWorldPosition(new T.Vector3());
     if(!this.B.Head||!this.B.HeadTop_End) return;
     const hd=W('Head'),top=W('HeadTop_End'),alvoY=hd.y+(top.y-hd.y)*0.35;
-    if(parado){ // só a base: as duas luvas na frente do rosto, na altura da testa
-      [['Right',1],['Left',-1]].forEach(([s,z])=>{const h=W(s+'Hand');this.reach(s,new T.Vector3(hd.x+10,alvoY+(h.y-hd.y)*0.15,hd.z+z*5));});
+    if(parado){ // só a base: antebraços paralelos e em pé na frente do rosto, luvas na altura da testa, cotovelos para baixo e fechados
+      // frente e lado de verdade (na base de luta o corpo fica de lado, então não dá para usar os eixos do mundo)
+      const sh=W('Neck'),f=new T.Vector3(0,0,1).applyQuaternion(this.B.Head.getWorldQuaternion(new T.Quaternion()));f.y=0;f.normalize();
+      const l=new T.Vector3().crossVectors(f,new T.Vector3(0,1,0)).normalize();if(l.dot(W('RightArm').sub(W('LeftArm')))<0) l.negate();
+      [['Right',1],['Left',-1]].forEach(([s,z])=>{const base=hd.clone().addScaledVector(f,13).addScaledVector(l,z*4.5);
+        this.reach(s,new T.Vector3(base.x,hd.y+1,base.z),new T.Vector3(base.x,sh.y-30,base.z).addScaledVector(l,z*2));this.punho(s);});
       return;
     }
     ['Right','Left'].forEach(s=>{

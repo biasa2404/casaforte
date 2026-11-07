@@ -22,7 +22,7 @@ const pair=v=>v==null?[null,null]:(isPt(v)?[v.slice(),v.slice()]:[v[0]??null,v[1
 function norm(p){
   const t=p.sh?ang(p.hip,p.sh):p.t;
   return {hip:p.hip.slice(),t,hd:p.hd??t,hk:pair(p.hk),ar:pair(p.ar),fk:pair(p.fk),lg:pair(p.lg),
-    to:typeof p.to==='number'?[p.to,p.to]:(p.to||[90,90]),ep:pair(p.ep||[-1,0.3]),kp:pair(p.kp||[1,0.15]),cv:p.cv||0,hf:p.hf||0};
+    to:typeof p.to==='number'?[p.to,p.to]:(p.to||[90,90]),ep:pair(p.ep||[-1,0.3]),kp:pair(p.kp||[1,0.15]),cv:p.cv||0,pv:p.pv||0,hp:p.hp||0,hf:p.hf||0};
 }
 function mix(a,b,k){
   if(a==null||b==null) return k<0.5?a:b;
@@ -42,7 +42,7 @@ function solve(p){
     else {const a=p.lg[i]||[0,0]; k=add(hip,a[0],L.TH); an=add(k,a[1],L.SH);}
     return [k,an,add(an,p.to[i],L.FT)];
   });
-  return {hip,sh,nk,head,arms,legs,cv:p.cv||0,hf:p.hf||0};
+  return {hip,sh,nk,head,arms,legs,cv:p.cv||0,pv:p.pv||0,hp:p.hp||0,hf:p.hf||0};
 }
 function A(frames,props){
   const f=frames.map(([p,d])=>({p:norm(p),d}));
@@ -175,8 +175,9 @@ AN.cobra=A([[{hip:[0,4],t:128,hd:136,hk:[[22,0],[20,0]],ep:[-1,0.2],lg:[[-90,-90
 AN.warrior=A([[{hip:[0,34],t:180,ar:[[178,180],[174,178]],fk:[[28,0],[-40,0]],to:[90,60]},3000],[{hip:[0,33],t:182,ar:[[182,184],[178,182]],fk:[[28,0],[-40,0]],to:[90,60]},3000]]);
 AN.chair=A([[{hip:[-12,34],t:150,ar:[[160,165],[156,160]],fk:[[3,0],[1,0]]},3000],[{hip:[-12,32.5],t:149,ar:[[162,167],[158,162]],fk:[[3,0],[1,0]]},3000]]);
 AN.tree=A([[{hip:[0,57.5],t:180,ar:[[178,180],[176,178]],fk:[[0,0],[6,28]],kp:[[1,.15],[1,0.2]],to:[90,0]},3000],[{hip:[0,57.5],t:181,ar:[[181,183],[179,181]],fk:[[0,0],[6,28]],kp:[[1,.15],[1,0.2]],to:[90,0]},3000]]);
-AN.catcow=A([[{...QUAD,t:108,hd:142,cv:-34},2200],[{...QUAD,t:112,hd:58,cv:30},2200]]);
-AN.seatfold=A([[{hip:[0,6],t:150,hk:[[40,24],[38,24]],ep:[0,1],lg:[[90,90],[90,90]],to:[180,180]},2800],[{hip:[0,6],t:110,hd:105,hk:[[56,8],[54,8]],ep:[0,1],lg:[[90,90],[90,90]],to:[180,180]},3200],[{hip:[0,6],t:110,hd:105,hk:[[56,8],[54,8]],ep:[0,1],lg:[[90,90],[90,90]],to:[180,180]},2800]]);
+AN.catcow=A([[{...QUAD,t:114,hd:150,cv:-42,pv:-14,hp:45},2200],[{...QUAD,t:96,hd:40,cv:42,pv:14,hp:-12},2200]]);
+{const sf={hip:[0,6],ep:[0,1],lg:[[90,90],[90,90]],to:[180,180]},dobra={...sf,t:122,hd:120,cv:6,hk:[[50,13],[48,13]]};
+ AN.seatfold=A([[{...sf,t:150,hk:[[40,24],[38,24]]},2800],[dobra,3200],[dobra,2800]]);}
 // Dança e aeróbico
 AN.danceMarch=A([[{hip:[0,57],t:180,ar:[[170,175],[20,40]],lg:[[50,-10],[0,0]]},480],[{hip:[0,57],t:180,ar:[[20,40],[170,175]],lg:[[0,0],[50,-10]]},480]]);
 {const fk=[[16,0],[-14,0]];

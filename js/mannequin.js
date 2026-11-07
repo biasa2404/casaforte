@@ -242,10 +242,11 @@ class Stage{
     const k2=sq?sq.k:(this.key2&&MOCAP[this.key2]?this.key2:null);
     const clip=k2&&this.real!==false?(realLoad(),realClip(k2)):null;
     if(clip&&REAL.ok&&!this.char){try{this.char=new RealChar(this.scene);}catch(e){console.warn(e);this.real=false;}}
-    const mc=k2?mocapFor(k2):null;
-    // enquanto o movimento real carrega, não mostra o boneco antigo (até 10 s; depois usa o reserva)
-    const rc=k2&&REAL.clips[k2];
-    if(k2&&this.real!==false&&!(clip&&this.char)&&!REAL.err&&!(rc&&rc.err)&&performance.now()-(this.tSet||0)<10000){
+    // enquanto o movimento gravado carrega, a Sophie faz a versão montada do mesmo movimento
+    const rc=k2&&REAL.clips[k2],falhou=REAL.err||(rc&&rc.err)||this.real===false;
+    const mc=k2&&falhou?mocapFor(k2):null;
+    const montado=k2&&!(clip&&this.char)&&!falhou&&this.char&&AN[k2]?k2:null;
+    if(k2&&!montado&&!falhou&&!(clip&&this.char)&&performance.now()-(this.tSet||0)<30000){
       if(this.char) this.char.visible=false;this.showBody(false);this.j=null;
       this.r.setClearColor(0x000000,0);this.r.clear();
       if(this.ov){const ctx=this.ov.getContext('2d'),d=this.ov.width/this._w;ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,this._w,this._h);
@@ -261,19 +262,19 @@ class Stage{
       this.char.visible=true;this.showBody(false);
       j={J3:this.char.joints(sq?sq.t:this.clipSec(ms,this.char.dur,k2))};this.char.blendStep();
       if(GUARDA_ALTA.has(k2)) this.char.guardaAlta(k2==='mtBounce');
-    } else if(mc){
+    } else if(mc&&!montado){
       if(this.char) this.char.visible=false;this.showBody(true);
       if(!this.mcOn){this.mcOn=true;this.bb=mc.bb;this.fitMat(mc.bb);}
       const J=mocapJoints(mc,sq?sq.t%(mc.frames.length/mc.fps):this.clipSec(ms,mc.frames.length/mc.fps,k2));J.sh=J.shJ0.map((x,i)=>(x+J.shJ1[i])/2);j={J3:J};this.pose3(J);
     } else {
-      j=solve(poseAt(this.an,ms));
+      j=solve(poseAt(montado?AN[montado]:this.an,ms));
       // poses montadas: a Sophie também faz, girando os ossos dela para cada pose
       if(this.real!==false&&HAS3D){try{realLoad();}catch(e){}
         if(REAL.ok&&!this.char){try{this.char=new RealChar(this.scene);}catch(e){console.warn(e);this.real=false;}}}
       if(this.char&&this.real!==false){
         try{this.char.poseJ(j,this.key2||this.an);this.char.blendStep();this.char.visible=true;this.showBody(false);
           if(this.mcOn!=='pose'){this.mcOn='pose';const b=bbox(this.an);this.bb={x0:b.x0-6,x1:b.x1+6,y1:b.y1+10};this.fitMat(this.bb);}}
-        catch(e){console.warn(e);this.real=false;this.char.visible=false;this.showBody(true);this.pose(j);}
+        catch(e){console.warn(e);this.char.visible=false;this.showBody(true);this.pose(j);} // só neste quadro; tenta de novo no próximo
       } else if(this.real!==false&&!REAL.err&&!REAL.ok&&performance.now()-(this.tSet||0)<10000){
         this.showBody(false);this.r.setClearColor(0x000000,0);this.r.clear();this.j=null;
         if(this.ov){const ctx=this.ov.getContext('2d'),d=this.ov.width/this._w;ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,this._w,this._h);}
