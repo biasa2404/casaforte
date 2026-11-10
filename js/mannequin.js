@@ -13,19 +13,19 @@ function jointMap(j){
     knee0:j.legs[0][0],ankle0:j.legs[0][1],toe0:j.legs[0][2],knee1:j.legs[1][0],ankle1:j.legs[1][1],toe1:j.legs[1][2]};
 }
 const zOf=name=>/0$/.test(name)?(/elbow|hand/.test(name)?11:5.5):(/1$/.test(name)?(/elbow|hand/.test(name)?-11:-5.5):0);
-function angAt(a,b,c){
-  const v1=[a[0]-b[0],a[1]-b[1]],v2=[c[0]-b[0],c[1]-b[1]];
-  const d=(v1[0]*v2[0]+v1[1]*v2[1])/((Math.hypot(...v1)*Math.hypot(...v2))||1);
+const vsub=(a,b)=>a.map((x,i)=>x-b[i]),vdot=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0),vlen=a=>Math.hypot(...a);
+function angAt(a,b,c){ // funciona em 2D e 3D
+  const v1=vsub(a,b),v2=vsub(c,b),d=vdot(v1,v2)/((vlen(v1)*vlen(v2))||1);
   return Math.acos(Math.max(-1,Math.min(1,d)))/RAD;
 }
 function devFromLine(a,b,c){ // distância de b até a reta a-c
-  const dx=c[0]-a[0],dy=c[1]-a[1],L2=Math.hypot(dx,dy)||1;
-  return Math.abs(dy*(b[0]-a[0])-dx*(b[1]-a[1]))/L2;
+  const u=vsub(c,a),w=vsub(b,a),k=vdot(w,u)/(vdot(u,u)||1);
+  return vlen(w.map((x,i)=>x-u[i]*k));
 }
 
 /* Guias de técnica por movimento */
 const GUIDES={
-  squat:[{t:'ang',j:['hip','knee0','ankle0'],goal:90,tol:15,label:'Joelho'},{t:'plumb',j:'toe0',label:'Ponta do pé'}],
+  squat:[{t:'ang',j:['hip','knee0','ankle0'],goal:80,tol:22,label:'Joelho'},{t:'plumb',j:'toe0',label:'Ponta do pé'}],
   squatPause:[{t:'ang',j:['hip','knee0','ankle0'],goal:90,tol:15,label:'Joelho'},{t:'plumb',j:'toe0',label:'Ponta do pé'}],
   squatJump:[{t:'ang',j:['hip','knee0','ankle0'],goal:90,tol:15,label:'Joelho'}],
   squatLight:[{t:'ang',j:['hip','knee0','ankle0'],goal:120,tol:15,label:'Joelho'}],
@@ -37,9 +37,9 @@ const GUIDES={
   bridge1Pause:[{t:'line',j:['sh','hip','knee0'],tol:4,label:'Ombro, quadril e joelho em linha'}],
   bridgeHold:[{t:'line',j:['sh','hip','knee0'],tol:4,label:'Ombro, quadril e joelho em linha'}],
   pushKnee:[{t:'line',j:['sh','hip','knee0'],tol:3,label:'Corpo reto'},{t:'ang',j:['sh','elbow0','hand0'],goal:90,tol:15,label:'Cotovelo'}],
-  pushFull:[{t:'line',j:['sh','hip','ankle0'],tol:3,label:'Corpo reto'},{t:'ang',j:['sh','elbow0','hand0'],goal:90,tol:15,label:'Cotovelo'}],
+  pushFull:[{t:'line',j:['sh','hip','ankle0'],tol:5,label:'Corpo reto'},{t:'ang',j:['sh','elbow0','hand0'],goal:70,tol:25,label:'Cotovelo'}],
   pushDecl:[{t:'line',j:['sh','hip','ankle0'],tol:3,label:'Corpo reto'},{t:'ang',j:['sh','elbow0','hand0'],goal:90,tol:15,label:'Cotovelo'}],
-  highPlank:[{t:'line',j:['sh','hip','ankle0'],tol:3,label:'Corpo reto'},{t:'plumb',j:'hand0',label:'Mão abaixo do ombro'}],
+  highPlank:[{t:'line',j:['sh','hip','ankle0'],tol:5,label:'Corpo reto'},{t:'plumb',j:'hand0',label:'Mão abaixo do ombro'}],
   plank:[{t:'line',j:['sh','hip','ankle0'],tol:3,label:'Corpo reto'},{t:'ang',j:['sh','elbow0','hand0'],goal:90,tol:12,label:'Cotovelo'}],
   dip1:[{t:'ang',j:['sh','elbow0','hand0'],goal:90,tol:15,label:'Cotovelo'}],
   dip2:[{t:'ang',j:['sh','elbow0','hand0'],goal:90,tol:15,label:'Cotovelo'}],
@@ -59,6 +59,9 @@ const GUIDES={
   knee:[{t:'ang',j:['hip','knee1','ankle1'],goal:60,tol:20,label:'Joelho de trás'}],
   teep:[{t:'line',j:['hip','knee0','ankle0'],tol:5,label:'Perna estendida no chute'}],
 };
+
+/* Movimentos de luta em que as mãos voltam para a guarda alta (altura da testa) */
+const GUARDA_ALTA=new Set(['mtBounce','jabcross','hookLead','hookRear','upperRear','elbow','teep','kickLow','kickMid','kickHigh','dodge','bodyJab','shadowbox']);
 
 class Stage{
   constructor(canvas,overlay,opt={}){
@@ -113,14 +116,25 @@ class Stage{
     let down=null;
     const el=this.ov||this.c;
     el.style.touchAction='pan-y';
-    el.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY,yaw:this.yaw,pitch:this.pitch};el.setPointerCapture?.(e.pointerId);});
+    el.addEventListener('pointerdown',e=>{this.yawTarget=null;down={x:e.clientX,y:e.clientY,yaw:this.yaw,pitch:this.pitch};el.setPointerCapture?.(e.pointerId);});
     el.addEventListener('pointermove',e=>{if(!down) return;this.yaw=Math.max(-1.45,Math.min(1.45,down.yaw-(e.clientX-down.x)*0.008));this.pitch=Math.max(-0.05,Math.min(0.7,down.pitch+(e.clientY-down.y)*0.004));});
     const up=()=>{down=null;};el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);
     el.addEventListener('dblclick',()=>{this.yaw=this.opt.yaw??0.5;this.pitch=0.16;});
   }
+  setSeq(seq,an){ // sequência de movimentos gravados (combinação de golpes ou coreografia)
+    this.seq=null;this.setAnim(an,seq[0].k);this.seq=seq;this.seqTot=seq.reduce((a,x)=>a+x.ms,0);
+    seq.forEach(x=>{mocapFor(x.k);try{realLoad();realClip(x.k);}catch(e){}});
+  }
+  seqAt(ms){ // qual movimento e em que ponto dele, no instante ms
+    let m=((ms%this.seqTot)+this.seqTot)%this.seqTot,i=0;
+    while(i<this.seq.length-1&&m>=this.seq[i].ms){m-=this.seq[i].ms;i++;}
+    const x=this.seq[i],d=m/1000*(x.rate??1);return {i,k:x.k,t:(x.t0||0)+(x.len?d%x.len:d),seg:x,local:m};
+  }
   setAnim(an,key){
-    if(this.an===an) return; this.an=an;this.key2=key;
-    const b=bbox(an);this.bb=b;
+    this.seq=null;
+    if(this.an===an&&this.key2===key) return; this.an=an;this.key2=key;this.mcOn=false;this.tSet=performance.now();
+    if(key) mocapFor(key); // começa a carregar o movimento gravado, se houver
+    const b=bbox(an);this.bb=b;this.fitMat(b);
     this.mat.scale.x=Math.max(70,b.x1-b.x0+40);this.mat.position.x=(b.x0+b.x1)/2;
     // objetos (cadeira)
     while(this.props.children.length) this.props.remove(this.props.children[0]);
@@ -134,6 +148,8 @@ class Stage{
       g.position.x=p.x;this.props.add(g);
     });
   }
+  showBody(v){if(this._body===v) return;this._body=v;for(const k in this.parts) this.parts[k].visible=v;}
+  fitMat(b){this.mat.scale.x=Math.max(70,b.x1-b.x0+40);this.mat.position.x=(b.x0+b.x1)/2;}
   resize(){
     const w=this.c.clientWidth,h=this.c.clientHeight;if(!w||!h) return false;
     if(this._w!==w||this._h!==h){this._w=w;this._h=h;this.r.setSize(w,h,false);this.cam.aspect=w/h;this.cam.updateProjectionMatrix();
@@ -185,10 +201,92 @@ class Stage{
       so.position.set(fc[0]-nrm[0]*1.6,fc[1]-nrm[1]*1.6,lz);
     }
   }
+  /* veste o boneco a partir das juntas 3D do movimento gravado */
+  pose3(J){
+    const V=a=>new THREE.Vector3(...a),M=new THREE.Matrix4();
+    const orient=(me,up,lat)=>{ // eixo y = para cima, z = lateral (lado direito), x = frente
+      const u=up.clone().normalize(),l=lat.clone().addScaledVector(u,-lat.dot(u)).normalize(),f=new THREE.Vector3().crossVectors(u,l);
+      M.makeBasis(f,u,l);me.quaternion.setFromRotationMatrix(M);return f;};
+    const hip=V(J.hip),nk=V(J.nk),hR=V(J.hipJ0),hL=V(J.hipJ1),sR=V(J.shJ0),sL=V(J.shJ1);
+    const tu=nk.clone().sub(hip).normalize(),latH=hR.clone().sub(hL),latS=sR.clone().sub(sL);
+    const pel=this.parts.pelvis;pel.position.copy(hip).addScaledVector(tu,2);pel.scale.set(6.6,7.2,9.6);orient(pel,tu,latH);
+    const chC=V(J.chest).lerp(nk,0.25),cu=nk.clone().sub(V(J.spine)).normalize();
+    const ch=this.parts.chest;ch.position.copy(chC).addScaledVector(cu,-2);ch.scale.set(7,11.5,10.6);orient(ch,cu,latS);
+    this.place('waist',pel.position.toArray(),ch.position.toArray());this.parts.waist.scale.set(6.2,this.parts.waist.scale.y,8.4);orient(this.parts.waist,ch.position.clone().sub(pel.position),latH.clone().add(latS));
+    const hb=V(J.headB),ht=V(J.top),hn=ht.clone().sub(hb).normalize(),hc=hb.clone().lerp(ht,0.48);
+    this.place('neck',nk.toArray(),hb.toArray());
+    const hd=this.parts.head;hd.position.copy(hc);hd.scale.set(7.4,8.2,7.2);const face=orient(hd,hn,latS);
+    const hair=this.parts.hair;hair.position.copy(hc).addScaledVector(face,-1.6).addScaledVector(hn,0.9);hair.scale.set(7.4,7.6,7.6);hair.quaternion.copy(hd.quaternion);
+    const bun=this.parts.bun;bun.position.copy(hc).addScaledVector(face,-8.2).addScaledVector(hn,3);bun.scale.setScalar(3.4);
+    const band=this.parts.band;band.position.copy(hc).addScaledVector(hn,3.6).addScaledVector(face,-0.4);band.scale.set(1,0.98,1);
+    band.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),hn);
+    const upW=new THREE.Vector3(0,1,0);
+    for(const i of [0,1]){
+      const sh=J['shJ'+i],el=J['elbow'+i],ha=J['hand'+i];
+      this.ball('shJ'+i,sh,3.7);this.place('ua'+i,sh,el);this.ball('elJ'+i,el,2.75);this.place('fa'+i,el,ha);
+      const hdir=V(ha).sub(V(el)).normalize(),hand=this.parts['hand'+i];
+      hand.position.copy(V(ha)).addScaledVector(hdir,2.2);hand.scale.set(2.4,2.9,2.1);hand.quaternion.setFromUnitVectors(upW,hdir);
+      const hp=J['hipJ'+i],kn=J['knee'+i],an=J['ankle'+i],to=J['toe'+i];
+      this.ball('hipJ'+i,hp,5.4);this.place('th'+i,hp,kn);this.ball('knJ'+i,kn,3.75);
+      this.place('sh'+i,kn,an);this.ball('anJ'+i,an,2.4);
+      const A=V(an),fd=V(to).sub(A),fl=fd.length()||1;fd.normalize();
+      const nrm=upW.clone().addScaledVector(fd,-upW.dot(fd)).normalize();
+      const fc=A.clone().addScaledVector(fd,fl*0.4).addScaledVector(nrm,-1.2);
+      const ft=this.parts['foot'+i];ft.position.copy(fc);ft.scale.set(3.0,Math.max(6.2,fl*0.62),3.3);ft.quaternion.setFromUnitVectors(upW,fd);
+      const so=this.parts['sole'+i];so.position.copy(fc).addScaledVector(nrm,-1.6);so.scale.set(2.8,ft.scale.y*0.97,3.1);so.quaternion.copy(ft.quaternion);
+    }
+  }
   frame(ms){
     if(!this.an||!this.resize()) return;
-    const j=solve(poseAt(this.an,ms));this.j=j;this.pose(j);
-    const b=this.bb,cx=(b.x0+b.x1)/2,cy=Math.max(b.y1,40)/2+2;
+    const sq=this.seq?this.seqAt(ms):null;this.seqNow=sq;
+    const k2=sq?sq.k:(this.key2&&MOCAP[this.key2]?this.key2:null);
+    const clip=k2&&this.real!==false?(realLoad(),realClip(k2)):null;
+    if(clip&&REAL.ok&&!this.char){try{this.char=new RealChar(this.scene);}catch(e){console.warn(e);this.real=false;}}
+    // enquanto o movimento gravado carrega, a Sophie faz a versão montada do mesmo movimento
+    const rc=k2&&REAL.clips[k2],falhou=REAL.err||(rc&&rc.err)||this.real===false;
+    const mc=k2&&falhou?mocapFor(k2):null;
+    const montado=k2&&!(clip&&this.char)&&!falhou&&this.char&&AN[k2]?k2:null;
+    if(k2&&!montado&&!falhou&&!(clip&&this.char)&&performance.now()-(this.tSet||0)<30000){
+      if(this.char) this.char.visible=false;this.showBody(false);this.j=null;
+      this.r.setClearColor(0x000000,0);this.r.clear();
+      if(this.ov){const ctx=this.ov.getContext('2d'),d=this.ov.width/this._w;ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,this._w,this._h);
+        ctx.font='600 15px "Atkinson Hyperlegible",system-ui,sans-serif';ctx.textAlign='center';ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()||'#667';
+        ctx.fillText('Carregando o movimento…',this._w/2,this._h/2);ctx.textAlign='start';}
+      return;
+    }
+    let j;
+    if(clip&&this.char){
+      const fit=this.char.use(k2,clip);
+      if(this.mcOn!=='real'){this.mcOn='real';this.bb={...fit.bb};this.fitMat(this.bb);}
+      else if(sq){const b=this.bb,f=fit.bb;if(f.x0<b.x0||f.x1>b.x1||f.y1>b.y1){this.bb={x0:Math.min(b.x0,f.x0),x1:Math.max(b.x1,f.x1),y1:Math.max(b.y1,f.y1)};this.fitMat(this.bb);}}
+      this.char.visible=true;this.showBody(false);
+      j={J3:this.char.joints(sq?sq.t:this.clipSec(ms,this.char.dur,k2))};this.char.blendStep();
+      if(GUARDA_ALTA.has(k2)) this.char.guardaAlta(k2==='mtBounce');
+    } else if(mc&&!montado){
+      if(this.char) this.char.visible=false;this.showBody(true);
+      if(!this.mcOn){this.mcOn=true;this.bb=mc.bb;this.fitMat(mc.bb);}
+      const J=mocapJoints(mc,sq?sq.t%(mc.frames.length/mc.fps):this.clipSec(ms,mc.frames.length/mc.fps,k2));J.sh=J.shJ0.map((x,i)=>(x+J.shJ1[i])/2);j={J3:J};this.pose3(J);
+    } else {
+      j=solve(poseAt(montado?AN[montado]:this.an,ms));
+      // poses montadas: a Sophie também faz, girando os ossos dela para cada pose
+      if(this.real!==false&&HAS3D){try{realLoad();}catch(e){}
+        if(REAL.ok&&!this.char){try{this.char=new RealChar(this.scene);}catch(e){console.warn(e);this.real=false;}}}
+      if(this.char&&this.real!==false){
+        try{this.char.poseJ(j,this.key2||this.an);this.char.blendStep();this.char.visible=true;this.showBody(false);
+          if(this.mcOn!=='pose'){this.mcOn='pose';const b=bbox(this.an);this.bb={x0:b.x0-6,x1:b.x1+6,y1:b.y1+10};this.fitMat(this.bb);}}
+        catch(e){console.warn(e);this.char.visible=false;this.showBody(true);this.pose(j);} // só neste quadro; tenta de novo no próximo
+      } else if(this.real!==false&&!REAL.err&&!REAL.ok&&performance.now()-(this.tSet||0)<10000){
+        this.showBody(false);this.r.setClearColor(0x000000,0);this.r.clear();this.j=null;
+        if(this.ov){const ctx=this.ov.getContext('2d'),d=this.ov.width/this._w;ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,this._w,this._h);}
+        return;
+      } else {if(this.char) this.char.visible=false;this.showBody(true);this.pose(j);}
+    }
+    this.j=j;
+    if(this.yawTarget!=null) this.yaw+=(this.yawTarget-this.yaw)*0.06;
+    // câmera desliza até o novo enquadramento, sem pulo
+    if(!this.bbS) this.bbS={...this.bb};
+    else{const f=0.15;for(const k of ['x0','x1','y1']) this.bbS[k]+=(this.bb[k]-this.bbS[k])*f;}
+    const b=this.bbS,cx=(b.x0+b.x1)/2,cy=Math.max(b.y1,40)/2+2;
     const half=Math.max((b.x1-b.x0)/2+14,(Math.max(b.y1,50))/2*(this.cam.aspect)+10);
     const vh=Math.max(b.y1/2+12,half/this.cam.aspect);
     const dist=vh/Math.tan(this.cam.fov*RAD/2)*1.04;
@@ -198,13 +296,35 @@ class Stage{
     this.r.render(this.scene,this.cam);
     this.drawGuides(j);
   }
+  drawCola(txt){ // colinha da aula, no alto da tela
+    const ctx=this.ov.getContext('2d'),cs=getComputedStyle(document.documentElement);
+    ctx.font='700 16px "Atkinson Hyperlegible",system-ui,sans-serif';
+    const maxW=this._w-24,words=txt.split(' '),lines=[];let cur='';
+    words.forEach(w=>{const t=cur?cur+' '+w:w;if(ctx.measureText(t).width>maxW-28&&cur){lines.push(cur);cur=w;}else cur=t;});lines.push(cur);
+    const w=Math.min(maxW,Math.max(...lines.map(l=>ctx.measureText(l).width))+28),h=lines.length*21+16,x=(this._w-w)/2,y=10;
+    ctx.fillStyle=cs.getPropertyValue('--accent').trim()||'#0B7A5E';ctx.globalAlpha=.95;ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y,w,h,12):ctx.rect(x,y,w,h);ctx.fill();ctx.globalAlpha=1;
+    ctx.fillStyle=cs.getPropertyValue('--accent-ink').trim()||'#fff';ctx.textAlign='center';
+    lines.forEach((l,i)=>ctx.fillText(l,this._w/2,y+25+i*21));ctx.textAlign='start';
+  }
+  clipSec(ms,dur,k){ // tempo do movimento gravado; com ritmo do nível, se houver
+    if(this.tempo&&typeof MOCAP_PTS!=='undefined'&&MOCAP_PTS[k]) return ritmoClip(ms,dur,MOCAP_PTS[k],this.tempo);
+    return ms/1000*(MOCAP_RATE[k]||1);
+  }
+  cycleMs(){
+    const k=this.key2,rate=(k&&MOCAP_RATE[k])||1;
+    if(this.mcOn==='real'&&this.char) return this.char.dur*1000/rate;
+    if(this.mcOn&&k){const m=mocapFor(k);if(m) return m.frames.length/m.fps*1000/rate;}
+    return this.an?this.an.total:2000;
+  }
   proj(p){const v=new THREE.Vector3(...p).project(this.cam);return [(v.x+1)/2*this._w,(1-v.y)/2*this._h];}
   drawGuides(j){
     const ov=this.ov;if(!ov) return;const ctx=ov.getContext('2d'),d=ov.width/this._w;
     ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,this._w,this._h);
-    const list=this.guides?GUIDES[this.key2]:null;if(!list) return;
+    const list=this.guideList!=null?this.guideList:(this.guides&&!this.seq?GUIDES[this.key2]:null);
+    if(this.cola) this.drawCola(this.cola);
+    if(!list||!list.length) return;
     const cs=getComputedStyle(document.documentElement),ok=cs.getPropertyValue('--accent').trim(),ink=cs.getPropertyValue('--ink').trim(),srf=cs.getPropertyValue('--surface').trim();
-    const J=jointMap(j),P=n=>this.proj([J[n][0],J[n][1],zOf(n)+(n.match(/0$/)?6:0)]);
+    const J=j.J3||jointMap(j),P=j.J3?(n=>this.proj(J[n])):(n=>this.proj([J[n][0],J[n][1],zOf(n)+(n.match(/0$/)?6:0)]));
     const pill=(x,y,txt,good)=>{
       ctx.font='700 13px "Atkinson Hyperlegible",system-ui,sans-serif';const w=ctx.measureText(txt).width+16;
       x=Math.max(4,Math.min(this._w-w-4,x));y=Math.max(4,Math.min(this._h-26,y));
@@ -227,11 +347,20 @@ class Stage{
         const A=P(a),C=P(c);ctx.strokeStyle=good?ok:ink;ctx.globalAlpha=good?.95:.5;ctx.lineWidth=2.5;ctx.setLineDash([7,6]);
         ctx.beginPath();ctx.moveTo(A[0],A[1]);ctx.lineTo(C[0],C[1]);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;
         pill(12,12+34*row++ +28,g.label+(good?' ✓':''),good);
+      } else if(g.t==='link'){
+        const A=P(g.j[0]),B=P(g.j[1]),col=cs.getPropertyValue('--warm').trim()||'#C2410C';
+        ctx.strokeStyle=col;ctx.lineWidth=3;ctx.setLineDash([6,5]);ctx.beginPath();ctx.moveTo(A[0],A[1]);ctx.lineTo(B[0],B[1]);ctx.stroke();ctx.setLineDash([]);
+        ctx.fillStyle=col;[A,B].forEach(q=>{ctx.beginPath();ctx.arc(q[0],q[1],5,0,7);ctx.fill();});
+        if(g.label) pill(Math.max(A[0],B[0])+14,(A[1]+B[1])/2-11,g.label,false);
+      } else if(g.t==='dot'){
+        const A=P(g.j),col=cs.getPropertyValue('--warm').trim()||'#C2410C',pulse=9+3*Math.sin(performance.now()/180);
+        ctx.strokeStyle=col;ctx.lineWidth=3;ctx.beginPath();ctx.arc(A[0],A[1],pulse,0,7);ctx.stroke();
+        if(g.label) pill(A[0]+16,A[1]-30,g.label,false);
       } else if(g.t==='plumb'){
-        const p=J[g.j],z0=zOf(g.j)+6,A=this.proj([p[0],0,z0]),B=this.proj([p[0],p[1]+46,z0]);
+        const p=J[g.j],z0=j.J3?p[2]:zOf(g.j)+6,A=this.proj([p[0],0,z0]),B=this.proj([p[0],p[1]+46,z0]);
         ctx.strokeStyle=ink;ctx.globalAlpha=.45;ctx.lineWidth=2;ctx.setLineDash([3,6]);
         ctx.beginPath();ctx.moveTo(A[0],A[1]);ctx.lineTo(B[0],B[1]);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=.8;
-        ctx.font='600 12px "Atkinson Hyperlegible",system-ui,sans-serif';ctx.fillStyle=ink;ctx.fillText(g.label,B[0]+6,B[1]+4);
+        ctx.font='600 12px "Atkinson Hyperlegible",system-ui,sans-serif';ctx.fillStyle=ink;ctx.fillText(g.label,A[0]+8,A[1]+14);
       }
       ctx.restore();
     });
