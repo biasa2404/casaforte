@@ -56,11 +56,11 @@ const WARM={
 };
 const COOL=[IT('Alongamento de pescoço','neckStretch',['ombros'],'Incline a cabeça devagar para cada lado, sem forçar','yoga',{q:'alongamento de pescoço lateral'}),IT('Alongamento de braço cruzado','armStretch',['ombros'],'Ombros longe das orelhas','yoga',{sw:1,q:'alongamento de ombro braço cruzado'}),IT('Respiração profunda','breath',[],'Inspire subindo os braços, solte o ar descendo','yoga'),IT('Alongamento posterior','fold',['posteriores'],'Joelhos levemente dobrados, sem forçar','yoga',{q:'alongamento posterior de coxa em pé'}),IT('Alongamento de quadríceps','quadStretch',['quadriceps'],'Troque de perna na metade','yoga',{sw:1})];
 const PLANS={
-  1:{nome:'Pernas e glúteos',tipo:'Força',warm:'forca',ex:['agach','afundo','ponte','bomdia','pant']},
+  1:{nome:'Força A: pernas, peito e costas',tipo:'Força',warm:'forca',ex:['agach','flexao','puxada','ponte','prancha']},
   2:{nome:'Muay Thai em casa',tipo:'Muay Thai',warm:'luta',mt:1,ex:['mt_jab','mt_gancho','mt_defesa','mt_joelho','mt_teep','mt_chute','mt_cotovelo']},
-  3:{nome:'Peito, costas, ombros e tríceps',tipo:'Força',warm:'forca',ex:['flexao','puxada','ombro','triceps','prancha','abd']},
+  3:{nome:'Força B: glúteos, ombros e tríceps',tipo:'Força',warm:'forca',ex:['afundo','ombro','bomdia','triceps','superman','abd']},
   4:{nome:'Yoga e alongamento',tipo:'Yoga',flow:['catcow','dog','warrior','chair','tree','cobra','child','seatfold','quad']},
-  5:{nome:'Glúteos, lombar, abdômen e peito',tipo:'Força',warm:'forca',ex:['superman','flexao','passaro','ponte','bomdia','abd']},
+  5:{nome:'Força C: corpo todo e abdômen',tipo:'Força',warm:'forca',ex:['agach','flexao','puxada','passaro','ponte','pant']},
   6:{nome:'Dança: ritmos brasileiros',tipo:'Dança e cardio',warm:'aero',coreo:1,ex:['d_marcha','d_corda','d_soco','d_chute','d_boxe','d_bumbum','burpee']},
   0:{nome:'Yoga leve e mobilidade',tipo:'Recuperação',flow:['breathY','catcow','child','cobra','dog','bridgeY','seatfold']},
 };
@@ -141,11 +141,12 @@ function build(dayIdx,tier,dur,opt={}){
     steps.push({k:'rest',s:10,label:'Volta à calma'});
     COOL.forEach((it,i)=>steps.push({k:'cool',s:coolS[i],it,label:'Volta à calma',fase:'Volta à calma'}));
   } else {
-    const warm=WARM[P.warm],ex=P.ex.map(f=>resolve(f,tier));
-    const warmS=WARM_S[P.warm],coolS=COOL.map(it=>it.sw?60:30);
+    // treino expresso (até 12 min): aquecimento curto, 4 movimentos do corpo todo e 2 rodadas
+    const curto=dur<=12,warm=curto?WARM[P.warm].slice(0,2):WARM[P.warm],ex=P.ex.slice(0,curto?4:99).map(f=>resolve(f,tier));
+    const warmS=curto?[45,45]:WARM_S[P.warm],cool=curto?COOL.filter(it=>!it.sw).slice(0,2):COOL,coolS=cool.map(it=>it.sw?60:30);
     const base=8+warmS.reduce((a,b)=>a+b)+15+10+coolS.reduce((a,b)=>a+b);
     const per=ex.reduce((a,it)=>a+tempoDe(it,tp.w),0)+(ex.length-1)*tp.r;
-    const R=Math.max(2,Math.min(8,Math.round((target-base+tp.rr)/(per+tp.rr))));
+    const R=curto?2:Math.max(2,Math.min(8,Math.round((target-base+tp.rr)/(per+tp.rr))));
     steps.push({k:'prep',s:8,label:'Prepare-se'});
     warm.forEach((it,i)=>steps.push({k:'warm',s:warmS[i],it,label:'Aquecimento'}));
     steps.push({k:'rest',s:15,label:'Prepare-se'});
@@ -158,7 +159,7 @@ function build(dayIdx,tier,dur,opt={}){
       });
     }
     steps.push({k:'rest',s:10,label:'Volta à calma'});
-    COOL.forEach((it,i)=>steps.push({k:'cool',s:coolS[i],it,label:'Volta à calma'}));
+    cool.forEach((it,i)=>steps.push({k:'cool',s:coolS[i],it,label:'Volta à calma'}));
   }
   steps.forEach((s,i)=>{if(!s.it){const n=steps.slice(i+1).find(x=>x.it);s.nx=n?n.it:null;}});
   return steps;

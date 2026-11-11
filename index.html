@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Casa Forte</title>
 <meta name="description" content="Treinos em casa sem equipamento: força, Muay Thai, yoga, alongamento e dança, com boneco 3D que ensina cada movimento e voz de incentivo.">
-<meta name="theme-color" content="#0B6B53">
+<meta name="theme-color" content="#F6F1EA">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -13,7 +13,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect x='2' y='2' width='36' height='36' rx='9' fill='%230B7A5E'/%3E%3Ccircle cx='20' cy='11' r='4' fill='white'/%3E%3Cpath d='M20 15v11M20 18l-8 4M20 18l8-6M20 26l-6 8M20 26l7 8' stroke='white' stroke-width='3.2' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..600,0..100&family=Figtree:wght@400;500;600;700&display=swap">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -47,6 +47,7 @@
       <section class="hero" id="todayCard" aria-live="polite"></section>
       <button class="rowlink" id="nextRow"></button>
       <button class="rowlink" id="medeRow" hidden></button>
+      <section class="card soft" id="instRow" hidden></section>
       <section class="card cuidado" id="cuidadoNote" hidden></section>
     </section>
 
@@ -76,6 +77,11 @@
       </header>
       <p class="muted small" style="margin:0">Toque em um dia para ver o treino. Dá para fazer qualquer um deles hoje.</p>
       <div class="planlist" id="planList"></div>
+      <section class="card" aria-labelledby="agTitle">
+        <h2 class="h2s" id="agTitle">Lembrete na sua agenda</h2>
+        <p class="small muted" style="margin:0">Escolha o horário. A agenda do celular avisa 10 minutos antes, nos dias do seu plano. Combinar dia e hora com antecedência ajuda a criar o hábito.</p>
+        <div class="btnrow"><input type="time" id="agHora" class="field" value="07:00" aria-label="Horário do treino"><button class="btn" id="agGo">Adicionar à agenda</button></div>
+      </section>
       <section class="card soft" aria-labelledby="whyTitle"><h2 class="h2s" id="whyTitle">Por que o plano é assim</h2><ul class="why" id="planWhy"></ul></section>
       <section aria-labelledby="aulasTitle"><h2 class="h2s" id="aulasTitle">Todas as aulas</h2><p class="muted small" style="margin:2px 0 8px">Faça qualquer aula quando quiser, mesmo fora do plano. As coreografias de dança ficam aqui.</p><div id="aulasList"></div></section>
     </section>
@@ -103,9 +109,10 @@
         <p class="muted small" style="margin:2px 0 10px">Linha tracejada: 150 minutos, o mínimo que a OMS recomenda por semana.</p>
         <div class="chart" id="chart"></div>
       </section>
-      <section class="card soft levelcard">
-        <div class="lvl"><small>Nível</small><b id="lvlNum">1</b></div>
-        <div style="min-width:0;flex:1"><b id="tierName">Iniciante</b><div class="xpbar"><i id="xpFill" style="width:0%"></i></div><div class="muted small" id="xpText"></div></div>
+      <section class="card soft" aria-labelledby="ctTitle">
+        <h2 class="h2s" id="ctTitle">Sua constância</h2>
+        <div class="ritmo" id="ctRitmo" style="justify-content:flex-start"></div>
+        <p class="small" id="ctText" style="margin:0"></p>
       </section>
       <div class="two">
         <section class="card" aria-labelledby="calTitle"><h2 class="h2s" id="calTitle">Últimas cinco semanas</h2><div class="cal" id="cal"></div></section>
@@ -182,6 +189,8 @@
       <div id="plHow" class="howbox" hidden></div>
       <div class="tagrow" id="plMus"></div>
       <div class="nextup" id="plNext"></div>
+    </div>
+    <div class="ctrlbar">
       <div class="ctrls">
         <button class="cb" id="prevBtn" aria-label="Voltar exercício"><svg viewBox="0 0 24 24"><path d="M6 5v14M19 5l-10 7 10 7z" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
         <button class="cb big" id="pauseBtn" aria-label="Pausar"><svg viewBox="0 0 24 24" id="pauseIco"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg></button>
@@ -198,21 +207,17 @@
 </div>
 
 <div class="overlay done" id="done" hidden>
-  <canvas id="confetti" aria-hidden="true"></canvas>
   <div class="box">
     <div class="eyebrow">Treino concluído</div>
-    <h2 id="dnTitle">Mandou bem!</h2>
+    <h2 id="dnTitle">Que bom que você veio</h2>
     <p class="muted" id="dnText" style="margin:0"></p>
     <div class="card" style="width:100%">
-      <div class="levelrow">
-        <div class="lvl"><small>Nível</small><b id="dnLvl">1</b></div>
-        <div style="text-align:left"><span class="tierpill" id="dnTier"></span><div class="xpbar"><i id="dnFill"></i></div><div class="muted" style="font-size:.9rem" id="dnXp"></div></div>
-      </div>
       <div class="stats">
-        <div class="stat"><b id="dnMin">0</b><span>minutos</span></div>
-        <div class="stat"><b id="dnGain">0</b><span>pontos ganhos</span></div>
-        <div class="stat"><b id="dnStreak">0</b><span>dias seguidos</span></div>
+        <div class="stat"><b id="dnMin">0</b><span>minutos hoje</span></div>
+        <div class="stat"><b id="dnSem">0</b><span>treinos na semana</span></div>
+        <div class="stat"><b id="dnTot">0</b><span>treinos no total</span></div>
       </div>
+      <div class="ritmo" id="dnRitmo" aria-hidden="true"></div>
     </div>
     <div class="esf" id="dnEsf"></div>
     <button class="go" id="dnBack">Voltar para Hoje</button>

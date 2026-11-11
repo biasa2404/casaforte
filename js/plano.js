@@ -64,9 +64,8 @@ function gerarPlano(q){
   // explicações em linguagem simples
   const NOMES=['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
   porque.push(`Você treina ${n} dias: ${dias.map(d=>NOMES[d]).join(', ')}.`);
-  if(nForca>=2) porque.push(fz.gap>=2?`Força em ${nForca} dias, como a OMS recomenda, sempre com um dia de intervalo entre eles para o músculo se recuperar.`
-    :`Força em ${nForca} dias, como a OMS recomenda. Com os dias escolhidos, dois treinos de força ficam seguidos: eles trabalham partes diferentes do corpo, mas se puder, espace mais os dias.`);
-  else porque.push('Com 2 dias por semana, um fica para a força e outro para o que você mais quer aprender. Se der, aumente para 3 dias e coloque mais um de força, que é o mínimo recomendado pela OMS.');
+  if(nForca>=2) porque.push(`Força em ${nForca} dias. Cada treino de força trabalha o corpo todo, com ênfases diferentes, então cada músculo é treinado ${nForca} vezes por semana: a OMS e o Colégio Americano de Medicina do Esporte recomendam pelo menos 2.`+(fz.gap>=2?' Sempre há um dia de intervalo entre eles para o músculo se recuperar.':' Com os dias escolhidos, dois treinos de força ficam seguidos. Funciona, mas se puder, espace mais os dias.'));
+  else porque.push('Com 2 dias por semana, um fica para a força (corpo todo) e outro para o que você mais quer aprender. Se der, aumente para 3 dias e coloque mais um de força: a recomendação é treinar cada músculo pelo menos 2 vezes por semana.');
   const usados=new Set(Object.values(semana));
   if(usados.has(2)) porque.push('Muay Thai ensina técnica e ainda conta como exercício aeróbico.');
   if(usados.has(6)) porque.push('O dia de dança com ritmos brasileiros ajuda o fôlego e a disposição.');

@@ -30,6 +30,18 @@ function realClip(key){
   return c.ok?c.clip:null;
 }
 
+/* cores de conferência: esquerda fria (azul/verde), direita quente (vermelho/laranja) */
+function corDoOsso(n){
+  const h=x=>[(x>>16&255)/255,(x>>8&255)/255,(x&255)/255];
+  if(/HandThumb/.test(n)) return h(n.startsWith('Left')?0x7b2cbf:0xffd60a);
+  if(/HandIndex|HandMiddle|HandRing|HandPinky/.test(n)) return h(n.startsWith('Left')?0x00e5ff:0xff5ab4);
+  const T={Hips:0x6c757d,Spine:0x9aa0a6,Spine1:0xadb5bd,Spine2:0xced4da,Neck:0xe9c46a,Head:0xf4d35e,HeadTop_End:0xf4d35e,
+    LeftShoulder:0x4361ee,LeftArm:0x3a0ca3,LeftForeArm:0x4895ef,LeftHand:0x03045e,
+    RightShoulder:0xe63946,RightArm:0x9d0208,RightForeArm:0xf48c06,RightHand:0x6a040f,
+    LeftUpLeg:0x2d6a4f,LeftLeg:0x52b788,LeftFoot:0x081c15,LeftToeBase:0x95d5b2,LeftToe_End:0x95d5b2,
+    RightUpLeg:0xbc6c25,RightLeg:0xdda15e,RightFoot:0x582f0e,RightToeBase:0xffb703,RightToe_End:0xffb703};
+  return h(T[n]??0x888888);
+}
 class RealChar{
   constructor(scene){
     this.root=new THREE.Group();this.root.rotation.y=Math.PI/2; // de frente para +x, lado direito para a câmera
@@ -45,6 +57,24 @@ class RealChar{
     this.root.scale.setScalar(this.s);
   }
   set visible(v){this.root.visible=v;}
+  /* Modo de conferência: cada parte do corpo de uma cor (pelo osso que mais move cada ponto da pele).
+     Lado esquerdo em tons frios, lado direito em tons quentes; dedos com cor própria para ver mão aberta ou fechada. */
+  colorir(on){
+    if(on===!!this._cor) return;this._cor=on;
+    this.obj.traverse(o=>{
+      if(!o.isSkinnedMesh) return;
+      if(!on){if(o.userData.mat0){o.material=o.userData.mat0;}return;}
+      if(!o.userData.matCor){
+        const g=o.geometry,si=g.attributes.skinIndex,sw=g.attributes.skinWeight,n=si.count,cor=new Float32Array(n*3),bones=o.skeleton.bones;
+        for(let i=0;i<n;i++){let bi=0,bw=-1;const G=(a,k)=>k===0?a.getX(i):k===1?a.getY(i):k===2?a.getZ(i):a.getW(i);for(let k=0;k<4;k++){const w=G(sw,k);if(w>bw){bw=w;bi=G(si,k);}}
+          const c=corDoOsso((bones[bi].name||'').replace(/^mixamorig\d*:?/,'').replace(/_\d+$/,''));cor[i*3]=c[0];cor[i*3+1]=c[1];cor[i*3+2]=c[2];}
+        const g2=g.clone();g2.setAttribute('color',new THREE.BufferAttribute(cor,3));o.userData.g0=g;o.userData.gCor=g2;
+        o.userData.matCor=new THREE.MeshLambertMaterial({vertexColors:true,skinning:true});
+      }
+      o.userData.mat0=o.userData.mat0||o.material;o.material=o.userData.matCor;o.geometry=o.userData.gCor;
+    });
+    if(!on) this.obj.traverse(o=>{if(o.isSkinnedMesh&&o.userData.g0) o.geometry=o.userData.g0;});
+  }
   /* Veste a Sophie com uma pose do boneco antigo (vista lateral, juntas 2D):
      cada osso é girado para apontar na direção do segmento correspondente. */
   /* Transição suave: guarda a pose atual e, nos próximos instantes, mistura com a nova */
@@ -63,7 +93,7 @@ class RealChar{
     if(this.key!=='~pose'||this.poseId!==id){this.snap();this.mixer.stopAllAction();this.key='~pose';this.poseId=id;}
     const B=this.B,T=THREE,W=n=>B[n].getWorldPosition(new T.Vector3());
     for(const n in this.rest){B[n].quaternion.copy(this.rest[n].q);B[n].position.copy(this.rest[n].p);}
-    this.root.position.set(0,0,0);this.root.updateMatrixWorld(true);
+    this.root.position.set(0,0,0);this.root.quaternion.setFromAxisAngle(new T.Vector3(0,1,0),Math.PI/2);this.root.updateMatrixWorld(true);
     if(this.footPitch==null){const f=W('RightToeBase').sub(W('RightFoot'));this.footPitch=Math.atan2(-f.y,Math.hypot(f.x,f.z));}
     const rot=(n,dq)=>{const b=B[n];if(!b) return;const pq=b.parent.getWorldQuaternion(new T.Quaternion()),wq=b.getWorldQuaternion(new T.Quaternion());
       b.quaternion.copy(pq.invert().multiply(dq.multiply(wq)));b.updateMatrixWorld(true);};
@@ -101,14 +131,34 @@ class RealChar{
     j.arms.forEach(([e,a])=>pts.push(['e',e],['a',a]));j.legs.forEach(([k,a,t])=>pts.push(['k',k],['an',a],['t',t]));
     const r2={e:2.75,a:2.5,k:3.75,an:0,t:0};let mMin=1e9;pts.forEach(([k,p])=>{const y=p[1]-(rm[k]??r2[k]??0);if(y<mMin) mMin=y;});
     this.root.position.y+=Math.max(0,mMin)-sMin;this.root.updateMatrixWorld(true);
+    // apoio nos antebraços (prancha baixa, esfinge): o braço da Sophie é mais curto que o do boneco antigo,
+    // então o corpo todo gira em volta da ponta dos pés até os cotovelos encostarem no chão
+    const ante=j.arms.every(([e,a])=>e[1]<=6&&a[1]<=6&&j.sh[1]-e[1]>12); // só quando os ombros estão no alto, apoiados nos cotovelos
+    if(ante){
+      const P=W('RightToe_End'),E=W('RightForeArm').add(W('LeftForeArm')).multiplyScalar(0.5),vx=E.x-P.x,vy=E.y-P.y,r=Math.hypot(vx,vy),alvo=2.6;
+      if(r>1&&Math.abs((alvo-P.y)/r)<1){
+        const d=Math.asin((alvo-P.y)/r)-Math.atan2(vy,vx),z=new T.Vector3(0,0,1);
+        this.root.position.sub(P).applyAxisAngle(z,d).add(P);this.root.quaternion.premultiply(new T.Quaternion().setFromAxisAngle(z,d));this.root.updateMatrixWorld(true);
+      }
+    }
     // mãos apoiadas no chão: a mão vai até o chão (mais perto do corpo se o braço não alcançar) e fica espalmada
     [['Right',0,1],['Left',1,-1]].forEach(([s2,i,zs])=>{
       const ha=j.arms[i][1];if(ha[1]>4) return;
+      if(ante){const El=W(s2+'ForeArm'),fl=El.distanceTo(W(s2+'Hand'));const Tt=new T.Vector3(El.x+fl*0.96,1.4,El.z);
+        this.reach(s2,Tt,new T.Vector3(El.x,-30,El.z));this.palma(s2,zs,1);return;}
       const A=W(s2+'Arm'),C=W(s2+'Hand'),Lb=A.distanceTo(W(s2+'ForeArm'))+W(s2+'ForeArm').distanceTo(C)-0.4,y0=1.4;
       const Tt=new T.Vector3(ha[0],y0,C.z),dy=A.y-y0,dz=A.z-Tt.z,dx=Tt.x-A.x,dd=Math.hypot(dx,dy,dz);
       if(dd>Lb){const hx=Math.sqrt(Math.max(0,Lb*Lb-dy*dy-dz*dz));Tt.x=A.x+Math.sign(dx||1)*hx;}
       this.reach(s2,Tt);this.palma(s2,zs,j.hf||(Tt.x>=A.x?1:-1));
     });
+    this.segurarPe(j);
+  }
+  /* Mão perto do tornozelo no boneco antigo (alongamento de quadríceps): a Sophie segura o próprio pé */
+  segurarPe(j){
+    const T=THREE,W=n=>this.B[n].getWorldPosition(new T.Vector3());
+    [['Right',0],['Left',1]].forEach(([s,i])=>{const ha=j.arms[i][1],an=j.legs[i][1];
+      if(!this.B[s+'Foot']||Math.hypot(ha[0]-an[0],ha[1]-an[1])>8) return;
+      this.reach(s,W(s+'Foot').add(new T.Vector3(0,1.5,0)));this.punho(s);});
   }
   /* Mão espalmada no chão: dedos para a frente (dir = +1) ou para trás, palma para baixo */
   palma(s,zs,dir){
@@ -158,9 +208,12 @@ class RealChar{
       if(w<=0||h.y>=alvoY) return;
       this.reach(s,new T.Vector3(h.x,h.y+(alvoY-h.y)*w,h.z));
     });
+    this.punho('Right');this.punho('Left'); // luta: sempre de mão fechada
   }
   use(key,clip){
-    if(this.key===key) return this.fits[key];
+    this.root.quaternion.setFromAxisAngle(new THREE.Vector3(0,1,0),Math.PI/2); // desfaz o giro da prancha baixa
+    // a posição volta ao encaixe em todo quadro (a mistura suave parte dela; sem isso a mistura acumula e o pé afunda)
+    if(this.key===key){this.root.position.set(...this.fits[key].off);return this.fits[key];}
     this.snap();this.key=key;this.mixer.stopAllAction();this.action=this.mixer.clipAction(clip);this.action.play();
     this.dur=clip.duration;
     if(!this.fits[key]){ // posição: quadril no centro do tapete e pés no chão

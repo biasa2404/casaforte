@@ -61,7 +61,7 @@ const GUIDES={
 };
 
 /* Movimentos de luta em que as mãos voltam para a guarda alta (altura da testa) */
-const GUARDA_ALTA=new Set(['mtBounce','jabcross','hookLead','hookRear','upperRear','elbow','teep','kickLow','kickMid','kickHigh','dodge','bodyJab','shadowbox']);
+const GUARDA_ALTA=new Set(['mtBounce','jabcross','hookLead','hookRear','upperRear','elbow','teep','kickLow','kickMid','kickHigh','dodge','bodyJab','shadowbox','knee','combo','boxWarm']);
 
 class Stage{
   constructor(canvas,overlay,opt={}){
@@ -254,6 +254,7 @@ class Stage{
         ctx.fillText('Carregando o movimento…',this._w/2,this._h/2);ctx.textAlign='start';}
       return;
     }
+    if(this.char) this.char.colorir(!!(this.cores||window.CORES));
     let j;
     if(clip&&this.char){
       const fit=this.char.use(k2,clip);
@@ -272,7 +273,7 @@ class Stage{
       if(this.real!==false&&HAS3D){try{realLoad();}catch(e){}
         if(REAL.ok&&!this.char){try{this.char=new RealChar(this.scene);}catch(e){console.warn(e);this.real=false;}}}
       if(this.char&&this.real!==false){
-        try{this.char.poseJ(j,this.key2||this.an);this.char.blendStep();this.char.visible=true;this.showBody(false);
+        try{this.char.poseJ(j,this.key2||this.an);this.char.blendStep();if(GUARDA_ALTA.has(sq?sq.k:this.key2)){this.char.punho('Right');this.char.punho('Left');}this.char.visible=true;this.showBody(false);
           if(this.mcOn!=='pose'){this.mcOn='pose';const b=bbox(this.an);this.bb={x0:b.x0-6,x1:b.x1+6,y1:b.y1+10};this.fitMat(this.bb);}}
         catch(e){console.warn(e);this.char.visible=false;this.showBody(true);this.pose(j);} // só neste quadro; tenta de novo no próximo
       } else if(this.real!==false&&!REAL.err&&!REAL.ok&&performance.now()-(this.tSet||0)<10000){

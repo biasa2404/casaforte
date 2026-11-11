@@ -106,12 +106,11 @@ const HUMOR=[['Com energia'],['Cansaço leve'],['Muito cansaço ou dor muscular'
 function greeting(){
   const h=new Date().getHours(),nm=S.prefs.name.trim();
   const hi=(h<12?'Bom dia':(h<18?'Boa tarde':'Boa noite'))+(nm?', '+nm:'')+'!';
-  const st=streak(),n=S.hist.length,feito=treinou(hoje());
+  const n=S.hist.length,feito=treinou(hoje());
   let txt;
-  if(feito) txt='Treino de hoje feito. Agora é descansar, comer bem e se orgulhar.';
+  if(feito) txt='Treino de hoje feito. Agora é descansar, comer bem e dormir bem: é aí que o corpo se fortalece.';
   else if(!n) txt='Hoje é o primeiro passo. A Sophie ensina cada movimento com calma antes de você fazer.';
-  else if(st>=2) txt=`São ${st} treinos em sequência. Bora manter?`;
-  else txt='Que bom te ver. O melhor treino é o que cabe no seu dia.';
+  else txt=['Que bom te ver. O melhor treino é o que cabe no seu dia.','Um passo de cada vez. Seu corpo agradece cada treino.','Respire fundo. Hoje é um bom dia para cuidar de você.'][new Date().getDate()%3];
   return [hi,txt];
 }
 function proximoLivre(de){
@@ -135,8 +134,8 @@ function renderHoje(){
   const now=new Date(),k=ymd(now);
   const [hi,txt]=greeting();$('hello').textContent=hi;$('helloLine').textContent=txt;
   $('todayDate').textContent=DAYS_L[now.getDay()].replace(/^./,c=>c.toUpperCase())+', '+now.toLocaleDateString('pt-BR',{day:'numeric',month:'long'});
-  const st=streak();$('streakPill').hidden=st<1;
-  $('streakPill').innerHTML=`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3c1 4 5 6 5 11a5 5 0 0 1-10 0c0-3 2-4 2-7 2 1 3 3 3 5"/></svg>${st} em sequência`;
+  {const mon=segunda().getTime(),n=new Set(S.hist.filter(h=>h.ts>=mon).map(h=>h.day)).size;$('streakPill').hidden=n<1;
+  $('streakPill').textContent=n===1?'1 treino nesta semana':`${n} treinos nesta semana`;}
   // faixa da semana
   const mon=segunda();
   $('wkStrip').innerHTML=[0,1,2,3,4,5,6].map(i=>{const d=new Date(mon);d.setDate(mon.getDate()+i);const kk=ymd(d),p=planoDoDia(d);
@@ -176,7 +175,8 @@ function renderHoje(){
     c.className='hero '+o.tipo;
     c.innerHTML=`<span class="eyebrow">${eyebrow}</span><h2>${esc(P.nome)}</h2><p>${txt}</p><div class="herotags">${tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div>`+
       `<button class="herobtn" data-abrir="${o.plan}" data-tier="${o.tier}" data-dur="${o.dur}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z" fill="currentColor"/></svg>Começar treino</button>`+
-      (o.tipo==='troca'&&o.livre?`<button class="herobtn ghost" data-remarcar="${o.original}" data-para="${ymd(o.livre)}">Passar ${esc(PLANS[o.original].tipo.toLowerCase())} para ${DAYS_L[o.livre.getDay()]}</button>`:'');
+      (o.tipo==='troca'&&o.livre?`<button class="herobtn ghost" data-remarcar="${o.original}" data-para="${ymd(o.livre)}">Passar ${esc(PLANS[o.original].tipo.toLowerCase())} para ${DAYS_L[o.livre.getDay()]}</button>`:'')+
+      (o.dur>12?`<button class="herobtn ghost" data-abrir="${P.mt||P.coreo?1:o.plan}" data-tier="${o.tier}" data-dur="10">Só tenho 10 minutos</button>`:'');
   }
   // amanhã
   const am=new Date(now);am.setDate(am.getDate()+1);const pa=planoDoDia(am);
@@ -186,12 +186,38 @@ function renderHoje(){
   const falta=['medidas','testes'].find(t=>{const u=ultimoReg(t);return !u||diasDesde(u.d)>=REG[t].cada;});
   $('medeRow').hidden=!falta;
   if(falta){$('medeRow').dataset.reg=falta;$('medeRow').innerHTML=`<span><small>${ultimoReg(falta)?'Já faz 4 semanas':'Para ver seus resultados'}</small><b>${falta==='medidas'?'Registrar medidas do corpo':'Fazer os testes de força e fôlego'}</b></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>`;}
+  // instalar na tela inicial (depois do primeiro treino, até a pessoa dispensar)
+  const inst=!S.prefs.instalouAviso&&S.hist.length>=1&&!(matchMedia('(display-mode: standalone)').matches||navigator.standalone);
+  $('instRow').hidden=!inst;
+  if(inst){const ios=/iPhone|iPad|iPod/.test(navigator.userAgent);
+    $('instRow').innerHTML=`<h2 class="h2s">Deixe o Casa Forte na tela inicial</h2><p class="small" style="margin:0">Abre como um aplicativo, em tela cheia e mais rápido.${ios?' No Safari, toque em Compartilhar e depois em <b>Adicionar à Tela de Início</b>.':(instEvt?'':' No Chrome, abra o menu ⋮ e toque em <b>Instalar aplicativo</b> ou <b>Adicionar à tela inicial</b>.')}</p><div class="btnrow">${instEvt?'<button class="btn" id="instGo">Instalar</button>':''}<button class="btn2" id="instNo">Agora não</button></div>`;}
   // cuidados
   const cu=((S.quiz&&S.quiz.cuidado)||[]).filter(x=>CUIDADO_TXT[x]);
   $('cuidadoNote').hidden=!cu.length;
   $('cuidadoNote').innerHTML=cu.length?'<h2 class="h2s">Atenção ao que você marcou</h2><ul>'+cu.map(x=>`<li>${esc(CUIDADO_TXT[x])}</li>`).join('')+'</ul>':'';
 }
 
+let instEvt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();instEvt=e;try{renderHoje();}catch(x){}});
+document.addEventListener('click',e=>{
+  if(e.target.id==='instNo'){S.prefs.instalouAviso=1;save();$('instRow').hidden=true;}
+  if(e.target.id==='instGo'&&instEvt){instEvt.prompt();instEvt.userChoice.finally(()=>{instEvt=null;S.prefs.instalouAviso=1;save();renderHoje();});}
+});
+/* ---------- Lembretes na agenda (arquivo .ics com os dias do plano) ----------
+   Combinar dia e hora com antecedência ("se for segunda, às 7h, eu treino") ajuda a criar o hábito. */
+function baixarAgenda(hora){
+  const sem=semana().semana,BY=['SU','MO','TU','WE','TH','FR','SA'],dias=Object.keys(sem).filter(d=>sem[d]!=null&&!semana().opc[d]).map(Number);
+  if(!dias.length) return;
+  const [hh,mm]=(hora||'07:00').split(':').map(Number),p2=n=>String(n).padStart(2,'0');
+  const ini=new Date();ini.setHours(hh,mm,0,0);while(!dias.includes(ini.getDay())||ini<new Date()) ini.setDate(ini.getDate()+1);
+  const dt=d=>d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+'T'+p2(d.getHours())+p2(d.getMinutes())+'00';
+  const fim=new Date(ini.getTime()+S.prefs.dur*60000),url=location.href.split('#')[0].split('?')[0];
+  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Casa Forte//PT-BR','BEGIN:VEVENT','UID:casaforte-'+Date.now()+'@casaforte','DTSTAMP:'+dt(new Date()),
+    'DTSTART:'+dt(ini),'DTEND:'+dt(fim),'RRULE:FREQ=WEEKLY;BYDAY='+dias.map(d=>BY[d]).join(','),'SUMMARY:Treino Casa Forte','DESCRIPTION:Seu treino de hoje está pronto: '+url,'URL:'+url,
+    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Hora do treino','TRIGGER:-PT10M','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));a.download='treinos-casa-forte.ics';document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);S.prefs.hora=hora;save();
+}
 /* ---------- Detalhe do treino ---------- */
 let sel=null,trItems=[]; // {plan,tier,dur,origem}
 function abrirTreino(plan,o={}){
@@ -288,7 +314,7 @@ function renderMov(){
   const norm=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
   movItems=catalogo().filter(it=>q?norm(it.n).includes(q):it.cat===movCat);
   movItems.sort((a,b)=>(MOCAP[b.a]?1:0)-(MOCAP[a.a]?1:0));
-  $('movGrid').innerHTML=movItems.length?movItems.map((it,i)=>`<button class="movcard" data-mvi="${i}"><b>${esc(it.n)}</b><small>${esc(it.m.map(m=>MUS[m]).slice(0,2).join(' · ')||'Relaxamento')}</small>${MOCAP[it.a]?'<span class="badge-real">Movimento real</span>':''}</button>`).join(''):'<p class="muted">Nenhum movimento com esse nome.</p>';
+  $('movGrid').innerHTML=movItems.length?movItems.map((it,i)=>`<button class="movcard" data-mvi="${i}"><img class="thumb" src="assets/thumbs/${esc(it.a)}.webp" alt="" loading="lazy" width="200" height="150" onerror="this.remove()"><span class="mtx"><b>${esc(it.n)}</b><small>${esc(it.m.map(m=>MUS[m]).slice(0,2).join(' · ')||'Relaxamento')}</small>${MOCAP[it.a]?'<span class="badge-real">Movimento real</span>':''}</span></button>`).join(''):'<p class="muted">Nenhum movimento com esse nome.</p>';
 }
 $('movBusca').addEventListener('input',renderMov);
 const VIDS=[
@@ -304,19 +330,20 @@ $('vids').innerHTML=VIDS.map(([t,s,q])=>`<a href="${yt(q)}" target="_blank" rel=
 
 /* ---------- Progresso ---------- */
 function renderProg(){
-  const now=new Date(),lv=level(S.xp),mes=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+  const now=new Date(),mes=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
   const noMes=S.hist.filter(h=>h.day.startsWith(mes)).length;
   const mon=segunda().getTime(),forcaSem=new Set(S.hist.filter(h=>h.ts>=mon&&PLANS[h.plan]&&PLANS[h.plan].tipo==='Força').map(h=>h.day)).size;
-  $('progTiles').innerHTML=[[noMes,'treinos no mês'],[streak(),'treinos em sequência'],[`${forcaSem}/2`,'dias de força nesta semana'],[S.hist.reduce((a,h)=>a+h.min,0),'minutos no total']].map(([v,l])=>`<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('');
+  $('progTiles').innerHTML=[[noMes,'treinos no mês'],[ritmoSemanas(8).filter(n=>n>=2).length+'/8','semanas com 2 treinos ou mais'],[`${forcaSem}/2`,'dias de força nesta semana'],[S.hist.reduce((a,h)=>a+h.min,0),'minutos no total']].map(([v,l])=>`<div class="tile"><b>${v}</b><span>${l}</span></div>`).join('');
   // minutos por semana (8 semanas)
   const sem=[];for(let i=7;i>=0;i--){const a=segunda();a.setDate(a.getDate()-7*i);const b=new Date(a);b.setDate(a.getDate()+7);
     sem.push({l:i?a.toLocaleDateString('pt-BR',{day:'numeric',month:'numeric'}):'esta',m:S.hist.filter(h=>h.ts>=a.getTime()&&h.ts<b.getTime()).reduce((x,h)=>x+h.min,0)});}
   const top=Math.max(200,...sem.map(s=>s.m));
   $('chart').innerHTML=`<div class="bars" role="img" aria-label="Minutos por semana: ${sem.map(s=>s.l+' '+s.m).join(', ')}"><i class="meta" style="bottom:${150/top*100}%"></i>${sem.map((s,i)=>`<span class="bar${i===7?' cur':''}" style="height:${Math.max(2,s.m/top*100)}%" title="${s.m} min"></span>`).join('')}</div><div class="blabels">${sem.map(s=>`<span>${s.l}</span>`).join('')}</div>`;
   renderCorpo();
-  $('lvlNum').textContent=lv;$('tierName').textContent=`Nível ${lv} · ${TIERS[autoTier(lv)]}`;
-  const into=S.xp%XP_LVL;$('xpFill').style.width=(into/XP_LVL*100)+'%';
-  $('xpText').textContent=`${into} de ${XP_LVL} pontos para o nível ${lv+1}`+(lv<5?'. Intermediário no nível 5':(lv<10?'. Avançado no nível 10':''));
+  const rs=ritmoSemanas(8),boas=rs.filter(n=>n>=2).length;
+  $('ctRitmo').innerHTML=rs.map(n=>`<i class="${n>=2?'on':n===1?'meio':''}" title="${n} treinos"></i>`).join('');
+  $('ctText').textContent=S.hist.length?`${boas} das últimas 8 semanas com 2 treinos ou mais. É a constância, mais do que um treino perfeito, que traz resultado. Perder um dia não desfaz o hábito.`
+    :'Cada bolinha é uma semana. Com 1 treino ela fica pela metade e com 2 ou mais se completa, o mínimo de força que a OMS recomenda.';
   const doneDays=new Set(S.hist.map(h=>h.day)),start=segunda();start.setDate(start.getDate()-28);
   let html=['S','T','Q','Q','S','S','D'].map(x=>`<div class="h">${x}</div>`).join('');
   for(let i=0;i<35;i++){const dt=new Date(start);dt.setDate(start.getDate()+i);const kk=ymd(dt);
@@ -332,7 +359,7 @@ function renderPerfil(){
   const nm=S.prefs.name.trim();
   $('pfName').textContent=nm||'Você';$('pfAvatar').textContent=(nm||'C')[0].toUpperCase();
   const lv=level(S.xp),primeiro=S.hist[0];
-  $('pfSub').textContent=`Nível ${lv} · ${TIERS[autoTier(lv)]}`+(primeiro?` · treinando desde ${new Date(primeiro.ts).toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}`:'');
+  $('pfSub').textContent=`Dificuldade: ${TIERS[baseTier()]}`+(primeiro?` · treinando desde ${new Date(primeiro.ts).toLocaleDateString('pt-BR',{month:'long',year:'numeric'})}`:'');
   const q=S.quiz;
   $('objChips').innerHTML=q?[
     ...q.obj.map(v=>[NOME_OP('obj',v),1]),[`${diasEscolhidos(q).map(d=>DAYS[d]).join(', ')} · ${S.prefs.dur} min`,0],[q.gosta.map(v=>NOME_OP('gosta',v)).join(', '),0],
@@ -681,7 +708,6 @@ function tick(now){
     if(pvAula){const dt=Math.min(100,now-pvLast);pvLast=now;pvStage.frame(pvAula.update(dt));if(pvAula.done&&pvAula.reps>=4){pararAulaPv();pvT0=now;}}
     else pvStage.frame(performance.now()-pvT0);
   }
-  if(!$('done').hidden) confettiFrame(now);
   requestAnimationFrame(tick);
 }
 requestAnimationFrame(tick);
@@ -720,7 +746,7 @@ $('quitBtn').onclick=()=>{
   $('qNo').onclick=()=>{$('quitBox').hidden=true;setPause(true);};
   $('qYes').onclick=()=>finish(keep);
 };
-const DONE_LINES=['Você apareceu para você hoje. Isso é o que transforma.','Mais forte que ontem. Hidrate-se e descanse bem.','Cada treino é um presente para o seu corpo.','Disciplina é carinho com o seu futuro.'];
+const DONE_LINES=['Você apareceu para você hoje. A constância é o que transforma.','Beba água e descanse bem: o músculo se fortalece na recuperação.','Cada treino conta, mesmo os mais leves.','Cuidar do corpo também é cuidar da mente.'];
 function finish(record){
   const p=P;P=null;Batida.stop();
   try{wake&&wake.release();}catch(e){}
@@ -732,15 +758,19 @@ function finish(record){
   S.hist.push({ts:Date.now(),day:today,plan:p.day,nome:PLANS[p.day].nome,min,tier:p.tier,xp:0});
   const st=streak(),gain=min*2+10+(firstToday?Math.min(st,7)*3:0);
   S.hist[S.hist.length-1].xp=gain;S.xp+=gain;save();
-  const lv=level(S.xp),up=lv>lvBefore,nm=S.prefs.name.trim();
-  $('dnTitle').textContent=up?'Subiu de nível!':(nm?`Mandou bem, ${nm}!`:'Mandou bem!');
-  $('dnText').textContent=up?`Agora você está no nível ${lv}. ${autoTier(lv)>autoTier(lvBefore)?'Os exercícios vão ficar mais desafiadores, e seu corpo já está preparado para eles.':'Continue assim.'}`:pick(DONE_LINES);
-  $('dnLvl').textContent=lv;$('dnTier').textContent=TIERS[autoTier(lv)];
-  $('dnFill').style.width=((S.xp%XP_LVL)/XP_LVL*100)+'%';$('dnXp').textContent=`${S.xp%XP_LVL} de ${XP_LVL} pontos para o nível ${lv+1}`;
-  $('dnMin').textContent=min;$('dnGain').textContent='+'+gain;$('dnStreak').textContent=st;
+  const lv=level(S.xp),up=autoTier(lv)>autoTier(lvBefore)&&S.prefs.tier==='auto',nm=S.prefs.name.trim();
+  $('dnTitle').textContent=nm?`Que bom que você veio, ${nm}`:'Que bom que você veio';
+  $('dnText').textContent=up?`Com a constância das últimas semanas, os próximos treinos passam para ${TIERS[autoTier(lv)]}: variações um pouco mais desafiadoras.`:pick(DONE_LINES);
+  const mon=segunda().getTime(),semT=new Set(S.hist.filter(h=>h.ts>=mon).map(h=>h.day)).size;
+  {const tot=new Set(S.hist.map(h=>h.day)).size,pl=(n,a,b)=>n===1?a:b;
+  $('dnMin').textContent=min;$('dnSem').textContent=semT;$('dnTot').textContent=tot;
+  $('dnMin').nextElementSibling.textContent=pl(min,'minuto hoje','minutos hoje');
+  $('dnSem').nextElementSibling.textContent=pl(semT,'treino na semana','treinos na semana');
+  $('dnTot').nextElementSibling.textContent=pl(tot,'treino no total','treinos no total');}
+  $('dnRitmo').innerHTML=ritmoSemanas(8).map(n=>`<i class="${n>=2?'on':n===1?'meio':''}" title="${n} treinos"></i>`).join('');
   $('dnEsf').innerHTML=PLANS[p.day].flow?'':`<b>Como foi o esforço?</b><span class="muted small">Para ganhar força e músculo, o ideal é terminar cada série sentindo que daria para fazer só mais 1 a 3 repetições.</span><div class="chips">${['Leve demais','Na medida','Pesado demais'].map((t,i)=>`<button class="chip" data-esforco="${i}">${t}</button>`).join('')}</div><span class="muted small" id="dnEsfMsg"></span>`;
-  $('done').hidden=false;startConfetti();
-  say(up?nmLine('nivel',{n:lv}):nmLine('fim'));
+  $('done').hidden=false;
+  say(nmLine('fim'));
 }
 /* Esforço: duas vezes "leve demais" no mesmo nível sobe a variação; duas vezes "pesado demais" desce */
 $('dnEsf').addEventListener('click',e=>{
@@ -757,21 +787,9 @@ $('dnEsf').addEventListener('click',e=>{
 });
 $('dnBack').onclick=()=>{$('done').hidden=true;irPara('hoje');};
 
-/* ---------- Confete ---------- */
-let conf=[];
-function startConfetti(){
-  if(matchMedia('(prefers-reduced-motion: reduce)').matches){conf=[];return;}
-  const cs=getComputedStyle(document.documentElement),cols=[cs.getPropertyValue('--accent').trim(),cs.getPropertyValue('--warm').trim(),'#F2C14E','#6EA8FE'];
-  conf=Array.from({length:120},()=>({x:Math.random(),y:-Math.random()*0.6,vx:(Math.random()-.5)*0.004,vy:0.003+Math.random()*0.005,r:Math.random()*6.28,vr:(Math.random()-.5)*0.2,c:pick(cols),s:5+Math.random()*6}));
-}
-function confettiFrame(){
-  const c=$('confetti');if(!conf.length) return;
-  const w=c.clientWidth,h=c.clientHeight,d=Math.min(2,devicePixelRatio||1);
-  if(c.width!==w*d){c.width=w*d;c.height=h*d;}
-  const ctx=c.getContext('2d');ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,w,h);
-  conf.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.r+=p.vr;ctx.save();ctx.translate(p.x*w,p.y*h);ctx.rotate(p.r);ctx.fillStyle=p.c;ctx.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);ctx.restore();});
-  conf=conf.filter(p=>p.y<1.1);
-}
+/* Constância: quantos dias com treino em cada uma das últimas n semanas (a mais antiga primeiro) */
+function ritmoSemanas(n){const o=[];for(let i=n-1;i>=0;i--){const a=segunda();a.setDate(a.getDate()-7*i);const b=new Date(a);b.setDate(a.getDate()+7);
+  o.push(new Set(S.hist.filter(h=>h.ts>=a.getTime()&&h.ts<b.getTime()).map(h=>h.day)).size);}return o;}
 
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&!$('preview').hidden) closePreview();
@@ -782,6 +800,8 @@ try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{re
 /* Já começa a baixar o personagem e os movimentos do treino de hoje, para não esperar depois */
 function preCarregar(keys){try{realLoad();keys.forEach(k=>{if(MOCAP[k]) realClip(k);});}catch(e){}}
 setTimeout(()=>{const o=opcaoHoje();if(o.plan!=null){const P=PLANS[o.plan];preCarregar((P.flow?P.flow.map(k=>YOGA[k]):P.ex.map(f=>resolve(f,o.tier))).map(it=>it.a));}},600);
+/* Modo de conferência das posturas (cada parte do corpo de uma cor): ?cores=1 */
+try{if(/[?&]cores=1/.test(location.search)) window.CORES=true;}catch(e){}
 /* Link direto para ver um movimento: #ver=squat */
 function verPorLink(){return verMov((location.hash.match(/^#ver=(\w+)/)||[])[1]);}
 function verMov(k){
@@ -865,3 +885,5 @@ document.addEventListener('click',e=>{
   if(b.dataset.reg) abrirReg(b.dataset.reg);else verHist(b.dataset.reghist);
 });
 $('regModal').addEventListener('click',e=>{if(e.target.id==='regModal') $('regModal').hidden=true;});
+$('agGo').onclick=()=>baixarAgenda($('agHora').value);
+try{if(S.prefs.hora) $('agHora').value=S.prefs.hora;}catch(e){}
