@@ -887,3 +887,17 @@ document.addEventListener('click',e=>{
 $('regModal').addEventListener('click',e=>{if(e.target.id==='regModal') $('regModal').hidden=true;});
 $('agGo').onclick=()=>baixarAgenda($('agHora').value);
 try{if(S.prefs.hora) $('agHora').value=S.prefs.hora;}catch(e){}
+
+/* ---------- Canto: data e hora pequenas + botão de tela cheia ---------- */
+(function(){
+  const rel=$('relogio'),bt=$('telaCheia'),el=document.documentElement;
+  const tick=()=>{const d=new Date();rel.textContent=d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}).replace('.','')+' · '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});};
+  tick();setInterval(tick,10000);
+  const pode=document.fullscreenEnabled||document.webkitFullscreenEnabled;
+  if(!pode) return; // iPhone não deixa sites ficarem em tela cheia
+  bt.hidden=false;
+  const ativo=()=>document.fullscreenElement||document.webkitFullscreenElement;
+  const marca=()=>{const on=!!ativo();bt.classList.toggle('on',on);bt.title=bt.ariaLabel=on?'Sair da tela cheia':'Tela cheia';document.body.classList.toggle('cheia',on);};
+  bt.onclick=()=>{try{if(ativo()) (document.exitFullscreen||document.webkitExitFullscreen).call(document);else (el.requestFullscreen||el.webkitRequestFullscreen).call(el);}catch(e){}};
+  document.addEventListener('fullscreenchange',marca);document.addEventListener('webkitfullscreenchange',marca);
+})();
