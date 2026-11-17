@@ -350,7 +350,7 @@ function renderProg(){
     html+=`<div class="c${doneDays.has(kk)?' on':''}${kk===ymd(now)?' td':''}${dt>now?' fut':''}" title="${dt.toLocaleDateString('pt-BR')}">${dt.getDate()}</div>`;}
   $('cal').innerHTML=html;
   const hum=['Com energia','Cansaço leve','Muito cansaço'];
-  $('hist').innerHTML=S.hist.length?S.hist.slice(-6).reverse().map(h=>`<li><span><b>${esc(h.nome)}</b><small>${new Date(h.ts).toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit'})} · ${h.min} min</small></span><span>${S.humor[h.day]!=null&&hum[S.humor[h.day]]?hum[S.humor[h.day]]:'+'+h.xp+' pontos'}</span></li>`).join(''):'<li class="empty">Seu primeiro treino aparece aqui assim que você terminar.</li>';
+  $('hist').innerHTML=S.hist.length?S.hist.slice(-6).reverse().map(h=>`<li><span><b>${esc(h.nome)}</b><small>${new Date(h.ts).toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit'})} · ${h.min} min${h.pct!=null&&h.pct<100?` · ${h.pct}% do treino`:''}</small></span><span>${S.humor[h.day]!=null&&hum[S.humor[h.day]]?hum[S.humor[h.day]]:''}</span></li>`).join(''):'<li class="empty">Seu primeiro treino aparece aqui assim que você terminar.</li>';
 }
 
 /* ---------- Perfil ---------- */
@@ -598,7 +598,28 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 
 /* ---------- Player ---------- */
 let P=null,wake=null;
-async function keepAwake(){try{wake=await navigator.wakeLock?.request('screen');}catch(e){wake=null;}}
+/* Tela acordada durante o treino: Wake Lock do navegador; se não houver (ou falhar), um vídeo mudo de 2 s em laço,
+   que impede a tela de apagar em navegadores antigos. O pedido volta sozinho quando a aba volta a ficar visível. */
+let acordaVid=null;
+const treinando=()=>!!P&&!$('player').hidden;
+async function keepAwake(){
+  if(!treinando()) return;
+  try{
+    if('wakeLock' in navigator){
+      if(wake&&!wake.released) return;
+      wake=await navigator.wakeLock.request('screen');
+      wake.addEventListener('release',()=>{wake=null;if(document.visibilityState==='visible'&&treinando()) setTimeout(keepAwake,300);});
+      return;
+    }
+  }catch(e){wake=null;}
+  try{
+    if(!acordaVid){acordaVid=document.createElement('video');acordaVid.src='assets/acordada.mp4';acordaVid.muted=true;acordaVid.loop=true;
+      acordaVid.setAttribute('playsinline','');acordaVid.setAttribute('aria-hidden','true');
+      acordaVid.style.cssText='position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:0;bottom:0';document.body.appendChild(acordaVid);}
+    await acordaVid.play();
+  }catch(e){}
+}
+function soltarTela(){try{wake&&wake.release();}catch(e){}wake=null;try{acordaVid&&acordaVid.pause();}catch(e){}}
 function startWorkout(){
   unlockAudio();
   const tier=sel.tier,steps=build(sel.plan,tier,sel.dur,{learn:needLearn,coreo:sel.coreo});
@@ -740,22 +761,22 @@ function syncBtns(){
 syncBtns();
 $('quitBtn').onclick=()=>{
   setPause(false);
-  const pct=Math.round(P.doneMs/(total(P.steps)*1000)*100),keep=pct>=60;
+  const pct=Math.min(100,Math.round(P.doneMs/(total(P.steps)*1000)*100));
   $('quitBox').hidden=false;
-  $('quitBox').innerHTML=`<div class="confirm"><b>Quer parar por hoje?</b><span>${keep?`Você já fez ${pct}% do treino, então ele conta como concluído.`:`Você fez ${pct}% do treino. Abaixo de 60% ele não entra no histórico, mas o esforço valeu.`}</span><div><button class="btn2" id="qNo">Continuar treinando</button><button class="btn2 danger" id="qYes">Encerrar</button></div></div>`;
+  $('quitBox').innerHTML=`<div class="confirm"><b>Quer parar por hoje?</b><span>Você fez ${pct}% do treino. Ele entra no seu histórico assim mesmo: cada parte conta.</span><div><button class="btn2" id="qNo">Continuar treinando</button><button class="btn2 danger" id="qYes">Encerrar</button></div></div>`;
   $('qNo').onclick=()=>{$('quitBox').hidden=true;setPause(true);};
-  $('qYes').onclick=()=>finish(keep);
+  $('qYes').onclick=()=>finish(true,pct);
 };
 const DONE_LINES=['Você apareceu para você hoje. A constância é o que transforma.','Beba água e descanse bem: o músculo se fortalece na recuperação.','Cada treino conta, mesmo os mais leves.','Cuidar do corpo também é cuidar da mente.'];
-function finish(record){
+function finish(record,pct=100){
   const p=P;P=null;Batida.stop();
-  try{wake&&wake.release();}catch(e){}
+  soltarTela();
   $('player').hidden=true;document.body.style.overflow='';
   if(!record){pararFala(); render();return;}
   const min=Math.max(1,Math.round(p.doneMs/60000));
   const today=ymd(new Date()),firstToday=!S.hist.some(h=>h.day===today);
   const lvBefore=level(S.xp);
-  S.hist.push({ts:Date.now(),day:today,plan:p.day,nome:PLANS[p.day].nome,min,tier:p.tier,xp:0});
+  S.hist.push({ts:Date.now(),day:today,plan:p.day,nome:PLANS[p.day].nome,min,tier:p.tier,xp:0,pct});
   const st=streak(),gain=min*2+10+(firstToday?Math.min(st,7)*3:0);
   S.hist[S.hist.length-1].xp=gain;S.xp+=gain;save();
   const lv=level(S.xp),up=autoTier(lv)>autoTier(lvBefore)&&S.prefs.tier==='auto',nm=S.prefs.name.trim();
@@ -795,7 +816,9 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&!$('preview').hidden) closePreview();
   if(P&&!$('player').hidden&&e.code==='Space'){e.preventDefault();$('pauseBtn').click();}
 });
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&P&&!wake) keepAwake();});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible') keepAwake();});
+// alguns navegadores só liberam depois de um toque: qualquer toque durante o treino confirma a tela acordada
+document.addEventListener('pointerdown',()=>{if(treinando()&&!wake) keepAwake();},{passive:true});
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readCol();plStage&&plStage.applyColors();pvStage&&pvStage.applyColors();});}catch(e){}
 /* Já começa a baixar o personagem e os movimentos do treino de hoje, para não esperar depois */
 function preCarregar(keys){try{realLoad();keys.forEach(k=>{if(MOCAP[k]) realClip(k);});}catch(e){}}
@@ -887,3 +910,17 @@ document.addEventListener('click',e=>{
 $('regModal').addEventListener('click',e=>{if(e.target.id==='regModal') $('regModal').hidden=true;});
 $('agGo').onclick=()=>baixarAgenda($('agHora').value);
 try{if(S.prefs.hora) $('agHora').value=S.prefs.hora;}catch(e){}
+
+/* ---------- Canto: data e hora pequenas + botão de tela cheia ---------- */
+(function(){
+  const rel=$('relogio'),bt=$('telaCheia'),el=document.documentElement;
+  const tick=()=>{const d=new Date();rel.textContent=d.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'2-digit'}).replace('.','')+' · '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});};
+  tick();setInterval(tick,10000);
+  const pode=document.fullscreenEnabled||document.webkitFullscreenEnabled;
+  if(!pode) return; // iPhone não deixa sites ficarem em tela cheia
+  bt.hidden=false;
+  const ativo=()=>document.fullscreenElement||document.webkitFullscreenElement;
+  const marca=()=>{const on=!!ativo();bt.classList.toggle('on',on);bt.title=bt.ariaLabel=on?'Sair da tela cheia':'Tela cheia';document.body.classList.toggle('cheia',on);};
+  bt.onclick=()=>{try{if(ativo()) (document.exitFullscreen||document.webkitExitFullscreen).call(document);else (el.requestFullscreen||el.webkitRequestFullscreen).call(el);}catch(e){}};
+  document.addEventListener('fullscreenchange',marca);document.addEventListener('webkitfullscreenchange',marca);
+})();

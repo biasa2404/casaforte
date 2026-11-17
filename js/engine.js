@@ -22,7 +22,7 @@ const pair=v=>v==null?[null,null]:(isPt(v)?[v.slice(),v.slice()]:[v[0]??null,v[1
 function norm(p){
   const t=p.sh?ang(p.hip,p.sh):p.t;
   return {hip:p.hip.slice(),t,hd:p.hd??t,hk:pair(p.hk),ar:pair(p.ar),fk:pair(p.fk),lg:pair(p.lg),
-    to:typeof p.to==='number'?[p.to,p.to]:(p.to||[90,90]),ep:pair(p.ep||[-1,0.3]),kp:pair(p.kp||[1,0.15]),cv:p.cv||0,pv:p.pv||0,hp:p.hp||0,hf:p.hf||0};
+    to:typeof p.to==='number'?[p.to,p.to]:(p.to||[90,90]),ep:pair(p.ep||[-1,0.3]),kp:pair(p.kp||[1,0.15]),cv:p.cv||0,pv:p.pv||0,hp:p.hp||0,hf:p.hf||0,kz:(p.kz||[0,0]).slice(),az:(p.az||[0,0]).slice()};
 }
 function mix(a,b,k){
   if(a==null||b==null) return k<0.5?a:b;
@@ -42,7 +42,7 @@ function solve(p){
     else {const a=p.lg[i]||[0,0]; k=add(hip,a[0],L.TH); an=add(k,a[1],L.SH);}
     return [k,an,add(an,p.to[i],L.FT)];
   });
-  return {hip,sh,nk,head,arms,legs,cv:p.cv||0,pv:p.pv||0,hp:p.hp||0,hf:p.hf||0};
+  return {hip,sh,nk,head,arms,legs,cv:p.cv||0,pv:p.pv||0,hp:p.hp||0,hf:p.hf||0,kz:p.kz||[0,0],az:p.az||[0,0]};
 }
 function A(frames,props){
   const f=frames.map(([p,d])=>({p:norm(p),d}));
@@ -173,15 +173,34 @@ AN.quadStretch=A([[{hip:[0,57.5],t:180,hk:[[24,82],[-4,54]],ep:[[-1,0.3],[-1,-0.
  AN.kickLow=rh(30);AN.kickMid=rh(62);AN.kickHigh=rh(82);
  AN.elbow=A([[g,380],[G({t:172,hk:[[4,104],[10,100]],ep:[[1,0.4],[0.3,-1]]}),260],[G({t:168,hip:[3,55],hk:[[16,98],[6,106]],ep:[[0.3,-1],[1,0.4]]}),300]]);}
 // Yoga
-AN.dog=A([[{hip:[2,54],t:53,hk:[52,0],ep:[-1,0.8],fk:[[-22,0],[-24,0]],to:30},3000],[{hip:[2,55.5],t:53,hk:[52,0],ep:[-1,0.8],fk:[[-22,0],[-24,0]],to:30},3000]]);
-AN.child=A([[{hip:[-8,12],t:68,hd:40,cv:14,hk:[[58,1],[56,1]],ep:[0,1],fk:[[-12,2],[-12,2]],kp:[[1,-0.2],[1,-0.2]],to:[-90,-90]},3000],[{hip:[-8,12.6],t:67,hd:38,cv:16,hk:[[58,1],[56,1]],ep:[0,1],fk:[[-12,2],[-12,2]],kp:[[1,-0.2],[1,-0.2]],to:[-90,-90]},3000]]);
-AN.cobra=A([[{hip:[0,4],t:128,hd:136,hk:[[22,0],[20,0]],ep:[-1,0.2],lg:[[-90,-90],[-90,-90]],to:[-90,-90]},3000],[{hip:[0,4],t:134,hd:144,hk:[[22,0],[20,0]],ep:[-1,0.2],lg:[[-90,-90],[-90,-90]],to:[-90,-90]},3000]]);
-AN.warrior=A([[{hip:[0,34],t:180,ar:[[178,180],[174,178]],fk:[[28,0],[-40,0]],to:[90,60]},3000],[{hip:[0,33],t:182,ar:[[182,184],[178,182]],fk:[[28,0],[-40,0]],to:[90,60]},3000]]);
-AN.chair=A([[{hip:[-12,34],t:150,ar:[[160,165],[156,160]],fk:[[3,0],[1,0]]},3000],[{hip:[-12,32.5],t:149,ar:[[162,167],[158,162]],fk:[[3,0],[1,0]]},3000]]);
-AN.tree=A([[{hip:[0,57.5],t:180,ar:[[178,180],[176,178]],fk:[[0,0],[6,28]],kp:[[1,.15],[1,0.2]],to:[90,0]},3000],[{hip:[0,57.5],t:181,ar:[[181,183],[179,181]],fk:[[0,0],[6,28]],kp:[[1,.15],[1,0.2]],to:[90,0]},3000]]);
-AN.catcow=A([[{...QUAD,t:114,hd:150,cv:-42,pv:-14,hp:45},2200],[{...QUAD,t:96,hd:40,cv:42,pv:14,hp:-12},2200]]);
-{const sf={hip:[0,6],ep:[0,1],lg:[[90,90],[90,90]],to:[180,180]},dobra={...sf,t:122,hd:120,cv:6,hk:[[50,13],[48,13]]};
- AN.seatfold=A([[{...sf,t:150,hk:[[40,24],[38,24]]},2800],[dobra,3200],[dobra,2800]]);}
+// Yoga: cada postura começa na posição inicial do passo a passo, entra devagar, fica parada respirando e volta.
+// Assim a aula (passo 1 = posição inicial, passo 2 = movimento) mostra exatamente o que a voz explica.
+{const quatro={...QUAD,hd:100};
+ const v={hip:[6,57],t:50,hd:44,hk:[[52,0],[52,0]],ep:[-1,0.8],fk:[[-20,0],[-22,0]],kp:[[1,.1],[1,.1]],to:40};
+ AN.dog=A([[quatro,1800],[v,2600],[v,3500],[{...v,hip:[6,58]},3500],[quatro,2200]]);}
+{const calc={hip:[-8,12],t:178,hd:180,ar:[[4,8],[0,4]],fk:[[-12,2],[-12,2]],kp:[[1,-0.2],[1,-0.2]],to:[-90,-90]};
+ const cr={hip:[-8,12],t:68,hd:40,cv:14,hk:[[58,1],[56,1]],ep:[0,1],fk:[[-12,2],[-12,2]],kp:[[1,-0.2],[1,-0.2]],to:[-90,-90]};
+ AN.child=A([[calc,1800],[cr,2800],[cr,3500],[{...cr,hip:[-8,12.6],t:67,hd:38,cv:16},3500],[calc,2200]]);}
+{const deit={hip:[0,4],t:92,hd:96,hk:[[24,0],[22,0]],ep:[-1,0.6],lg:[[-90,-90],[-90,-90]],to:[-90,-90]};
+ const co={...deit,t:116,hd:126,hk:[[24,0],[22,0]],ep:[-1,0.4]};
+ AN.cobra=A([[deit,1800],[co,2400],[co,3500],[{...co,t:118,hd:128},3500],[deit,2200]]);}
+{const base={hip:[0,51],t:180,ar:[[6,10],[0,4]],fk:[[28,0],[-40,0]],kp:[[1,.15],[1,.15]],to:[90,60]};
+ const g={hip:[0,34],t:180,ar:[[178,180],[174,178]],fk:[[28,0],[-40,0]],to:[90,60]};
+ AN.warrior=A([[base,1800],[g,2600],[g,3500],[{...g,hip:[0,33],t:182},3500],[base,2200]]);}
+{const pe=ST({fk:[[3,0],[1,0]]}),c={hip:[-12,34],t:150,ar:[[160,165],[156,160]],fk:[[3,0],[1,0]]};
+ AN.chair=A([[pe,1800],[c,2600],[c,3500],[{...c,hip:[-12,32.5],t:149},3500],[pe,2200]]);}
+// árvore: o joelho da perna dobrada abre para o lado (kz) e a sola do pé apoia na parte interna da coxa, acima do joelho
+{const pe=ST({fk:[[0,0],[-2,0]]}),
+   ar={hip:[0,57.5],t:180,ar:[[178,180],[176,178]],fk:[[0,0],[4,44]],kp:[[1,.15],[1,0.2]],to:[90,0],kz:[0,17],az:[0,-12]};
+ AN.tree=A([[pe,1800],[ar,2600],[ar,3500],[{...ar,t:181},3500],[pe,2200]]);}
+AN.catcow=A([[{...QUAD,hd:100},1600],[{...QUAD,t:96,hd:40,cv:42,pv:14,hp:-12},2200],[{...QUAD,t:114,hd:150,cv:-42,pv:-14,hp:45},2200]]);
+// pinça sentada: sentada e alta, mãos ao lado do quadril -> inspira subindo os braços -> solta o ar e dobra no quadril,
+// coluna longa, mãos nas canelas; volta subindo devagar
+{const sf={hip:[0,6],lg:[[90,90],[90,90]],to:[180,180]};
+ const alta={...sf,t:178,hd:180,hk:[[-2,7],[-2,7]],ep:[[-1,0.4],[-1,0.4]]};
+ const sobe={...sf,t:178,hd:180,ar:[[172,176],[170,174]]};
+ const dobra={...sf,t:124,hd:120,cv:4,hk:[[44,9],[42,9]],ep:[[0,1],[0,1]]},funda={...dobra,t:119,hd:114,hk:[[47,8],[45,8]]};
+ AN.seatfold=A([[alta,1800],[sobe,2000],[dobra,2600],[funda,3500],[funda,1500],[sobe,2200],[alta,0.001]]);}
 // Dança e aeróbico
 AN.danceMarch=A([[{hip:[0,57],t:180,ar:[[170,175],[20,40]],lg:[[50,-10],[0,0]]},480],[{hip:[0,57],t:180,ar:[[20,40],[170,175]],lg:[[0,0],[50,-10]]},480]]);
 {const fk=[[16,0],[-14,0]];

@@ -483,3 +483,38 @@ h1{font-size:2.2rem}h2{font-size:1.75rem}h3{font-size:1.3rem}
 .plname.linkish{text-decoration:none;border-bottom:1px dashed color-mix(in srgb,var(--ink,currentColor) 30%,transparent);padding-bottom:2px}
 .ritmo i,.ritmo span{opacity:1}
 .ritmo i.meio{background:linear-gradient(90deg,var(--accent) 50%,var(--mat) 50%)}
+
+/* v9.1: canto com data e hora pequenas e botão de tela cheia */
+.canto{position:fixed;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:65;display:flex;align-items:center;gap:6px;padding:4px 4px 4px 10px;border-radius:999px;background:color-mix(in srgb,var(--surface) 82%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--sh);font-size:.74rem;color:var(--muted);font-variant-numeric:tabular-nums;pointer-events:none}
+.canto>*{pointer-events:auto}
+.canto .relogio{white-space:nowrap;text-transform:capitalize}
+.telacheia{width:28px;height:28px;border-radius:50%;border:0;background:transparent;color:var(--ink);display:grid;place-items:center;cursor:pointer}
+.telacheia:hover{background:var(--mat)}
+.telacheia svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.telacheia.on svg{transform:rotate(180deg)}
+.canto:has(.telacheia[hidden]){padding-right:10px}
+@media (min-width:900px){.canto{bottom:14px;right:16px}}
+/* celular durante o treino: a barra de controles fica embaixo, então o canto some (o celular já mostra a hora) */
+@media (max-width:899px){body:has(#player:not([hidden])) .canto{display:none}}
+/* v9.2: treino no computador cabe inteiro na tela, sem rolar (só olhar e fazer) */
+@media (min-width:760px){
+  .overlay#player{overflow:hidden}
+  .pl{max-width:none;height:100%;min-height:0;flex:1;grid-template-columns:minmax(0,1.7fr) minmax(320px,1fr);grid-template-rows:auto auto minmax(0,1fr) auto;column-gap:clamp(18px,2.4vw,40px);row-gap:12px;padding-inline:clamp(16px,3vw,48px);padding-block:14px 52px}
+  .stage{grid-column:1;grid-row:3/5;min-height:0;height:auto}
+  .side{grid-column:2;grid-row:3;min-height:0;overflow:auto;justify-content:center;gap:clamp(14px,2.4vh,26px);padding-top:0;scrollbar-width:thin}
+  .ctrlbar{grid-column:2;grid-row:4;padding:0;background:none}
+  .ctrlbar .ctrls.small{flex-wrap:wrap;overflow:visible;justify-content:center}
+  .plinfo{grid-template-columns:minmax(0,1fr) auto}
+  .plname{font-size:clamp(1.9rem,3.2vw,3.2rem)}
+  .pltip{font-size:clamp(1rem,1.25vw,1.25rem);margin-top:8px}
+  .nextup{font-size:clamp(.95rem,1.1vw,1.1rem)}
+  .ring{width:clamp(130px,17vh,210px);height:clamp(130px,17vh,210px)}.ring .t{font-size:clamp(3rem,7vh,4.8rem)}
+  .plhead .eyebrow{font-size:.85rem}
+  .plhead .num{font-size:1rem}
+}
+/* tela baixa (notebook com a barra do navegador): menos espaço entre as partes */
+@media (min-width:760px) and (max-height:640px){
+  .pl{padding-block:8px 46px;row-gap:8px}
+  .ring{width:120px;height:120px}.ring .t{font-size:2.8rem}
+  .cb.big{width:58px;height:58px}
+}
