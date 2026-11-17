@@ -116,8 +116,10 @@ class RealChar{
       const [el,ha]=j.arms[i],[kn,an,to]=j.legs[i];
       aim(s+'Arm',s+'ForeArm',sub(V(el,11.5*zs),at(L.T-3,10*zs)));
       aim(s+'ForeArm',s+'Hand',sub(V(ha),V(el)));
-      aim(s+'UpLeg',s+'Leg',sub(V(kn),V(j.hip)));
-      aim(s+'Leg',s+'Foot',sub(V(an),V(kn)));
+      // kz/az: joelho e tornozelo para fora (+) ou para dentro (-) do corpo, para posturas como a árvore
+      const kz=((j.kz&&j.kz[i])||0)*zs,az=((j.az&&j.az[i])||0)*zs;
+      aim(s+'UpLeg',s+'Leg',sub(V(kn,kz),V(j.hip)));
+      aim(s+'Leg',s+'Foot',sub(V(an,az),V(kn,kz)));
       // o pé do boneco antigo vai do tornozelo à ponta; o da Sophie, do tornozelo à base dos dedos (mais inclinado)
       // gira para o lado que fica mais perto do chão (em pé: para baixo e à frente; ajoelhada: peito do pé no chão)
       const fd=sub(V(to),V(an)).normalize(),r1=(g)=>new T.Vector3(fd.x*Math.cos(g)-fd.y*Math.sin(g),fd.x*Math.sin(g)+fd.y*Math.cos(g),0);

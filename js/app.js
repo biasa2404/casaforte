@@ -350,7 +350,7 @@ function renderProg(){
     html+=`<div class="c${doneDays.has(kk)?' on':''}${kk===ymd(now)?' td':''}${dt>now?' fut':''}" title="${dt.toLocaleDateString('pt-BR')}">${dt.getDate()}</div>`;}
   $('cal').innerHTML=html;
   const hum=['Com energia','Cansaço leve','Muito cansaço'];
-  $('hist').innerHTML=S.hist.length?S.hist.slice(-6).reverse().map(h=>`<li><span><b>${esc(h.nome)}</b><small>${new Date(h.ts).toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit'})} · ${h.min} min</small></span><span>${S.humor[h.day]!=null&&hum[S.humor[h.day]]?hum[S.humor[h.day]]:'+'+h.xp+' pontos'}</span></li>`).join(''):'<li class="empty">Seu primeiro treino aparece aqui assim que você terminar.</li>';
+  $('hist').innerHTML=S.hist.length?S.hist.slice(-6).reverse().map(h=>`<li><span><b>${esc(h.nome)}</b><small>${new Date(h.ts).toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'2-digit'})} · ${h.min} min${h.pct!=null&&h.pct<100?` · ${h.pct}% do treino`:''}</small></span><span>${S.humor[h.day]!=null&&hum[S.humor[h.day]]?hum[S.humor[h.day]]:''}</span></li>`).join(''):'<li class="empty">Seu primeiro treino aparece aqui assim que você terminar.</li>';
 }
 
 /* ---------- Perfil ---------- */
@@ -761,14 +761,14 @@ function syncBtns(){
 syncBtns();
 $('quitBtn').onclick=()=>{
   setPause(false);
-  const pct=Math.round(P.doneMs/(total(P.steps)*1000)*100),keep=pct>=60;
+  const pct=Math.min(100,Math.round(P.doneMs/(total(P.steps)*1000)*100));
   $('quitBox').hidden=false;
-  $('quitBox').innerHTML=`<div class="confirm"><b>Quer parar por hoje?</b><span>${keep?`Você já fez ${pct}% do treino, então ele conta como concluído.`:`Você fez ${pct}% do treino. Abaixo de 60% ele não entra no histórico, mas o esforço valeu.`}</span><div><button class="btn2" id="qNo">Continuar treinando</button><button class="btn2 danger" id="qYes">Encerrar</button></div></div>`;
+  $('quitBox').innerHTML=`<div class="confirm"><b>Quer parar por hoje?</b><span>Você fez ${pct}% do treino. Ele entra no seu histórico assim mesmo: cada parte conta.</span><div><button class="btn2" id="qNo">Continuar treinando</button><button class="btn2 danger" id="qYes">Encerrar</button></div></div>`;
   $('qNo').onclick=()=>{$('quitBox').hidden=true;setPause(true);};
-  $('qYes').onclick=()=>finish(keep);
+  $('qYes').onclick=()=>finish(true,pct);
 };
 const DONE_LINES=['Você apareceu para você hoje. A constância é o que transforma.','Beba água e descanse bem: o músculo se fortalece na recuperação.','Cada treino conta, mesmo os mais leves.','Cuidar do corpo também é cuidar da mente.'];
-function finish(record){
+function finish(record,pct=100){
   const p=P;P=null;Batida.stop();
   soltarTela();
   $('player').hidden=true;document.body.style.overflow='';
@@ -776,7 +776,7 @@ function finish(record){
   const min=Math.max(1,Math.round(p.doneMs/60000));
   const today=ymd(new Date()),firstToday=!S.hist.some(h=>h.day===today);
   const lvBefore=level(S.xp);
-  S.hist.push({ts:Date.now(),day:today,plan:p.day,nome:PLANS[p.day].nome,min,tier:p.tier,xp:0});
+  S.hist.push({ts:Date.now(),day:today,plan:p.day,nome:PLANS[p.day].nome,min,tier:p.tier,xp:0,pct});
   const st=streak(),gain=min*2+10+(firstToday?Math.min(st,7)*3:0);
   S.hist[S.hist.length-1].xp=gain;S.xp+=gain;save();
   const lv=level(S.xp),up=autoTier(lv)>autoTier(lvBefore)&&S.prefs.tier==='auto',nm=S.prefs.name.trim();
