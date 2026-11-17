@@ -598,7 +598,28 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 
 /* ---------- Player ---------- */
 let P=null,wake=null;
-async function keepAwake(){try{wake=await navigator.wakeLock?.request('screen');}catch(e){wake=null;}}
+/* Tela acordada durante o treino: Wake Lock do navegador; se não houver (ou falhar), um vídeo mudo de 2 s em laço,
+   que impede a tela de apagar em navegadores antigos. O pedido volta sozinho quando a aba volta a ficar visível. */
+let acordaVid=null;
+const treinando=()=>!!P&&!$('player').hidden;
+async function keepAwake(){
+  if(!treinando()) return;
+  try{
+    if('wakeLock' in navigator){
+      if(wake&&!wake.released) return;
+      wake=await navigator.wakeLock.request('screen');
+      wake.addEventListener('release',()=>{wake=null;if(document.visibilityState==='visible'&&treinando()) setTimeout(keepAwake,300);});
+      return;
+    }
+  }catch(e){wake=null;}
+  try{
+    if(!acordaVid){acordaVid=document.createElement('video');acordaVid.src='assets/acordada.mp4';acordaVid.muted=true;acordaVid.loop=true;
+      acordaVid.setAttribute('playsinline','');acordaVid.setAttribute('aria-hidden','true');
+      acordaVid.style.cssText='position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:0;bottom:0';document.body.appendChild(acordaVid);}
+    await acordaVid.play();
+  }catch(e){}
+}
+function soltarTela(){try{wake&&wake.release();}catch(e){}wake=null;try{acordaVid&&acordaVid.pause();}catch(e){}}
 function startWorkout(){
   unlockAudio();
   const tier=sel.tier,steps=build(sel.plan,tier,sel.dur,{learn:needLearn,coreo:sel.coreo});
@@ -749,7 +770,7 @@ $('quitBtn').onclick=()=>{
 const DONE_LINES=['Você apareceu para você hoje. A constância é o que transforma.','Beba água e descanse bem: o músculo se fortalece na recuperação.','Cada treino conta, mesmo os mais leves.','Cuidar do corpo também é cuidar da mente.'];
 function finish(record){
   const p=P;P=null;Batida.stop();
-  try{wake&&wake.release();}catch(e){}
+  soltarTela();
   $('player').hidden=true;document.body.style.overflow='';
   if(!record){pararFala(); render();return;}
   const min=Math.max(1,Math.round(p.doneMs/60000));
@@ -795,7 +816,9 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&!$('preview').hidden) closePreview();
   if(P&&!$('player').hidden&&e.code==='Space'){e.preventDefault();$('pauseBtn').click();}
 });
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&P&&!wake) keepAwake();});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible') keepAwake();});
+// alguns navegadores só liberam depois de um toque: qualquer toque durante o treino confirma a tela acordada
+document.addEventListener('pointerdown',()=>{if(treinando()&&!wake) keepAwake();},{passive:true});
 try{matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readCol();plStage&&plStage.applyColors();pvStage&&pvStage.applyColors();});}catch(e){}
 /* Já começa a baixar o personagem e os movimentos do treino de hoje, para não esperar depois */
 function preCarregar(keys){try{realLoad();keys.forEach(k=>{if(MOCAP[k]) realClip(k);});}catch(e){}}
