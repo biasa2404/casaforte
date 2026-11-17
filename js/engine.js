@@ -22,7 +22,7 @@ const pair=v=>v==null?[null,null]:(isPt(v)?[v.slice(),v.slice()]:[v[0]??null,v[1
 function norm(p){
   const t=p.sh?ang(p.hip,p.sh):p.t;
   return {hip:p.hip.slice(),t,hd:p.hd??t,hk:pair(p.hk),ar:pair(p.ar),fk:pair(p.fk),lg:pair(p.lg),
-    to:typeof p.to==='number'?[p.to,p.to]:(p.to||[90,90]),ep:pair(p.ep||[-1,0.3]),kp:pair(p.kp||[1,0.15])};
+    to:typeof p.to==='number'?[p.to,p.to]:(p.to||[90,90]),ep:pair(p.ep||[-1,0.3]),kp:pair(p.kp||[1,0.15]),cv:p.cv||0,pv:p.pv||0,hp:p.hp||0,hf:p.hf||0};
 }
 function mix(a,b,k){
   if(a==null||b==null) return k<0.5?a:b;
@@ -42,7 +42,7 @@ function solve(p){
     else {const a=p.lg[i]||[0,0]; k=add(hip,a[0],L.TH); an=add(k,a[1],L.SH);}
     return [k,an,add(an,p.to[i],L.FT)];
   });
-  return {hip,sh,nk,head,arms,legs};
+  return {hip,sh,nk,head,arms,legs,cv:p.cv||0,pv:p.pv||0,hp:p.hp||0,hf:p.hf||0};
 }
 function A(frames,props){
   const f=frames.map(([p,d])=>({p:norm(p),d}));
@@ -102,8 +102,9 @@ const AN={};
  AN.bridge1Pause=A([[a1,1100],[b1,1800],[b1,1100]]);
  AN.bridgeHold=A([[b,2500],[{...b,hip:[-4,25]},2500]]);}
 AN.calf=A([[ST({fk:[[0,0],[0,0]],to:[90,90]}),700],[{hip:[0,63.5],t:180,ar:[[8,12],[-4,4]],fk:[[0,6],[0,6]],to:[40,40]},700]]);
-{const gm=ST({ar:[[150,-110],[150,-110]]});
- const gb={hip:[-10,55],t:95,hd:100,ar:[[65,-195],[65,-195]],fk:[[2,0],[-2,0]]};
+{// braços cruzados no peito (mais seguro para o pescoço do que mãos atrás da cabeça)
+ const gm=ST({hk:[[9,82],[7,83]],ep:[[0.4,-1],[0.4,-1]],kp:[[1,.15],[1,.15]]});delete gm.ar;
+ const gb={hip:[-10,55],t:95,hd:100,hk:[[21,50],[19,51]],ep:[[0.2,-1],[0.2,-1]],fk:[[2,0],[-2,0]],kp:[[1,.15],[1,.15]]};
  AN.goodmorning=A([[gm,1100],[gb,1100]]);
  AN.goodmorningSlow=A([[gm,1600],[gb,1400],[gb,1600]]);}
 // Força: empurrar
@@ -114,10 +115,15 @@ AN.pushFull=A([[pushP('full',40),900],[pushP('full',16),900]]);
  AN.dip1=dip(28);AN.dip2=dip(38);AN.dip3=dip(48);}
 AN.highPlank=A([[pushP('full',40),1600],[pushP('full',38.5),1600]]);
 AN.pike=A([[{hip:[2,54],t:53,hk:[52,0],ep:[-1,0.8],fk:[[-22,0],[-24,0]],to:30},1000],[{hip:[14,50],t:41,hk:[52,0],ep:[-1,0.8],fk:[[-22,0],[-24,0]],to:30},1000]]);
-AN.pikeElev=A([[{hip:[0,66],t:24,hk:[30,0],ep:[-1,0.8],fk:[[-22,31],[-24,31]],kp:[[1,.3],[1,.3]],to:-90},1100],[{hip:[6,54],t:25,hk:[30,0],ep:[-1,0.8],fk:[[-22,31],[-24,31]],kp:[[1,.3],[1,.3]],to:-90},1100]],[CH(-28,-1)]);
+// pés na cadeira, pernas retas, quadril alto; desce a cabeça entre as mãos dobrando os cotovelos
+AN.pikeElev=A([[{hip:[14,76],t:10,hk:[24,0],ep:[-1,0.8],fk:[[-22,31],[-24,31]],kp:[[.3,-1],[.3,-1]],to:-90},1100],[{hip:[18,70],t:8,hk:[24,0],ep:[-1,0.8],fk:[[-22,31],[-24,31]],kp:[[.3,-1],[.3,-1]],to:-90},1100]],[CH(-28,-1)]);
 // Costas e core
-{const lie={hip:[0,4],t:90,hd:90,ar:[[90,90],[90,90]],lg:[[-90,-90],[-90,-90]],to:[-90,-90]};
+{const lie={hip:[0,4],t:92,hd:100,ar:[[90,90],[90,90]],lg:[[-90,-90],[-90,-90]],to:[-90,-90]};
  AN.superman=A([[lie,900],[{...lie,t:104,hd:110,ar:[[112,112],[106,106]],lg:[[-102,-102],[-99,-99]]},1300],[{...lie,t:104,hd:110,ar:[[112,112],[106,106]],lg:[[-102,-102],[-99,-99]]},900]]);
+ // puxada deitada: braços estendidos à frente (Y) e depois cotovelos puxados para trás (W), peito um pouco elevado
+ {const Y={...lie,t:100,hd:104,ar:[[112,112],[110,110]]},Wp={...lie,t:100,hd:104,ar:[[-118,76],[-116,78]]};
+  AN.pronePull=A([[Y,700],[Wp,700],[Wp,300]]);
+  AN.pronePullPause=A([[Y,800],[Wp,800],[Wp,1600]]);}
  AN.supermanTop=A([[lie,900],[{...lie,t:104,hd:110,ar:[[112,112],[106,106]]},1100]]);
  const s1={...lie,t:102,hd:106,ar:[[118,118],[98,98]],lg:[[-92,-92],[-104,-104]]},s2={...lie,t:102,hd:106,ar:[[98,98],[118,118]],lg:[[-104,-104],[-92,-92]]};
  AN.swimmer=A([[s1,600],[s2,600]]);}
@@ -127,8 +133,12 @@ AN.pikeElev=A([[{hip:[0,66],t:24,hk:[30,0],ep:[-1,0.8],fk:[[-22,31],[-24,31]],kp
  AN.birddogSlow=A([[a,1500],[b,2600],[b,1500]]);}
 AN.plank=A([[plankF(23),1600],[plankF(24.5),1600]]);
 {const b=pushP('full',40),px=b.fk;
- const c1={...b,fk:[[b.hip[0]-8,14],px],kp:[[1,-0.4],[0,-1]],to:[20,30]},c2={...b,fk:[px,[b.hip[0]-8,14]],kp:[[0,-1],[1,-0.4]],to:[30,20]};
- AN.climberSlow=A([[c1,560],[c2,560]]);AN.climber=A([[c1,380],[c2,380]]);AN.climberFast=A([[c1,280],[c2,280]]);}
+ // joelho vem em direção ao peito sem encostar no chão; a outra perna fica estendida; na troca, as duas passam pelo meio
+ const fr=[b.hip[0]+12,8],kp=[[1,0.2],[1,0.2]];
+ const c1={...b,fk:[fr,px],kp,to:[40,30]},c2={...b,fk:[px,fr],kp,to:[30,40]};
+ // segura cada lado e troca rápido, como no movimento real
+ const cl=d=>A([[c1,d*0.75],[c1,d*0.25],[c2,d*0.75],[c2,d*0.25]]);
+ AN.climberSlow=cl(560);AN.climber=cl(380);AN.climberFast=cl(280);}
 {const base={hip:[0,4],kp:[[.3,1],[.3,1]],fk:[[24,0],[22,0]]};
  AN.crunch=A([[{...base,sh:[-34,4],ar:[[90,90],[90,90]]},900],[{...base,sh:[-26,22],hd:-40,ar:[[60,70],[60,70]]},900]]);}
 AN.legraise=A([[{hip:[0,4],t:-90,ar:[[90,90],[90,90]],lg:[[96,96],[96,96]],to:[180,180]},1200],[{hip:[0,4],t:-90,ar:[[90,90],[90,90]],lg:[[178,178],[178,178]],to:[120,120]},1200]]);
@@ -140,8 +150,10 @@ AN.vup=A([[{hip:[0,4],t:-90,ar:[[-90,-90],[-90,-90]],lg:[[95,95],[95,95]],to:[18
  AN.burpee=A([[st,300],[sq,300],[pk,450],[sq,300],[jp,300]]);
  AN.burpee0=A([[st,450],[sq,450],[pk,700],[sq,450]]);}
 // Aquecimento e volta à calma
-AN.highknees=A([[{hip:[0,58],t:180,ar:[[-35,40],[35,100]],lg:[[80,0],[0,0]]},320],[{hip:[0,58],t:180,ar:[[35,100],[-35,40]],lg:[[0,0],[80,0]]},320]]);
-AN.buttkicks=A([[{hip:[0,58],t:180,ar:[[-30,60],[30,110]],lg:[[-5,-165],[0,0]],to:[-60,90]},280],[{hip:[0,58],t:180,ar:[[30,110],[-30,60]],lg:[[0,0],[-5,-165]],to:[90,-60]},280]]);
+// uma perna de cada vez: passa pelo meio com os dois pés no chão (sem as duas pernas dobradas no ar)
+{const n={hip:[0,57.5],t:180,ar:[[0,60],[0,60]],lg:[[0,0],[0,0]]};
+ AN.highknees=A([[{hip:[0,58],t:180,ar:[[-35,40],[35,100]],lg:[[80,0],[0,0]]},220],[n,100],[{hip:[0,58],t:180,ar:[[35,100],[-35,40]],lg:[[0,0],[80,0]]},220],[n,100]]);
+ AN.buttkicks=A([[{hip:[0,58],t:180,ar:[[-30,60],[30,110]],lg:[[-5,-165],[0,0]],to:[-60,90]},200],[n,90],[{hip:[0,58],t:180,ar:[[30,110],[-30,60]],lg:[[0,0],[-5,-165]],to:[90,-60]},200],[n,90]]);}
 AN.circles=A([0,90,180,270,360].map((a,i)=>[ST({ar:[[a,a+8],[a+180,a+188]]}),i===4?0:380]));
 AN.breath=A([[ST({ar:[[6,10],[2,6]]}),3500],[ST({ar:[[176,178],[170,174]]}),3500]]);
 {const a=ST({ar:[[6,8],[2,4]]}),b={hip:[-8,57],t:28,hd:20,hk:[[16,1],[13,1]],ep:[1,0],fk:[[2,0],[-2,0]]};
@@ -162,13 +174,14 @@ AN.quadStretch=A([[{hip:[0,57.5],t:180,hk:[[24,82],[-4,54]],ep:[[-1,0.3],[-1,-0.
  AN.elbow=A([[g,380],[G({t:172,hk:[[4,104],[10,100]],ep:[[1,0.4],[0.3,-1]]}),260],[G({t:168,hip:[3,55],hk:[[16,98],[6,106]],ep:[[0.3,-1],[1,0.4]]}),300]]);}
 // Yoga
 AN.dog=A([[{hip:[2,54],t:53,hk:[52,0],ep:[-1,0.8],fk:[[-22,0],[-24,0]],to:30},3000],[{hip:[2,55.5],t:53,hk:[52,0],ep:[-1,0.8],fk:[[-22,0],[-24,0]],to:30},3000]]);
-AN.child=A([[{hip:[-4,12],t:78,hd:100,hk:[[62,2],[60,2]],ep:[0,1],lg:[[70.5,-90],[70.5,-90]],to:[-90,-90]},3000],[{hip:[-4,12.5],t:76,hd:98,hk:[[62,2],[60,2]],ep:[0,1],lg:[[70.5,-90],[70.5,-90]],to:[-90,-90]},3000]]);
+AN.child=A([[{hip:[-8,12],t:68,hd:40,cv:14,hk:[[58,1],[56,1]],ep:[0,1],fk:[[-12,2],[-12,2]],kp:[[1,-0.2],[1,-0.2]],to:[-90,-90]},3000],[{hip:[-8,12.6],t:67,hd:38,cv:16,hk:[[58,1],[56,1]],ep:[0,1],fk:[[-12,2],[-12,2]],kp:[[1,-0.2],[1,-0.2]],to:[-90,-90]},3000]]);
 AN.cobra=A([[{hip:[0,4],t:128,hd:136,hk:[[22,0],[20,0]],ep:[-1,0.2],lg:[[-90,-90],[-90,-90]],to:[-90,-90]},3000],[{hip:[0,4],t:134,hd:144,hk:[[22,0],[20,0]],ep:[-1,0.2],lg:[[-90,-90],[-90,-90]],to:[-90,-90]},3000]]);
 AN.warrior=A([[{hip:[0,34],t:180,ar:[[178,180],[174,178]],fk:[[28,0],[-40,0]],to:[90,60]},3000],[{hip:[0,33],t:182,ar:[[182,184],[178,182]],fk:[[28,0],[-40,0]],to:[90,60]},3000]]);
 AN.chair=A([[{hip:[-12,34],t:150,ar:[[160,165],[156,160]],fk:[[3,0],[1,0]]},3000],[{hip:[-12,32.5],t:149,ar:[[162,167],[158,162]],fk:[[3,0],[1,0]]},3000]]);
 AN.tree=A([[{hip:[0,57.5],t:180,ar:[[178,180],[176,178]],fk:[[0,0],[6,28]],kp:[[1,.15],[1,0.2]],to:[90,0]},3000],[{hip:[0,57.5],t:181,ar:[[181,183],[179,181]],fk:[[0,0],[6,28]],kp:[[1,.15],[1,0.2]],to:[90,0]},3000]]);
-AN.catcow=A([[{...QUAD,t:106,hd:140},2200],[{...QUAD,t:117,hd:65},2200]]);
-AN.seatfold=A([[{hip:[0,6],t:150,hk:[[40,24],[38,24]],ep:[0,1],lg:[[90,90],[90,90]],to:[180,180]},2800],[{hip:[0,6],t:110,hd:105,hk:[[56,8],[54,8]],ep:[0,1],lg:[[90,90],[90,90]],to:[180,180]},3200],[{hip:[0,6],t:110,hd:105,hk:[[56,8],[54,8]],ep:[0,1],lg:[[90,90],[90,90]],to:[180,180]},2800]]);
+AN.catcow=A([[{...QUAD,t:114,hd:150,cv:-42,pv:-14,hp:45},2200],[{...QUAD,t:96,hd:40,cv:42,pv:14,hp:-12},2200]]);
+{const sf={hip:[0,6],ep:[0,1],lg:[[90,90],[90,90]],to:[180,180]},dobra={...sf,t:122,hd:120,cv:6,hk:[[50,13],[48,13]]};
+ AN.seatfold=A([[{...sf,t:150,hk:[[40,24],[38,24]]},2800],[dobra,3200],[dobra,2800]]);}
 // Dança e aeróbico
 AN.danceMarch=A([[{hip:[0,57],t:180,ar:[[170,175],[20,40]],lg:[[50,-10],[0,0]]},480],[{hip:[0,57],t:180,ar:[[20,40],[170,175]],lg:[[0,0],[50,-10]]},480]]);
 {const fk=[[16,0],[-14,0]];
