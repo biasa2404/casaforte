@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2c6a37">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Cozinha em Dia</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Inter:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: app de cozinha para o celular. Cabeçalho com o dia, coluna única de até 680px, abas fixas embaixo. */
+:root{
+  --bg:#f3f6ef; --surface:#ffffff; --surface2:#e7eee1; --fg:#1b281d; --muted:#5a6a5c; --line:#d3ddcc;
+  --accent:#2c6a37; --accent-fg:#ffffff; --accent-soft:#d9ead8;
+  --warm:#c97a12; --warm-soft:#fbe9cc; --info:#2b5c86; --info-soft:#dbe8f4; --ferro:#9a3a2c; --ferro-soft:#f5dfda;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-body:"Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"DM Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111913; --surface:#19231b; --surface2:#213025; --fg:#e6eee4; --muted:#9aab9c; --line:#2d3d30;
+  --accent:#7cc488; --accent-fg:#0d180f; --accent-soft:#22402a;
+  --warm:#f0b456; --warm-soft:#3b2c14; --info:#8cb9e2; --info-soft:#1d3247; --ferro:#e48d7b; --ferro-soft:#40231d;
+  color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111913; --surface:#19231b; --surface2:#213025; --fg:#e6eee4; --muted:#9aab9c; --line:#2d3d30;
+  --accent:#7cc488; --accent-fg:#0d180f; --accent-soft:#22402a;
+  --warm:#f0b456; --warm-soft:#3b2c14; --info:#8cb9e2; --info-soft:#1d3247; --ferro:#e48d7b; --ferro-soft:#40231d;
+  color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 var(--f-body);margin:0;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:0 calc(84px + env(safe-area-inset-bottom, 0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top, 0px);z-index:10;background:var(--bg)}
+.wrap{max-width:680px;margin:0 auto}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;line-height:1.15;margin:0}
+h1{font-size:1.7rem;font-weight:800;letter-spacing:-.01em}
+h2{font-size:1.25rem;font-weight:800}
+h3{font-size:1.02rem;font-weight:600}
+p{margin:0}
+a{color:var(--accent)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.eyebrow{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+/* cabeçalho */
+header.top{padding-block:20px 8px;display:flex;flex-direction:column;gap:14px}
+.brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand .logo{font-family:var(--f-display);font-weight:800;font-size:1.05rem;display:flex;align-items:center;gap:8px}
+.brand .logo svg{width:26px;height:26px}
+.weekpill{font-size:.8rem;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+
+/* abas */
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom, 0px);padding-left:env(safe-area-inset-left, 0px);padding-right:env(safe-area-inset-right, 0px)}
+nav.tabs .in{max-width:680px;margin:0 auto;display:grid;grid-template-columns:repeat(7,1fr)}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 0 10px;text-decoration:none;color:var(--muted);font-size:.64rem;font-weight:600;min-width:0;white-space:nowrap}
+/* validade */
+.alerta{background:var(--ferro-soft);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.alerta h3{color:var(--ferro)}
+.alerta a{font-weight:600;font-size:.88rem}
+.vrow{display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.vrow .acts{display:flex;gap:6px}
+.vrow .acts button{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:5px 9px;font-size:.8rem;font-weight:600;cursor:pointer}
+.dias{font-family:var(--f-mono);font-size:.8rem;font-weight:500;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.dias.vencido,.dias.urgente{background:var(--ferro-soft);color:var(--ferro)}
+.dias.logo{background:var(--warm-soft);color:var(--warm)}
+.dias.ok{background:var(--accent-soft);color:var(--accent)}
+.vform{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.vform .fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.vform input[type=text],.vform input[type=date]{font:inherit;padding:8px 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg);width:100%;min-width:0}
+.vform .full{grid-column:1/-1}
+.vform label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;font-weight:600;color:var(--muted);min-width:0}
+.presets{display:flex;flex-wrap:wrap;gap:6px}
+.presets button{border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:4px 10px;font-size:.8rem;cursor:pointer}
+nav.tabs a svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.tabs a[aria-current="page"]{color:var(--accent)}
+
+section.view{display:flex;flex-direction:column;gap:16px;padding-top:6px}
+
+/* faixa de dias */
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:6px 0 7px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:1px}
+.day b{font-family:var(--f-display);font-size:1.05rem}
+.day span{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.day.today{border-color:var(--accent)}
+.day[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.day[aria-pressed="true"] span{color:var(--accent-fg)}
+.day i{width:5px;height:5px;border-radius:50%;background:transparent;margin-top:2px}
+.day i.done{background:var(--warm)}
+
+/* resumo do dia */
+.summary{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.ring{width:74px;height:74px;position:relative}
+.ring svg{width:74px;height:74px;transform:rotate(-90deg)}
+.ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--f-display);font-weight:800;font-size:1.15rem;line-height:1}
+.ring .num small{font-family:var(--f-body);font-weight:500;font-size:.62rem;color:var(--muted);margin-top:3px}
+.stats{display:flex;flex-direction:column;gap:6px;min-width:0}
+.bar{height:8px;border-radius:99px;background:var(--surface2);overflow:hidden}
+.bar > div{height:100%;background:var(--accent);border-radius:99px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:.74rem;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--surface2);color:var(--muted);white-space:nowrap}
+.chip.pronto{background:var(--accent-soft);color:var(--accent)}
+.chip.esquentar{background:var(--warm-soft);color:var(--warm)}
+.chip.cozinhar{background:var(--info-soft);color:var(--info)}
+.chip.ferro{background:var(--ferro-soft);color:var(--ferro)}
+
+/* linha do tempo */
+.timeline{display:flex;flex-direction:column;gap:10px;position:relative}
+.item{display:grid;grid-template-columns:52px 1fr;gap:10px}
+.item .hora{font-family:var(--f-mono);font-size:.9rem;color:var(--muted);padding-top:15px;text-align:right}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;min-width:0}
+.card.noite{background:var(--surface2);border-style:dashed}
+.card.prep{border-color:var(--warm);background:var(--warm-soft)}
+.card .body{min-width:0;display:flex;flex-direction:column;gap:6px}
+.card .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.card.checked h3{text-decoration:line-through;text-decoration-color:var(--muted)}
+.card.checked{opacity:.72}
+.check{appearance:none;-webkit-appearance:none;width:30px;height:30px;border-radius:9px;border:2px solid var(--line);background:var(--surface);cursor:pointer;display:grid;place-items:center;margin-top:2px}
+.check:checked{background:var(--accent);border-color:var(--accent)}
+.check:checked::after{content:"";width:9px;height:15px;border:solid var(--accent-fg);border-width:0 3px 3px 0;transform:translateY(-2px) rotate(45deg)}
+details{font-size:.9rem}
+details summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:.85rem;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"+ "}
+details[open] summary::before{content:"− "}
+ol.steps,ul.steps{margin:8px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.tasks{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.tasks label{display:grid;grid-template-columns:22px 1fr;gap:8px;align-items:start;cursor:pointer;font-size:.92rem}
+.tasks input{width:20px;height:20px;margin:1px 0 0;accent-color:var(--accent)}
+.tasks label.done span{text-decoration:line-through;color:var(--muted)}
+.tip{border-left:3px solid var(--warm);padding:8px 12px;background:var(--surface);border-radius:0 10px 10px 0;font-size:.9rem}
+
+/* segmentado */
+.seg{display:inline-flex;background:var(--surface2);border-radius:999px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;padding:6px 14px;border-radius:999px;font-weight:600;font-size:.85rem;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+
+.btn{border:0;border-radius:11px;padding:10px 16px;font-weight:600;cursor:pointer;background:var(--accent);color:var(--accent-fg)}
+.btn.ghost{background:var(--surface2);color:var(--fg)}
+.btn.small{padding:7px 12px;font-size:.85rem}
+
+/* semana */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.86rem}
+th,td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--line)}
+th{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--surface2)}
+tr:last-child td{border-bottom:0}
+td.dia{font-family:var(--f-display);font-weight:600;white-space:nowrap}
+tr.hoje td{background:var(--accent-soft)}
+.weekcard{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.marmitas{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.marmita{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface2);display:flex;flex-direction:column;gap:4px}
+
+/* preparo */
+.timer{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.timer .clock{font-family:var(--f-mono);font-size:2rem;font-weight:500;line-height:1}
+.steplist{display:flex;flex-direction:column;gap:8px}
+.step{display:grid;grid-template-columns:56px 1fr auto;gap:10px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.step .t{font-family:var(--f-mono);font-size:.95rem;font-weight:500;padding-top:2px}
+.step .t small{display:block;font-size:.72rem;color:var(--muted);font-weight:400}
+.step .txt{min-width:0;display:flex;flex-direction:column;gap:4px;font-size:.92rem}
+.step.now{border-color:var(--warm);box-shadow:0 0 0 2px var(--warm-soft)}
+.step.done{opacity:.6}
+.step.done .txt span{text-decoration:line-through}
+.lane{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.lane.Pressão{color:var(--ferro)} .lane.Forno{color:var(--warm)} .lane.Fogão{color:var(--info)}
+.step input{width:24px;height:24px;accent-color:var(--accent);margin:0}
+.rende{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.rende div{background:var(--surface2);border-radius:10px;padding:8px 10px;font-size:.85rem}
+.rende b{display:block;font-family:var(--f-display);font-size:1.15rem}
+
+/* compras */
+.shop{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:6px 14px 10px}
+.shop h3{padding:10px 0 6px;font-size:.95rem}
+.shop label{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line);cursor:pointer}
+.shop input{width:20px;height:20px;accent-color:var(--accent);margin:0}
+.shop label.done span{text-decoration:line-through;color:var(--muted)}
+.shop .q{font-family:var(--f-mono);font-size:.85rem;color:var(--muted);text-align:right;white-space:nowrap}
+.shop input.price{width:64px;font:inherit;font-family:var(--f-mono);font-size:.85rem;padding:3px 6px;border:1px solid var(--line);border-radius:7px;background:var(--bg);color:var(--fg);text-align:right}
+.shop .note{font-size:.75rem;color:var(--muted);display:block}
+
+/* ciência */
+.sci{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.sci .rule{font-weight:600}
+.sci .src{font-size:.78rem;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.two ul{margin:4px 0 0;padding-left:18px;font-size:.88rem}
+@media (max-width:440px){.two{grid-template-columns:1fr}}
+
+/* perfil */
+.form{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.form label{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:.92rem}
+.form input[type=number],.form input[type=time]{font:inherit;font-family:var(--f-mono);padding:6px 8px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg);width:120px}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom, 0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 14px;border-radius:10px;font-size:.88rem;z-index:30}
+@media (prefers-reduced-motion:no-preference){.card,.step,.day{transition:background .2s, opacity .2s, border-color .2s}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="logo">
+        <svg viewBox="0 0 32 32" aria-hidden="true"><rect x="4" y="10" width="24" height="16" rx="4" fill="var(--accent)"/><rect x="7" y="6" width="18" height="5" rx="2" fill="var(--warm)"/><path d="M10 18h12" stroke="var(--accent-fg)" stroke-width="2.4" stroke-linecap="round"/></svg>
+        Cozinha em Dia
+      </div>
+      <span class="weekpill" id="weekpill">Semana A</span>
+    </div>
+  </header>
+  <main id="main"></main>
+</div>
+
+<nav class="tabs" aria-label="Seções">
+  <div class="in">
+    <a href="#hoje" data-v="hoje"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 7.5V12l3 2"/></svg>Hoje</a>
+    <a href="#semana" data-v="semana"><svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>Semana</a>
+    <a href="#preparo" data-v="preparo"><svg viewBox="0 0 24 24"><path d="M5 11h14v6a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z"/><path d="M3 11h18M9 7c0-1.5 1-1.5 1-3M14 7c0-1.5 1-1.5 1-3"/></svg>Preparo</a>
+    <a href="#compras" data-v="compras"><svg viewBox="0 0 24 24"><path d="M5 8h14l-1.3 10.2a2 2 0 0 1-2 1.8H8.3a2 2 0 0 1-2-1.8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>Compras</a>
+    <a href="#validade" data-v="validade"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="2"/><path d="M6 10h12M9 6.5h2M9 13.5v3"/></svg>Validade</a>
+    <a href="#ciencia" data-v="ciencia"><svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-9V3"/><path d="M7.5 15h9"/></svg>Por quê</a>
+    <a href="#perfil" data-v="perfil"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Perfil</a>
+  </div>
+</nav>
+
+<script>
+(function(){
+/* ---------- armazenamento seguro ---------- */
+const PFX='ced2:';
+function load(k,def){try{const v=localStorage.getItem(PFX+k);return v==null?def:JSON.parse(v)}catch(e){return def}}
+function save(k,v){try{localStorage.setItem(PFX+k,JSON.stringify(v))}catch(e){}}
+
+/* ---------- datas ---------- */
+const DIAS=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+const DIAS_C=['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const MESES=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+function startOfDay(d){const x=new Date(d);x.setHours(0,0,0,0);return x}
+function mondayOf(d){const x=startOfDay(d);return addDays(x,-((x.getDay()+6)%7))}
+const REF_MONDAY=new Date(2026,10,9); // segunda 09/11/2026 = Semana A
+function weekOf(d){
+  const o=load('semana','auto'); if(o==='A'||o==='B') return o;
+  const n=Math.round((mondayOf(d)-REF_MONDAY)/(7*864e5));
+  return (((n%2)+2)%2)===0?'A':'B';
+}
+function fmtDate(d){return d.getDate()+' de '+MESES[d.getMonth()]}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+
+/* ---------- receitas ---------- */
+const MICRO=[
+ 'Tampa entreaberta ou tampa própria de micro-ondas.',
+ 'Arroz parecendo seco? Pingue 1 colher de água por cima.',
+ '2 min na potência alta, mexa e volte por mais 1 a 2 min.',
+ 'Deixe descansar 1 min: o calor se espalha por igual.',
+ 'O meio deve sair fumegando (cerca de 74 °C).',
+ 'Vinagrete ou salada em pote separado, frio.',
+ 'Beba junto 1 copo de suco de maracujá: a vitamina C ajuda a absorver o ferro do feijão e da carne.'
+];
+const C={
+ vitamina:{refeicao:'Café da manhã',nome:'Vitamina de banana com aveia',desc:'300 ml de leite, 1 banana, 2 col. de aveia e 1 fio de mel. Desce fácil quando não há fome cedo.',tempo:3,tipo:'rapido',prot:14,passos:['Bata tudo com o mixer ou no liquidificador por 30 s.','Se tiver whey, 1 dosador a mais soma cerca de 20 g de proteína.']},
+ panqBanana:{refeicao:'Café da manhã',nome:'Panquecas de banana com mel e 1 copo de leite',desc:'2 panquecas feitas na terça, aquecidas, com um fio de mel.',tempo:2,tipo:'esquentar',prot:15,passos:['30 s no micro-ondas.','Mel por cima e 1 copo de leite (ou whey no leite, se tiver).']},
+ paoOvo:{refeicao:'Café da manhã',nome:'Pão com ovo e queijo, e 1 copo de leite',desc:'Na sanduicheira: pão, 1 ovo mexido e 1 fatia de queijo.',tempo:6,tipo:'rapido',prot:20,passos:['Mexa 1 ovo na frigideira, 2 min.','Pão com o ovo e o queijo na sanduicheira, 3 min.']},
+ kitPao:{refeicao:'Lanche da manhã',nome:'Fruta e pão com queijo',desc:'Kit montado ontem à noite. Coma por volta das 8h30, com alarme no celular.',tempo:1,tipo:'pronto',prot:9},
+ kitOvo:{refeicao:'Lanche da manhã',nome:'Fruta e ovo cozido',desc:'Kit montado ontem à noite: 1 fruta da estação (caju, manga, goiaba ou laranja) e 1 ovo cozido na terça.',tempo:1,tipo:'pronto',prot:7},
+ kitPanq:{refeicao:'Lanche da manhã',nome:'Fruta e 1 panqueca de banana',desc:'Kit montado ontem à noite.',tempo:1,tipo:'pronto',prot:5}
+};
+
+/* ---------- semanas ---------- */
+const SEMANAS={
+ A:{
+  resumo:'Estrogonofe de frango, feijão tropeiro e macarrão temperado com carne moída.',
+  marmitas:[
+   {dia:3,nome:'Estrogonofe de frango',acomp:'arroz e feijão',prot:30,onde:'geladeira'},
+   {dia:4,nome:'Feijão tropeiro com carne moída',acomp:'arroz e vinagrete',prot:30,onde:'geladeira',ferro:true},
+   {dia:5,nome:'Macarrão temperado com carne moída',acomp:'vinagrete',prot:26,onde:'freezer',ferro:true}
+  ],
+  jantar:{
+   1:{nome:'Omelete de queijo e tomate com pão',desc:'Feito na hora, com suco de maracujá.',tempo:15,tipo:'cozinhar',prot:22,passos:['Bata 2 ovos com sal, tomate picado e cheiro-verde.','Frigideira untada, 3 min, junte o queijo e dobre.','Pão e 1 copo de suco.']},
+   2:{nome:'Estrogonofe de frango com arroz',desc:'Feito hoje no preparo. É só servir.',tempo:0,tipo:'pronto',prot:28},
+   3:{nome:'Misto de carne moída com queijo na sanduicheira',desc:'Carne moída já pronta (pote de terça), vinagrete e suco.',tempo:8,tipo:'esquentar',prot:22,ferro:true,passos:['Aqueça a carne moída 1 min.','Pão com a carne e o queijo na sanduicheira, 3 min.','Vinagrete por cima ou ao lado.']},
+   4:{nome:'Cuscuz temperado com ovo e couve',desc:'Jantar leve: amanhã você acorda às 3h50.',tempo:15,tipo:'cozinhar',prot:16,ferro:true,passos:['Hidrate 5 col. de flocão com água, sal, cebola e cheiro-verde por 5 min.','Cuscuzeira por 7 min.','Enquanto isso, 1 ovo mexido com couve fatiada.']}
+  },
+  noiteSeg:['Deixe 250 g de feijão carioca de molho na geladeira. Reduz os fitatos, que atrapalham o ferro, e encurta o cozimento.'],
+  prep:{dura:95,
+   rende:[['3','marmitas (qua, qui, sex)'],['2','jantares prontos (ter e qua)'],['6','panquecas de banana'],['3','ovos cozidos'],['2','potinhos de feijão extra']],
+   passos:[
+    {t:0,d:30,onde:'Pressão',txt:'Feijão de molho na pressão, água 3 dedos acima e 1 folha de louro. Depois que pegar pressão, 20 min em fogo baixo.'},
+    {t:0,d:10,onde:'Bancada',txt:'Corte 300 g de peito de frango em cubos e tempere com alho, sal e limão. Pique 2 cebolas e 2 tomates.'},
+    {t:10,d:25,onde:'Fogão',txt:'Estrogonofe: doure o frango 10 min, junte cebola, 2 col. de extrato de tomate e ½ copo de água, 10 min. Desligue e misture ½ caixa de creme de leite.'},
+    {t:10,d:20,onde:'Fogão',txt:'Arroz: 1 xícara crua (4 porções), 18 min tampado.'},
+    {t:15,d:20,onde:'Fogão',txt:'Refogue 300 g de carne moída com cebola, alho, colorau, 1 cenoura ralada e cheiro-verde, 15 min. Divida em 3 partes.'},
+    {t:15,d:12,onde:'Fogão',txt:'3 ovos em água fervente por 10 min, depois água fria. Guarde com casca.'},
+    {t:30,d:12,onde:'Fogão',txt:'Macarrão: 100 g, 2 min a menos que o pacote manda. Misture com ⅓ da carne moída e 1 col. de extrato. É a marmita de sexta.'},
+    {t:35,d:10,onde:'Pressão',txt:'Tire a pressão. Refogue alho e cebola e junte ao feijão, 10 min.'},
+    {t:45,d:10,onde:'Fogão',txt:'Tropeiro: na frigideira, ⅓ da carne moída, 1 concha de feijão escorrido, 1 ovo mexido, couve fatiada e 4 col. de farinha de mandioca.'},
+    {t:50,d:15,onde:'Bancada',txt:'Panquecas de banana: mixer com 2 bananas, 2 ovos e 6 col. de aveia. Frigideira untada, 2 min de cada lado. Rende 6.'},
+    {t:65,d:5,onde:'Bancada',txt:'Vinagrete: tomate, cebola e cheiro-verde picados, limão, sal e fio de azeite. Pote tampado, dura 3 dias.'},
+    {t:70,d:15,onde:'Bancada',txt:'Espalhe tudo em travessas rasas para esfriar rápido. Separe o seu jantar de hoje.'},
+    {t:85,d:10,onde:'Bancada',txt:'Monte e etiquete: quarta (estrogonofe, arroz, feijão) e quinta (tropeiro, arroz) na geladeira; sexta (macarrão) no freezer. O ⅓ de carne moída restante vai num pote para o jantar de quarta. Feijão extra: 2 potinhos no freezer.'}
+   ]}
+ },
+ B:{
+  resumo:'Iscas de carne ao molho, panquecas de frango e grão-de-bico refogado.',
+  marmitas:[
+   {dia:3,nome:'Iscas de carne ao molho',acomp:'arroz e feijão',prot:30,onde:'geladeira',ferro:true},
+   {dia:4,nome:'Panquecas de frango ao molho de tomate',acomp:'arroz',prot:28,onde:'geladeira'},
+   {dia:5,nome:'Iscas de carne com grão-de-bico refogado',acomp:'arroz',prot:30,onde:'freezer',ferro:true}
+  ],
+  jantar:{
+   1:{nome:'Macarrão temperado com ovo e vinagrete',desc:'Feito na hora, com suco de maracujá.',tempo:20,tipo:'cozinhar',prot:18,passos:['80 g de macarrão.','Refogue alho, cebola, tomate e cheiro-verde; junte 2 ovos mexidos.','Misture o macarrão e sirva com vinagrete.']},
+   2:{nome:'Panquecas de frango ao molho',desc:'Feitas hoje no preparo. É só servir.',tempo:0,tipo:'pronto',prot:26},
+   3:{nome:'Salada morna de grão-de-bico com frango e pão',desc:'Grão-de-bico e frango desfiado do pote de terça, com vinagrete.',tempo:5,tipo:'esquentar',prot:22,ferro:true,passos:['Aqueça o grão-de-bico e o frango por 1 min.','Misture o vinagrete e coma com pão.']},
+   4:{nome:'Ovos mexidos com queijo, pão e suco',desc:'Jantar leve: amanhã você acorda às 3h50.',tempo:8,tipo:'rapido',prot:20,passos:['2 ovos mexidos com queijo em fogo baixo.','Pão e 1 copo de suco.']}
+  },
+  noiteSeg:['Deixe 150 g de grão-de-bico de molho na geladeira (8 a 12 h).','Passe 1 potinho de feijão do freezer para a geladeira, para a marmita de quarta.'],
+  prep:{dura:105,
+   rende:[['3','marmitas (qua, qui, sex)'],['2','jantares prontos (ter e qua)'],['6','panquecas de banana'],['3','ovos cozidos'],['1','pote de grão-de-bico']],
+   passos:[
+    {t:0,d:25,onde:'Pressão',txt:'300 g de peito de frango com água, sal, alho e louro. Depois que pegar pressão, 15 min.'},
+    {t:0,d:10,onde:'Bancada',txt:'Corte 300 g de acém ou patinho em iscas finas e tempere com alho, sal e colorau. Pique 2 cebolas e 3 tomates.'},
+    {t:10,d:25,onde:'Fogão',txt:'Iscas: doure em frigideira bem quente, em 2 levas. Junte cebola em rodelas, tomate e ½ copo de água, 15 min, até formar molho.'},
+    {t:10,d:20,onde:'Fogão',txt:'Arroz: 1 xícara crua (4 porções), 18 min tampado.'},
+    {t:15,d:5,onde:'Bancada',txt:'Massa de panqueca no liquidificador: 1 ovo, 1 xícara de leite, 1 xícara de farinha de trigo e sal.'},
+    {t:20,d:12,onde:'Fogão',txt:'3 ovos em água fervente por 10 min, depois água fria.'},
+    {t:25,d:15,onde:'Pressão',txt:'Tire a pressão, desfie o frango e refogue com tomate, cebola e cheiro-verde, 5 min.'},
+    {t:40,d:30,onde:'Pressão',txt:'Grão-de-bico (de molho desde segunda) na pressão. Depois que pegar pressão, 20 min.'},
+    {t:40,d:20,onde:'Fogão',txt:'Faça 6 panquecas (2 min cada). Recheie com frango e enrole. Molho: extrato de tomate, água e cebola, 5 min, por cima. Separe um pouco de frango para quarta.'},
+    {t:60,d:15,onde:'Bancada',txt:'Panquecas de banana: mixer com 2 bananas, 2 ovos e 6 col. de aveia. Frigideira, 2 min de cada lado.'},
+    {t:70,d:10,onde:'Pressão',txt:'Tire a pressão e refogue o grão-de-bico com alho, cebola e 1 cenoura ralada.'},
+    {t:75,d:5,onde:'Bancada',txt:'Vinagrete: tomate, cebola, cheiro-verde, limão, sal e fio de azeite.'},
+    {t:80,d:15,onde:'Bancada',txt:'Espalhe tudo em travessas rasas para esfriar rápido. Separe o seu jantar de hoje.'},
+    {t:95,d:10,onde:'Bancada',txt:'Monte e etiquete: quarta (iscas, arroz, feijão) e quinta (2 panquecas, arroz) na geladeira; sexta (iscas, grão-de-bico, arroz) no freezer. Grão-de-bico e frango restantes num pote para o jantar de quarta.'}
+   ]}
+ }
+};
+
+/* compras: [seção, item, quantidade, preço estimado R$, recorrência] ; rec 'semana' ou 'mes' */
+const COMPRAS={
+ A:[
+  ['Açougue','Peito de frango','300 g',5.5,'semana'],['Açougue','Carne moída de acém','300 g',10,'semana'],
+  ['Ovos e laticínios','Ovos','12 un.',8.5,'semana'],['Ovos e laticínios','Leite','1 L',5.5,'semana'],['Ovos e laticínios','Queijo mussarela fatiado','100 g',5,'semana'],['Ovos e laticínios','Creme de leite','1 caixinha',3.5,'semana'],
+  ['Feira','Banana','4 un.',2.5,'semana'],['Feira','Fruta da estação (caju, manga, goiaba, laranja)','4 un.',4,'semana'],['Feira','Tomate','4 un.',3,'semana'],['Feira','Cebola','3 un.',2,'semana'],['Feira','Couve','1 maço',2.5,'semana'],['Feira','Cenoura','1 un.',1,'semana'],['Feira','Limão','2 un.',1,'semana'],['Feira','Cheiro-verde','1 maço',2,'semana'],
+  ['Padaria','Pão francês','6 un.',4,'semana']
+ ],
+ B:[
+  ['Açougue','Peito de frango','300 g',5.5,'semana'],['Açougue','Acém ou patinho em bife','300 g',11,'semana'],
+  ['Ovos e laticínios','Ovos','12 un.',8.5,'semana'],['Ovos e laticínios','Leite','1 L',5.5,'semana'],['Ovos e laticínios','Queijo mussarela fatiado','100 g',5,'semana'],
+  ['Feira','Banana','4 un.',2.5,'semana'],['Feira','Fruta da estação (caju, manga, goiaba, laranja)','4 un.',4,'semana'],['Feira','Tomate','5 un.',3.5,'semana'],['Feira','Cebola','3 un.',2,'semana'],['Feira','Cenoura','1 un.',1,'semana'],['Feira','Limão','2 un.',1,'semana'],['Feira','Cheiro-verde','1 maço',2,'semana'],
+  ['Padaria','Pão francês','6 un.',4,'semana']
+ ],
+ mes:[
+  ['Despensa','Arroz','1 kg',6,'mes'],['Despensa','Feijão carioca','1 kg',8,'mes'],['Despensa','Grão-de-bico','500 g',9,'mes'],['Despensa','Aveia em flocos','250 g',5,'mes'],['Despensa','Flocão de milho','500 g',3,'mes'],['Despensa','Macarrão','500 g',4.5,'mes'],['Despensa','Farinha de mandioca','500 g',5,'mes'],['Despensa','Farinha de trigo','1 kg',5,'mes'],['Despensa','Extrato de tomate','2 un.',5,'mes'],['Despensa','Alho','1 cabeça',3,'mes'],['Despensa','Óleo, sal, colorau, louro, mel','se acabar',0,'mes']
+ ]
+};
+
+const FDS={
+ compras:'Para um fim de semana em casa, some cerca de R$ 15: 200 g de frango, 6 ovos e 4 pães.',
+ opcoes:[
+  {ref:'Café',nome:'Panquecas de banana com whey e mel',desc:'Mixer com 1 banana, 1 ovo, 3 col. de aveia e 1 dosador de whey (se tiver). 10 min.',prot:28},
+  {ref:'Café',nome:'Cuscuz temperado com ovo',desc:'Flocão com cebola, tomate e cheiro-verde, e 1 ovo. 15 min.',prot:12},
+  {ref:'Almoço',nome:'Estrogonofe de frango com arroz e feijão',desc:'200 g de frango, feijão do potinho do freezer. 30 min.',prot:35},
+  {ref:'Almoço',nome:'Arroz, feijão do freezer, ovo e vinagrete',desc:'O prato mais barato e completo. 25 min.',prot:16},
+  {ref:'Lanche',nome:'Vitamina de banana com aveia',desc:'Leite, banana, aveia e mel. 3 min.',prot:14},
+  {ref:'Jantar',nome:'Macarrão temperado com ovo',desc:'Alho, tomate, cheiro-verde e 2 ovos. 20 min.',prot:18},
+  {ref:'Jantar',nome:'Pão com ovo e queijo, e suco',desc:'O seu clássico, na sanduicheira. 8 min.',prot:20}
+ ]
+};
+
+const HORAS_PADRAO={cafe:'04:45',cafeSex:'04:00',lanche1:'08:30',almoco:'11:45',preparo:'14:15',lancheTarde:'15:30',lancheSeg:'17:00',jantar:'19:00',noite:'19:30',deitar:'21:00'};
+function horas(){return Object.assign({},HORAS_PADRAO,load('horas',{}))}
+
+/* ---------- monta o dia ---------- */
+function planoDoDia(date){
+  const d=date.getDay(), wk=weekOf(date), W=SEMANAS[wk], H=horas(), it=[];
+  const marm=dia=>W.marmitas.find(m=>m.dia===dia);
+  const kit=t=>({kitPao:'1 fruta e 1 pão com queijo',kitOvo:'1 fruta e 1 ovo cozido',kitPanq:'1 fruta e 1 panqueca de banana'}[t]);
+  if(d===0||d===6) return null;
+  if(d===1){
+    it.push({id:'lanche2',hora:H.lancheSeg,refeicao:'Lanche da tarde',nome:'Suco de maracujá e pão com queijo na sanduicheira',desc:'Ao chegar do estágio.',tempo:5,tipo:'rapido',prot:10});
+    it.push(Object.assign({id:'jantar',hora:H.jantar,refeicao:'Jantar'},W.jantar[1]));
+    const tasks=W.noiteSeg.slice();
+    tasks.push('Guarde na geladeira o almoço de terça que veio da sua mãe.');
+    tasks.push('Monte o kit de amanhã na frente da geladeira: almoço, 1 fruta e 1 pão com queijo.');
+    tasks.push('Confira a lista de compras: o preparo é amanhã, às '+H.preparo+'.');
+    it.push({id:'noite',hora:H.noite,tipo:'noite',nome:'Preparar amanhã',desc:'5 a 10 min, logo depois do jantar.',tasks});
+  }
+  if(d>=2&&d<=5){
+    it.push(Object.assign({id:'cafe',hora:d===5?H.cafeSex:H.cafe},C[{2:'vitamina',3:'panqBanana',4:'paoOvo',5:'panqBanana'}[d]]));
+    it.push(Object.assign({id:'lanche1',hora:H.lanche1},C[{2:'kitPao',3:'kitOvo',4:'kitOvo',5:'kitOvo'}[d]]));
+    if(d===2){
+      it.push({id:'almoco',hora:H.almoco,refeicao:'Almoço',nome:'Almoço feito pela sua mãe',desc:'Trazido na segunda. Esquente com tampa entreaberta e beba suco de maracujá junto.',tempo:4,tipo:'esquentar',passos:MICRO});
+    }else{
+      const m=marm(d);
+      it.push({id:'almoco',hora:H.almoco,refeicao:'Almoço',nome:m.nome,desc:'Com '+m.acomp+'. '+(m.onde==='geladeira'?'Marmita da geladeira, feita na terça.':'Marmita que saiu do freezer na quarta à noite.'),tempo:4,tipo:'esquentar',prot:m.prot,ferro:!!m.ferro,passos:MICRO,passosTitulo:'Como esquentar'});
+    }
+    if(d===2){
+      it.push({id:'preparo',hora:H.preparo,tipo:'prep',nome:'Preparo da semana '+wk,desc:'Cerca de '+W.prep.dura+' min com o cronômetro da aba Preparo. Rende as marmitas de quarta a sexta, dois jantares e os cafés.'});
+      it.push({id:'lanche2',hora:'16:00',refeicao:'Lanche da tarde',nome:'Panquecas de banana fresquinhas e suco de maracujá',desc:'Recompensa do preparo: 2 panquecas recém-feitas.',tempo:1,tipo:'pronto',prot:10});
+    }
+    if(d===3||d===4){
+      it.push({id:'lanche2',hora:H.lancheTarde,refeicao:'Lanche da tarde (pós-treino)',nome:d===3?'Vitamina de banana com aveia':'Pão com ovo e suco de maracujá',desc:d===3?'300 ml de leite, 1 banana, 2 col. de aveia. Até 2 h depois do treino.':'1 pão, 1 ovo mexido e 1 copo de suco.',tempo:d===3?3:6,tipo:'rapido',prot:d===3?14:12});
+    }
+    if(d<=4){
+      it.push(Object.assign({id:'jantar',hora:H.jantar,refeicao:'Jantar'},W.jantar[d]));
+      const tasks=[];
+      const tom=addDays(date,1), WT=SEMANAS[weekOf(tom)];
+      if(d===3) tasks.push('Passe a marmita de sexta ('+W.marmitas[2].nome.toLowerCase()+') do freezer para a geladeira.');
+      if(d===2||d===3) tasks.push('Monte o kit de amanhã na frente da geladeira: marmita, 1 fruta e 1 ovo cozido.');
+      if(d===4){tasks.push('Monte o kit de sexta na frente da geladeira: marmita, 1 fruta e 1 ovo cozido. Amanhã você acorda às 3h50.');tasks.push('Deixe 2 panquecas de banana à mão para o café.')}
+      if(d===2) tasks.push('As panquecas de banana de quarta ficam na geladeira; as de sexta podem ir para o freezer.');
+      it.push({id:'noite',hora:H.noite,tipo:'noite',nome:'Preparar amanhã',desc:'5 min, logo depois do jantar.',tasks});
+      it.push({id:'deitar',hora:d===4?subtrai(H.deitar,30):H.deitar,tipo:'sono',nome:d===4?'Deitar mais cedo':'Hora de deitar',desc:d===4?'Sexta você acorda às 3h50. Deitando às '+subtrai(H.deitar,30)+', são cerca de 7 h de sono.':'Acordando às 4h30, deitar às '+H.deitar+' dá 7h30 de sono. Tela longe na última meia hora.'});
+    }
+    if(d===5){
+      it.push({id:'fds',hora:'13:40',tipo:'fds',nome:'Fim de semana',desc:'Bom fim de semana na casa dos seus pais. Se for ficar em casa, abra as opções abaixo.'});
+    }
+  }
+  it.sort((a,b)=>a.hora.localeCompare(b.hora));
+  return it;
+}
+function subtrai(h,min){const [a,b]=h.split(':').map(Number);let t=a*60+b-min;if(t<0)t+=1440;return String(Math.floor(t/60)).padStart(2,'0')+':'+String(t%60).padStart(2,'0')}
+
+/* ---------- estado ---------- */
+let view='hoje';
+let diaSel=startOfDay(new Date());
+const main=document.getElementById('main');
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function checks(date){return load('dia:'+iso(date),{})}
+function setCheck(date,k,v){const c=checks(date);if(v)c[k]=true;else delete c[k];save('dia:'+iso(date),c);if(v){const f=load('inicio',null);if(!f||f>iso(date))save('inicio',iso(date))}}
+function refeicoesDe(date){const p=planoDoDia(date);return p?p.filter(i=>i.refeicao).map(i=>i.id):[]}
+function diaCompleto(date){const r=refeicoesDe(date);if(!r.length)return null;const c=checks(date);return r.every(k=>c[k])}
+function sequencia(){
+  let n=0,d=startOfDay(new Date()),guard=0;
+  if(diaCompleto(d)!==true) d=addDays(d,-1);
+  while(guard++<500){const s=diaCompleto(d);if(s===null){d=addDays(d,-1);continue}if(!s)break;n++;d=addDays(d,-1)}
+  return n;
+}
+function diaDoHabito(){const f=load('inicio',null);if(!f)return 0;const [y,m,dd]=f.split('-').map(Number);return Math.floor((startOfDay(new Date())-new Date(y,m-1,dd))/864e5)+1}
+function toast(msg){const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),1800)}
+function chipTipo(tipo){return {pronto:'<span class="chip pronto">Pronto</span>',esquentar:'<span class="chip esquentar">Esquentar</span>',cozinhar:'<span class="chip cozinhar">Cozinhar</span>',rapido:'<span class="chip cozinhar">Rápido</span>'}[tipo]||''}
+function tempoTxt(m){return m<=1?'1 min':m+' min'}
+function meta(){return Math.round((Number(load('peso',50))||50)*1.6)}
+
+/* ---------- HOJE ---------- */
+function renderHoje(){
+  const hoje=startOfDay(new Date()), seg=mondayOf(diaSel);
+  const W=weekOf(diaSel), itens=planoDoDia(diaSel), c=checks(diaSel);
+  let h='<section class="view">';
+  h+='<div><p class="eyebrow">'+(iso(diaSel)===iso(hoje)?'Hoje':'Planejamento')+' · Semana '+W+'</p><h1>'+DIAS[diaSel.getDay()]+', '+fmtDate(diaSel)+'</h1></div>';
+  h+='<div class="days" role="group" aria-label="Dias da semana">';
+  for(let i=0;i<7;i++){const d=addDays(seg,i),s=diaCompleto(d);h+='<button class="day'+(iso(d)===iso(hoje)?' today':'')+'" aria-pressed="'+(iso(d)===iso(diaSel))+'" data-dia="'+iso(d)+'"><span>'+DIAS_C[d.getDay()]+'</span><b>'+d.getDate()+'</b><i class="'+(s?'done':'')+'"></i></button>'}
+  h+='</div>';
+  if(iso(diaSel)===iso(hoje)) h+=alertaValidade();
+  if(!itens){
+    h+='<div class="weekcard"><p class="eyebrow">Fim de semana</p><h2>Na casa dos seus pais</h2><p>Aproveite. Na segunda à noite o plano volta, com o feijão de molho para o preparo de terça.</p></div>';
+    h+=renderFds();
+    h+='</section>';main.innerHTML=h;bindDays();bindFds();return;
+  }
+  const refs=itens.filter(i=>i.refeicao), feitas=refs.filter(i=>c[i.id]).length, n=refs.length;
+  const prot=refs.reduce((s,i)=>s+(i.prot||0),0), M=meta();
+  const pct=n?feitas/n:0, CC=2*Math.PI*31;
+  h+='<div class="summary"><div class="ring"><svg viewBox="0 0 74 74"><circle cx="37" cy="37" r="31" fill="none" stroke="var(--surface2)" stroke-width="8"/><circle cx="37" cy="37" r="31" fill="none" stroke="var(--accent)" stroke-width="8" stroke-linecap="round" stroke-dasharray="'+(CC*pct)+' '+CC+'"/></svg><div class="num">'+feitas+'/'+n+'<small>refeições</small></div></div>';
+  h+='<div class="stats"><div class="row" style="gap:6px;justify-content:flex-start"><span class="small"><b>'+sequencia()+'</b> dias seguidos completos</span>'+(diaDoHabito()?'<span class="chip">dia '+diaDoHabito()+' de ~66 do hábito</span>':'')+'</div>';
+  const dc=diaSel.getDay();
+  if(dc>=2&&dc<=4){h+='<div class="small">Proteína do plano: <b class="mono">≈ '+prot+' g</b> · meta <b class="mono">≈ '+M+' g</b></div><div class="bar" aria-hidden="true"><div style="width:'+Math.min(100,Math.round(prot/M*100))+'%"></div></div>'}
+  else h+='<div class="small muted">'+(dc===1?'Hoje o plano começa quando você chega do estágio.':'Sexta: café, lanche e marmita. O resto do dia é na casa dos seus pais.')+'</div>';
+  h+='</div></div>';
+  h+='<div class="timeline">';
+  itens.forEach(it=>{
+    const done=!!c[it.id];
+    if(it.tipo==='noite'){
+      h+='<div class="item"><div class="hora">'+it.hora+'</div><div class="card noite"><div class="body"><p class="eyebrow">Para amanhã</p><h3>'+it.nome+'</h3><p class="small muted">'+it.desc+'</p><ul class="tasks">';
+      it.tasks.forEach((t,i)=>{const k='noite'+i,on=!!c[k];h+='<li><label class="'+(on?'done':'')+'"><input type="checkbox" data-k="'+k+'" '+(on?'checked':'')+'><span>'+esc(t)+'</span></label></li>'});
+      h+='</ul></div><div></div></div></div>';return;
+    }
+    if(it.tipo==='prep'){
+      h+='<div class="item"><div class="hora">'+it.hora+'</div><div class="card prep'+(done?' checked':'')+'"><div class="body"><p class="eyebrow">Terça de preparo</p><h3>'+it.nome+'</h3><p class="small">'+it.desc+'</p><div><a class="btn small" href="#preparo" style="display:inline-block;text-decoration:none">Abrir o passo a passo</a></div></div><input type="checkbox" class="check" aria-label="Feito" data-k="'+it.id+'" '+(done?'checked':'')+'></div></div>';return;
+    }
+    if(it.tipo==='sono'||it.tipo==='fds'){
+      h+='<div class="item"><div class="hora">'+it.hora+'</div><div class="card noite'+(done?' checked':'')+'"><div class="body"><p class="eyebrow">'+(it.tipo==='sono'?'Sono':'Depois do estágio')+'</p><h3>'+it.nome+'</h3><p class="small muted">'+it.desc+'</p></div>'+(it.tipo==='sono'?'<input type="checkbox" class="check" aria-label="Feito" data-k="'+it.id+'" '+(done?'checked':'')+'>':'<div></div>')+'</div></div>';return;
+    }
+    h+='<div class="item"><div class="hora">'+it.hora+'</div><div class="card'+(done?' checked':'')+'"><div class="body">';
+    h+='<p class="eyebrow">'+esc(it.refeicao||'')+'</p><h3>'+esc(it.nome)+'</h3>';
+    if(it.desc)h+='<p class="small muted">'+esc(it.desc)+'</p>';
+    h+='<div class="meta">'+chipTipo(it.tipo)+(it.tempo?'<span class="chip mono">'+tempoTxt(it.tempo)+'</span>':'')+(it.prot?'<span class="chip mono">≈ '+it.prot+' g prot.</span>':'')+(it.ferro?'<span class="chip ferro">Ferro</span>':'')+'</div>';
+    if(it.passos&&it.passos.length)h+='<details><summary>'+(it.passosTitulo||'Como fazer')+'</summary><ol class="steps">'+it.passos.map(p=>'<li>'+esc(p)+'</li>').join('')+'</ol></details>';
+    h+='</div><input type="checkbox" class="check" aria-label="Feito: '+esc(it.nome)+'" data-k="'+it.id+'" '+(done?'checked':'')+'></div></div>';
+  });
+  h+='</div>';
+  if(dc===5) h+=renderFds();
+  h+='<p class="tip">Água: deixe uma garrafa de 500 ml na bolsa e beba 2 dessas no estágio e 1 em casa. Suco de maracujá junto do almoço e do jantar ajuda o ferro; leite e queijo ficam melhor nos lanches.</p>';
+  h+='</section>';
+  main.innerHTML=h;bindDays();bindFds();
+  main.querySelectorAll('input[data-k]').forEach(inp=>inp.onchange=()=>{setCheck(diaSel,inp.dataset.k,inp.checked);render();
+    if(inp.checked&&diaCompleto(diaSel)===true&&refeicoesDe(diaSel).includes(inp.dataset.k))toast('Dia completo. Mais um tijolo no hábito.');});
+}
+function bindDays(){main.querySelectorAll('.day').forEach(b=>b.onclick=()=>{const [y,m,d]=b.dataset.dia.split('-').map(Number);diaSel=new Date(y,m-1,d);render()})}
+function renderFds(){
+  const open=load('fdsAberto',false);
+  let h='<div class="weekcard"><div class="row"><div><p class="eyebrow">Fim de semana em casa</p><h3>Opções rápidas e baratas</h3></div><button class="btn small ghost" id="fdsBtn">'+(open?'Esconder':'Vou ficar em casa')+'</button></div>';
+  if(open){
+    h+='<p class="small muted">'+FDS.compras+'</p><div class="marmitas">';
+    FDS.opcoes.forEach(o=>h+='<div class="marmita"><span class="eyebrow">'+o.ref+' · ≈ '+o.prot+' g prot.</span><b>'+o.nome+'</b><span class="small muted">'+o.desc+'</span></div>');
+    h+='</div>';
+  }
+  return h+'</div>';
+}
+function bindFds(){const b=document.getElementById('fdsBtn');if(b)b.onclick=()=>{save('fdsAberto',!load('fdsAberto',false));render()}}
+
+/* ---------- SEMANA ---------- */
+let semanaVer=null;
+function segWeek(W){return '<div class="seg" role="group" aria-label="Escolher semana"><button data-w="A" aria-pressed="'+(W==='A')+'">Semana A</button><button data-w="B" aria-pressed="'+(W==='B')+'">Semana B</button></div>'}
+function bindSeg(fn){main.querySelectorAll('.seg button[data-w]').forEach(b=>b.onclick=()=>fn(b.dataset.w))}
+function renderSemana(){
+  const atual=weekOf(new Date()),W=semanaVer||atual,S=SEMANAS[W],hoje=new Date().getDay();
+  let h='<section class="view"><div class="row"><div><p class="eyebrow">Cardápio</p><h1>Semana '+W+'</h1></div>'+segWeek(W)+'</div>';
+  h+='<div class="weekcard"><p>'+S.resumo+'</p><p class="small muted">As semanas A e B se alternam para variar sem complicar as compras. Frango entra no máximo 2 vezes por semana. Esta semana é a '+atual+'.</p><div class="marmitas">';
+  S.marmitas.forEach(m=>h+='<div class="marmita"><span class="eyebrow">Marmita de '+DIAS[m.dia].toLowerCase()+' · ≈ '+m.prot+' g prot.</span><b>'+m.nome+'</b><span class="small muted">com '+m.acomp+' · '+m.onde+'</span></div>');
+  h+='</div></div>';
+  h+='<div class="tablewrap"><table><thead><tr><th>Dia</th><th>Café</th><th>Almoço</th><th>Lanche da tarde</th><th>Jantar</th></tr></thead><tbody>';
+  const cafes={2:C.vitamina.nome,3:C.panqBanana.nome,4:C.paoOvo.nome,5:C.panqBanana.nome};
+  const tardes={1:'Suco e pão com queijo',2:'Panquecas de banana e suco',3:'Vitamina de banana',4:'Pão com ovo e suco'};
+  [1,2,3,4,5].forEach(d=>{
+    const m=S.marmitas.find(x=>x.dia===d);
+    h+='<tr class="'+(d===hoje&&W===atual?'hoje':'')+'"><td class="dia">'+DIAS_C[d]+'</td><td>'+(cafes[d]||'<span class="muted">casa dos pais</span>')+'</td><td>'+(m?m.nome:'<span class="muted">feito pela sua mãe</span>')+'</td><td>'+(tardes[d]||'<span class="muted">—</span>')+'</td><td>'+(S.jantar[d]?S.jantar[d].nome:'<span class="muted">casa dos pais</span>')+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  h+='<p class="small muted">Lanche da manhã de terça a sexta: 1 fruta da estação com ovo cozido, pão com queijo ou panqueca de banana, sempre no kit da noite anterior. Fins de semana na casa dos pais ficam livres; a aba Hoje mostra opções se você ficar em casa.</p></section>';
+  main.innerHTML=h;bindSeg(v=>{semanaVer=v;render()});
+}
+
+/* ---------- PREPARO ---------- */
+let prepVer=null,tick=null;
+function proximaTerca(){const n=startOfDay(new Date());return addDays(n,(9-n.getDay())%7)}
+function renderPreparo(){
+  const W=prepVer||weekOf(proximaTerca()),P=SEMANAS[W].prep;
+  const st=load('prep:inicio',null),done=load('prep:'+W,{});
+  const el=st&&st.w===W?Math.floor((Date.now()-st.t)/60000):null;
+  let h='<section class="view"><div class="row"><div><p class="eyebrow">Terça, ao chegar · cerca de '+P.dura+' min</p><h1>Preparo da semana '+W+'</h1></div>'+segWeek(W)+'</div>';
+  h+='<div class="rende">'+P.rende.map(r=>'<div><b>'+r[0]+'</b>'+r[1]+'</div>').join('')+'</div>';
+  h+='<div class="timer"><div class="row"><div><p class="eyebrow">Cronômetro</p><div class="clock">'+(el==null?'0:00':fmtMin(el))+'</div></div><div class="row" style="gap:8px">'+(el==null?'<button class="btn" id="start">Começar agora</button>':'<button class="btn ghost" id="reset">Zerar</button>')+'</div></div>';
+  h+='<p class="small muted">'+(el==null?'Se começar agora, termina por volta das '+horaDe(Date.now()+P.dura*60000)+'.':'Termina por volta das '+horaDe(st.t+P.dura*60000)+'. O passo atual fica destacado.')+'</p></div>';
+  h+='<p class="small muted">Antes de começar: coma algo rápido (suco e pão), separe as 3 marmiteiras, 3 potinhos, fita crepe e caneta. Usa panela de pressão, 3 bocas do fogão e o mixer.</p>';
+  h+='<div class="steplist">';
+  P.passos.forEach((s,i)=>{const now=el!=null&&el>=s.t&&el<s.t+s.d&&!done[i],ok=!!done[i];
+    h+='<div class="step'+(now?' now':'')+(ok?' done':'')+'"><div class="t">'+fmtMin(s.t)+'<small>'+s.d+' min</small></div><div class="txt"><span class="lane '+s.onde+'">'+s.onde+'</span><span>'+esc(s.txt)+'</span></div><input type="checkbox" aria-label="Passo feito" data-i="'+i+'" '+(ok?'checked':'')+'></div>'});
+  h+='</div>';
+  h+='<div class="timer"><p class="eyebrow">Ao terminar</p><p class="small">Registre o que foi feito no controle de validade: marmitas, panquecas, ovos cozidos e vinagrete entram com o prazo certo.</p><div><button class="btn small" id="regVal">Registrar nas validades</button></div></div>';
+  h+='<div class="sci"><h3>Por que assim</h3><ul class="steps"><li>O que demora mais (pressão) começa primeiro; o resto acontece enquanto ela trabalha.</li><li>Comida em camada rasa esfria rápido e entra na geladeira dentro de 2 h.</li><li>Quarta e quinta ficam na geladeira (até 3 a 4 dias). Sexta vai para o freezer e desce para a geladeira na quarta à noite.</li><li>O macarrão sai 2 min antes do ponto porque termina de cozinhar no micro-ondas.</li></ul></div>';
+  h+='</section>';
+  main.innerHTML=h;bindSeg(v=>{prepVer=v;render()});
+  const s=document.getElementById('start');if(s)s.onclick=()=>{save('prep:inicio',{w:W,t:Date.now()});save('prep:'+W,{});render()};
+  const r=document.getElementById('reset');if(r)r.onclick=()=>{save('prep:inicio',null);save('prep:'+W,{});render()};
+  document.getElementById('regVal').onclick=()=>{registrarPreparo(W);toast('Registrado nas validades');location.hash='validade'};
+  main.querySelectorAll('.step input').forEach(inp=>inp.onchange=()=>{const d=load('prep:'+W,{});if(inp.checked)d[inp.dataset.i]=true;else delete d[inp.dataset.i];save('prep:'+W,d);render()});
+  clearInterval(tick);if(el!=null)tick=setInterval(()=>{if(view==='preparo')render();else clearInterval(tick)},20000);
+}
+function fmtMin(m){return Math.floor(m/60)+':'+String(m%60).padStart(2,'0')}
+function horaDe(ms){const d=new Date(ms);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+
+/* ---------- COMPRAS ---------- */
+let comprasVer=null;
+const brl=v=>'R$ '+v.toFixed(2).replace('.',',');
+function preco(item,def){const p=load('precos',{});return p[item]!=null?p[item]:def}
+function renderCompras(){
+  const ter=proximaTerca(),W=comprasVer||weekOf(ter);
+  const L=COMPRAS[W].concat(COMPRAS.mes), st=load('compras:'+W,{});
+  const grupos={};L.forEach((x,i)=>{(grupos[x[0]]=grupos[x[0]]||[]).push([x,i])});
+  const semana=COMPRAS[W].reduce((s,x)=>s+preco(x[1],x[3]),0);
+  const despensa=COMPRAS.mes.reduce((s,x)=>s+preco(x[1],x[3]),0);
+  const mensal=semana*4.3+despensa, orc=Number(load('orcamento',200))||200;
+  let h='<section class="view"><div class="row"><div><p class="eyebrow">Para o preparo de terça, '+ter.getDate()+'/'+(ter.getMonth()+1)+'</p><h1>Compras da semana '+W+'</h1></div>'+segWeek(W)+'</div>';
+  h+='<div class="summary" style="grid-template-columns:1fr"><div class="stats"><div class="row"><span class="small">Semana <b class="mono">'+brl(semana)+'</b></span><span class="small">Despensa do mês <b class="mono">'+brl(despensa)+'</b></span></div>';
+  h+='<div class="small">Mês estimado <b class="mono">'+brl(mensal)+'</b> de <b class="mono">'+brl(orc)+'</b></div><div class="bar"><div style="width:'+Math.min(100,mensal/orc*100)+'%;background:'+(mensal>orc?'var(--ferro)':'var(--accent)')+'"></div></div>';
+  h+='<p class="small muted">'+(mensal>orc?'Passa '+brl(mensal-orc)+' do orçamento. Veja abaixo como fechar a conta.':'Dentro do orçamento.')+' Preços são estimativas: toque no valor para pôr o do seu mercado.</p></div></div>';
+  h+='<div class="row"><span class="small muted">'+L.filter((x,i)=>st[i]).length+'/'+L.length+' no carrinho · para 1 pessoa</span><div class="row" style="gap:8px"><button class="btn small" id="copiar">Copiar lista</button><button class="btn small ghost" id="limpar">Desmarcar</button></div></div>';
+  Object.keys(grupos).forEach(g=>{
+    h+='<div class="shop"><h3>'+g+(g==='Despensa'?' <span class="small muted">(compra 1 vez no mês)</span>':'')+'</h3>';
+    grupos[g].forEach(([x,i])=>{const on=!!st[i];h+='<label class="'+(on?'done':'')+'"><input type="checkbox" data-i="'+i+'" '+(on?'checked':'')+'><span>'+esc(x[1])+'<span class="note">'+esc(x[2])+'</span></span><span class="q">R$ <input class="price" type="number" step="0.5" min="0" inputmode="decimal" id="p-'+W+'-'+i+'" data-item="'+esc(x[1])+'" value="'+preco(x[1],x[3])+'"></span></label>'});
+    h+='</div>';
+  });
+  const venc=estoque().filter(i=>diasAte(i.data)<=7);
+  if(venc.length) h+='<div class="alerta"><h3>Já tem em casa, vencendo nesta semana</h3><p class="small">'+venc.map(i=>esc(i.nome)).join(' · ')+'</p><p class="small">Use antes de comprar de novo.</p></div>';
+  h+='<div class="sci"><h3>Como fechar em R$ '+orc+'</h3><ul class="steps"><li>Traga da casa dos seus pais o que sobrar lá: pão, frutas, polpas (você já traz) e ovos fazem muita diferença.</li><li>Ovos na bandeja de 30 a cada 2 semanas e frango em promoção, congelado em porções de 300 g.</li><li>Fruta da estação na feira (em novembro: caju e manga) custa bem menos que maçã.</li><li>Se apertar, troque a carne de uma semana por mais 300 g de frango e 6 ovos: economiza cerca de R$ 5 por semana.</li></ul></div>';
+  h+='</section>';
+  main.innerHTML=h;bindSeg(v=>{comprasVer=v;render()});
+  main.querySelectorAll('.shop input[type=checkbox]').forEach(inp=>inp.onchange=()=>{const s=load('compras:'+W,{});if(inp.checked)s[inp.dataset.i]=true;else delete s[inp.dataset.i];save('compras:'+W,s);render()});
+  main.querySelectorAll('input.price').forEach(inp=>{inp.onclick=e=>e.stopPropagation();inp.onchange=()=>{const p=load('precos',{});const v=parseFloat(inp.value);if(v>=0)p[inp.dataset.item]=v;else delete p[inp.dataset.item];save('precos',p);render()}});
+  document.getElementById('limpar').onclick=()=>{save('compras:'+W,{});render()};
+  document.getElementById('copiar').onclick=()=>{
+    let t='Compras da semana '+W+'\n';Object.keys(grupos).forEach(g=>{t+='\n'+g+'\n';grupos[g].forEach(([x,i])=>{if(!st[i])t+='- '+x[1]+': '+x[2]+'\n'})});
+    try{navigator.clipboard.writeText(t).then(()=>toast('Lista copiada. Cole no WhatsApp ou nas notas.'),()=>toast('Não deu para copiar neste aplicativo.'))}catch(e){toast('Não deu para copiar neste aplicativo.')}
+  };
+}
+
+/* ---------- CIÊNCIA ---------- */
+function renderCiencia(){
+  const S=(t,u)=>'<a href="'+u+'" target="_blank" rel="noopener">'+t+'</a>';
+  const M=meta(),peso=Number(load('peso',50))||50;
+  let h='<section class="view"><div><p class="eyebrow">A base do plano</p><h1>Por que funciona assim</h1></div>';
+  h+='<p class="muted">Cada regra do site vem de uma recomendação oficial ou de um estudo. É orientação geral e não substitui nutricionista nem o médico que receitou seus suplementos.</p>';
+  const cards=[
+   ['Proteína para ganhar massa','Cerca de 1,6 g de proteína por kg por dia maximiza o ganho de massa com treino de força. Dividir em 4 ou 5 refeições aproveita melhor.','Para você ('+peso+' kg): cerca de '+M+' g por dia, uns 20 g por refeição. Por isso há proteína até no café e nos lanches.',S('Morton et al., 2018','https://doi.org/10.1136/bjsports-2017-097608')+' · '+S('Schoenfeld e Aragon, 2018','https://doi.org/10.1186/s12970-018-0215-1')],
+   ['Ferritina e B12 baixas','A falta de ferro causa cansaço e sonolência mesmo antes de virar anemia. O ferro do feijão é bem mais absorvido com vitamina C na mesma refeição; leite, queijo e chá atrapalham. A B12 vem só de alimentos de origem animal.','Por isso: carne ou frango em todas as marmitas, suco de maracujá no almoço e no jantar, leite e queijo nos lanches, feijão de molho. O suplemento segue o horário que o médico indicou.',S('OMS/FAO: Vitamin and mineral requirements','https://www.who.int/publications/i/item/9241546123')+' · '+S('Guia Alimentar para a População Brasileira','https://bvsms.saude.gov.br/bvs/publicacoes/guia_alimentar_populacao_brasileira_2ed.pdf')],
+   ['Pouca fome cedo e lanches esquecidos','Comer em horários regulares, com planos no formato "quando X, então Y", aumenta muito a chance de cumprir. Líquidos e porções pequenas passam melhor quando não há fome.','Por isso: vitamina e panquecas no café, kit de lanche montado na noite anterior e alarme às 8h30.',S('Gollwitzer, 1999','https://doi.org/10.1037/0003-066X.54.7.493')],
+   ['Sono','Adultos precisam de 7 a 9 h de sono. Acordando às 4h30, deitar às 22h dá só 6h30, o que pode explicar parte da sonolência.','Por isso: o site lembra de deitar às 21h, e às 20h30 na quinta. Se a sonolência e os despertares continuarem, conte ao médico junto com a ferritina baixa.',S('Watson et al., 2015 (AASM e SRS)','https://doi.org/10.5664/jcsm.4758')],
+   ['Segurança das marmitas','Comida cozida dura 3 a 4 dias na geladeira e meses no freezer. Deve ir à geladeira em até 2 h, em potes rasos. Descongelar na geladeira é o jeito seguro. Ao esquentar, mexer e deixar descansar até sair fumegando.','Por isso: quarta e quinta na geladeira, sexta no freezer, e a tarefa de passar para a geladeira na quarta à noite.',S('USDA: Leftovers and Food Safety','https://www.fsis.usda.gov/food-safety/safe-food-handling-and-preparation/food-safety-basics/leftovers-and-food-safety')+' · '+S('ANVISA RDC 216/2004','https://bvsms.saude.gov.br/bvs/saudelegis/anvisa/2004/res0216_15_09_2004.html')],
+   ['Hábito leva cerca de 66 dias','Em média um hábito fica automático em 66 dias (variou de 18 a 254). Falhar um dia não apaga o progresso.','Por isso: horários fixos e o contador de dias. Vale pelo conjunto, não pela perfeição.',S('Lally et al., 2010','https://doi.org/10.1002/ejsp.674')]
+  ];
+  cards.forEach(c=>h+='<div class="sci"><h3>'+c[0]+'</h3><p>'+c[1]+'</p><p class="rule">'+c[2]+'</p><p class="src">Fonte: '+c[3]+'</p></div>');
+  h+='<div class="sci"><h3>O que fica bom no micro-ondas</h3><div class="two"><div><span class="chip pronto">Esquenta bem</span><ul><li>Feijão, tropeiro, grão-de-bico</li><li>Arroz, com 1 colher de água</li><li>Estrogonofe, carne moída, iscas ao molho</li><li>Panquecas cobertas com molho</li><li>Macarrão cozido 2 min a menos</li></ul></div><div><span class="chip ferro">Evitar na marmita</span><ul><li>Bife grelhado seco (resseca): prefira com molho</li><li>Batata inglesa (fica arenosa no freezer)</li><li>Fritura e empanados (amolecem)</li><li>Ovo frito ou cozido (fica borrachudo)</li><li>Vinagrete quente: vai em pote separado</li></ul></div></div></div>';
+  h+='<div class="sci"><h3>Quanto tempo dura</h3><div class="tablewrap"><table><thead><tr><th>Alimento</th><th>Geladeira</th><th>Freezer</th></tr></thead><tbody><tr><td>Marmita cozida</td><td>3 a 4 dias</td><td>2 a 3 meses</td></tr><tr><td>Feijão e grão-de-bico cozidos</td><td>3 a 4 dias</td><td>3 meses</td></tr><tr><td>Panquecas de banana</td><td>3 dias</td><td>1 mês</td></tr><tr><td>Ovo cozido com casca</td><td>7 dias</td><td>não congelar</td></tr><tr><td>Vinagrete</td><td>3 dias</td><td>não congelar</td></tr><tr><td>Carne e frango crus</td><td>1 a 2 dias</td><td>até 4 a 12 meses</td></tr></tbody></table></div><p class="src">Prazos do USDA FoodKeeper, com geladeira a 5 °C ou menos e freezer a −18 °C.</p></div>';
+  h+='</section>';
+  main.innerHTML=h;
+}
+
+/* ---------- PERFIL ---------- */
+function renderPerfil(){
+  const H=horas(),peso=load('peso',50),sem=load('semana','auto'),orc=load('orcamento',200);
+  const nomes={cafe:'Café (ter a qui)',cafeSex:'Café (sexta)',lanche1:'Lanche da manhã',almoco:'Almoço',preparo:'Preparo de terça',lancheTarde:'Lanche pós-treino',lancheSeg:'Lanche de segunda',jantar:'Jantar',noite:'Preparar amanhã',deitar:'Deitar'};
+  let h='<section class="view"><div><p class="eyebrow">Ajustes</p><h1>Seu perfil</h1></div>';
+  h+='<div class="form"><h3>Meta de proteína</h3><label for="peso">Peso (kg)<input type="number" id="peso" min="30" max="200" step="0.5" value="'+esc(peso)+'"></label><p class="small muted" id="metaTxt">Meta: cerca de '+Math.round(peso*1.6)+' g por dia, ou '+Math.round(peso*0.4)+' g por refeição.</p></div>';
+  h+='<div class="form"><h3>Orçamento</h3><label for="orc">Mercado por mês (R$)<input type="number" id="orc" min="0" step="10" value="'+esc(orc)+'"></label></div>';
+  h+='<div class="form"><h3>Horários</h3><p class="small muted">Mesmos horários todo dia ajudam o hábito a ficar automático.</p>';
+  Object.keys(nomes).forEach(k=>h+='<label for="h-'+k+'">'+nomes[k]+'<input type="time" id="h-'+k+'" data-h="'+k+'" value="'+H[k]+'"></label>');
+  h+='</div>';
+  h+='<div class="form"><h3>Rodízio de semanas</h3><p class="small muted">No automático, as semanas A e B se alternam sozinhas.</p><div class="seg" role="group" aria-label="Semana"><button data-s="auto" aria-pressed="'+(sem==='auto')+'">Automático</button><button data-s="A" aria-pressed="'+(sem==='A')+'">Sempre A</button><button data-s="B" aria-pressed="'+(sem==='B')+'">Sempre B</button></div></div>';
+  h+='<div class="form"><h3>Seus registros</h3><p class="small muted">As marcações ficam guardadas só neste aparelho e navegador.</p><div><button class="btn ghost small" id="zerar">Apagar marcações</button></div><p class="small" id="confirma" hidden>Apagar as marcações de refeições, compras e preparo? <button class="btn small" id="sim">Apagar</button> <button class="btn ghost small" id="nao">Cancelar</button></p></div>';
+  h+='</section>';
+  main.innerHTML=h;
+  document.getElementById('peso').oninput=e=>{const v=parseFloat(e.target.value);if(v>0){save('peso',v);document.getElementById('metaTxt').textContent='Meta: cerca de '+Math.round(v*1.6)+' g por dia, ou '+Math.round(v*0.4)+' g por refeição.'}};
+  document.getElementById('orc').onchange=e=>{const v=parseFloat(e.target.value);if(v>0){save('orcamento',v);toast('Orçamento salvo')}};
+  main.querySelectorAll('input[data-h]').forEach(i=>i.onchange=()=>{const o=load('horas',{});o[i.dataset.h]=i.value||HORAS_PADRAO[i.dataset.h];save('horas',o);toast('Horário salvo')});
+  main.querySelectorAll('button[data-s]').forEach(b=>b.onclick=()=>{save('semana',b.dataset.s);render()});
+  document.getElementById('zerar').onclick=()=>{document.getElementById('confirma').hidden=false};
+  document.getElementById('nao').onclick=()=>{document.getElementById('confirma').hidden=true};
+  document.getElementById('sim').onclick=()=>{try{Object.keys(localStorage).filter(k=>k.startsWith(PFX)&&/^ced2:(dia|compras|prep|inicio)/.test(k)).forEach(k=>localStorage.removeItem(k))}catch(e){};toast('Marcações apagadas');render()};
+}
+
+/* ---------- VALIDADE ---------- */
+const LOCAIS=['Geladeira','Freezer','Armário'];
+const PRESETS=[
+ ['Leite aberto',3,'Geladeira'],['Creme de leite aberto',2,'Geladeira'],['Extrato de tomate aberto',5,'Geladeira'],['Queijo fatiado aberto',5,'Geladeira'],
+ ['Frango cru',2,'Geladeira'],['Carne crua',2,'Geladeira'],['Frango cru no freezer',180,'Freezer'],['Carne crua no freezer',120,'Freezer'],
+ ['Pão francês',2,'Armário'],['Pão no freezer',30,'Freezer'],['Feijão cozido',4,'Geladeira'],['Marmita',4,'Geladeira'],['Marmita no freezer',60,'Freezer'],['Polpa de fruta',180,'Freezer']
+];
+function hojeIso(){return iso(startOfDay(new Date()))}
+function diasAte(dataIso){const [y,m,d]=dataIso.split('-').map(Number);return Math.round((new Date(y,m-1,d)-startOfDay(new Date()))/864e5)}
+function estoque(){return load('estoque',[]).slice().sort((a,b)=>a.data.localeCompare(b.data))}
+function addEstoque(nome,data,local,qtd){const L=load('estoque',[]);L.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),nome,data,local,qtd:qtd||''});save('estoque',L)}
+function rotuloDias(n){if(n<0)return ['vencido','Venceu há '+(-n)+' dia'+(n===-1?'':'s')];if(n===0)return ['urgente','Vence hoje'];if(n===1)return ['urgente','Vence amanhã'];if(n<=4)return ['logo','Vence em '+n+' dias'];return ['ok',n+' dias']}
+function fmtCurta(dataIso){const [y,m,d]=dataIso.split('-');return d+'/'+m}
+function alertaValidade(){
+  const urg=estoque().filter(i=>diasAte(i.data)<=2);
+  if(!urg.length)return '';
+  return '<div class="alerta"><h3>Use primeiro</h3><p class="small">'+urg.slice(0,4).map(i=>esc(i.nome)+' ('+rotuloDias(diasAte(i.data))[1].toLowerCase()+')').join(' · ')+(urg.length>4?' e mais '+(urg.length-4):'')+'</p><a href="#validade">Ver validades</a></div>';
+}
+function renderValidade(){
+  const L=estoque(),st=load('estoqueStats',{}),mes=hojeIso().slice(0,7),s=st[mes]||{usou:0,jogou:0};
+  let h='<section class="view"><div><p class="eyebrow">Geladeira, freezer e armário</p><h1>Validades</h1></div>';
+  h+='<p class="muted">Anote o que comprou ou abriu. A lista fica em ordem do que vence primeiro, e a aba Hoje avisa 2 dias antes.</p>';
+  h+='<form class="vform" id="vform"><div class="presets" aria-label="Atalhos">'+PRESETS.map((p,i)=>'<button type="button" data-p="'+i+'">'+p[0]+'</button>').join('')+'</div>';
+  h+='<div class="fields"><label class="full" for="vnome">O que é<input type="text" id="vnome" required placeholder="Ex.: iogurte, frango, polpa de maracujá"></label>';
+  h+='<label for="vdata">Vence em<input type="date" id="vdata" required value="'+iso(addDays(new Date(),3))+'"></label>';
+  h+='<label for="vqtd">Quantidade<input type="text" id="vqtd" placeholder="Ex.: 2 un., 300 g"></label></div>';
+  h+='<div class="row"><div class="seg" role="group" aria-label="Onde está">'+LOCAIS.map((l,i)=>'<button type="button" data-l="'+l+'" aria-pressed="'+(i===0)+'">'+l+'</button>').join('')+'</div><button class="btn" type="submit">Adicionar</button></div>';
+  h+='<p class="small muted">Os atalhos preenchem o prazo típico depois de aberto ou comprado. Se a embalagem disser outra data, vale a da embalagem.</p></form>';
+  h+='<div class="row"><span class="small">Este mês: <b class="mono">'+s.usou+'</b> usados a tempo · <b class="mono">'+s.jogou+'</b> jogados fora</span></div>';
+  if(!L.length){h+='<div class="shop"><p class="small muted" style="padding:12px 0">Nada anotado ainda. Comece pelo que está na geladeira agora, ou registre as marmitas no fim do preparo de terça.</p></div>'}
+  else{
+    const grupos=[['Vencidos',i=>diasAte(i.data)<0],['Até 2 dias',i=>{const n=diasAte(i.data);return n>=0&&n<=2}],['Esta semana',i=>{const n=diasAte(i.data);return n>2&&n<=7}],['Mais tarde',i=>diasAte(i.data)>7]];
+    grupos.forEach(([g,f])=>{const it=L.filter(f);if(!it.length)return;
+      h+='<div class="shop"><h3>'+g+'</h3>';
+      it.forEach(i=>{const [cls,txt]=rotuloDias(diasAte(i.data));h+='<div class="vrow"><div style="min-width:0"><b>'+esc(i.nome)+'</b> <span class="small muted">'+esc(i.local)+(i.qtd?' · '+esc(i.qtd):'')+' · '+fmtCurta(i.data)+'</span></div><span class="dias '+cls+'">'+txt+'</span><div class="acts" style="grid-column:1/-1"><button data-usou="'+i.id+'">Usei</button><button data-jogou="'+i.id+'">Joguei fora</button>'+(i.local==='Freezer'?'':'<button data-freezer="'+i.id+'">Mandar ao freezer</button>')+'</div></div>'});
+      h+='</div>'});
+  }
+  h+='<div class="sci"><h3>Para não perder comida</h3><ul class="steps"><li>Na terça, antes das compras, abra esta aba: o que vence logo entra no cardápio da semana.</li><li>Na geladeira, o que vence primeiro fica na frente (primeiro que vence, primeiro que sai).</li><li>Sobrou e não vai dar tempo? Freezer antes de vencer: carne, frango, pão, feijão e polpa congelam bem.</li><li>Leite, creme de leite e extrato abertos duram poucos dias: anote no dia em que abrir.</li></ul></div>';
+  h+='</section>';
+  main.innerHTML=h;
+  let local='Geladeira';
+  main.querySelectorAll('button[data-l]').forEach(b=>b.onclick=()=>{local=b.dataset.l;main.querySelectorAll('button[data-l]').forEach(x=>x.setAttribute('aria-pressed',x===b))});
+  main.querySelectorAll('button[data-p]').forEach(b=>b.onclick=()=>{const p=PRESETS[b.dataset.p];document.getElementById('vnome').value=p[0];document.getElementById('vdata').value=iso(addDays(new Date(),p[1]));local=p[2];main.querySelectorAll('button[data-l]').forEach(x=>x.setAttribute('aria-pressed',x.dataset.l===local))});
+  document.getElementById('vform').onsubmit=e=>{e.preventDefault();const n=document.getElementById('vnome').value.trim(),d=document.getElementById('vdata').value;if(!n||!d)return;addEstoque(n,d,local,document.getElementById('vqtd').value.trim());toast('Anotado: '+n);render()};
+  const tira=(id,campo)=>{save('estoque',load('estoque',[]).filter(i=>i.id!==id));if(campo){const st=load('estoqueStats',{});st[mes]=st[mes]||{usou:0,jogou:0};st[mes][campo]++;save('estoqueStats',st)}render()};
+  main.querySelectorAll('button[data-usou]').forEach(b=>b.onclick=()=>tira(b.dataset.usou,'usou'));
+  main.querySelectorAll('button[data-jogou]').forEach(b=>b.onclick=()=>tira(b.dataset.jogou,'jogou'));
+  main.querySelectorAll('button[data-freezer]').forEach(b=>b.onclick=()=>{const L2=load('estoque',[]);const i=L2.find(x=>x.id===b.dataset.freezer);if(i){i.local='Freezer';i.data=iso(addDays(new Date(),60));save('estoque',L2);toast('No freezer: mais 2 meses')}render()});
+}
+function registrarPreparo(W){
+  const S=SEMANAS[W],t=new Date();
+  S.marmitas.forEach(m=>addEstoque('Marmita: '+m.nome.toLowerCase(),iso(addDays(t,m.onde==='freezer'?60:4)),m.onde==='freezer'?'Freezer':'Geladeira','1 un.'));
+  addEstoque('Panquecas de banana',iso(addDays(t,3)),'Geladeira','');
+  addEstoque('Ovos cozidos',iso(addDays(t,7)),'Geladeira','3 un.');
+  addEstoque('Vinagrete',iso(addDays(t,3)),'Geladeira','');
+  if(W==='A')addEstoque('Feijão extra',iso(addDays(t,90)),'Freezer','2 potinhos');
+}
+
+/* ---------- roteamento ---------- */
+const VIEWS={hoje:renderHoje,semana:renderSemana,preparo:renderPreparo,compras:renderCompras,validade:renderValidade,ciencia:renderCiencia,perfil:renderPerfil};
+function render(){
+  document.getElementById('weekpill').textContent='Semana '+weekOf(new Date());
+  document.querySelectorAll('nav.tabs a').forEach(a=>a.setAttribute('aria-current',a.dataset.v===view?'page':'false'));
+  (VIEWS[view]||renderHoje)();
+}
+function route(){const h=location.hash.replace('#','');const nv=VIEWS[h]?h:'hoje';if(nv!==view){view=nv;window.scrollTo(0,0)}render()}
+window.addEventListener('hashchange',route);
+view=VIEWS[location.hash.replace('#','')]?location.hash.replace('#',''):'hoje';
+render();
+})();
+</script>
+
+</body>
+</html>
