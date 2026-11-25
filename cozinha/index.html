@@ -79,6 +79,8 @@ nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:2px;padding
 .vform input[type=text],.vform input[type=date]{font:inherit;padding:8px 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg);width:100%;min-width:0}
 .vform .full{grid-column:1/-1}
 .vform label{display:flex;flex-direction:column;gap:4px;font-size:.82rem;font-weight:600;color:var(--muted);min-width:0}
+.swaplist{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.swaplist button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1px solid var(--line);background:var(--surface2);border-radius:10px;padding:8px 10px;cursor:pointer}
 .presets{display:flex;flex-wrap:wrap;gap:6px}
 .presets button{border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:4px 10px;font-size:.8rem;cursor:pointer}
 nav.tabs a svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
@@ -131,6 +133,9 @@ details{font-size:.9rem}
 details summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:.85rem;list-style:none}
 details summary::-webkit-details-marker{display:none}
 details summary::before{content:"+ "}
+details.subs summary{color:var(--warm)}
+details.guarda summary{color:var(--info)}
+details.subs{margin-top:2px}
 details[open] summary::before{content:"− "}
 ol.steps,ul.steps{margin:8px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
 .tasks{list-style:none;margin:4px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
@@ -247,11 +252,12 @@ function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'
 function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
 function startOfDay(d){const x=new Date(d);x.setHours(0,0,0,0);return x}
 function mondayOf(d){const x=startOfDay(d);return addDays(x,-((x.getDay()+6)%7))}
-const REF_MONDAY=new Date(2026,10,9); // segunda 09/11/2026 = Semana A
+const REF_MONDAY=new Date(2026,10,23); // segunda 23/11/2026 = Semana A
+const LETRAS=['A','B','C','D'];
 function weekOf(d){
-  const o=load('semana','auto'); if(o==='A'||o==='B') return o;
+  const o=load('semana','auto'); if(LETRAS.includes(o)) return o;
   const n=Math.round((mondayOf(d)-REF_MONDAY)/(7*864e5));
-  return (((n%2)+2)%2)===0?'A':'B';
+  return LETRAS[((n%4)+4)%4];
 }
 function fmtDate(d){return d.getDate()+' de '+MESES[d.getMonth()]}
 function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
@@ -275,38 +281,145 @@ const C={
  kitPanq:{refeicao:'Lanche da manhã',nome:'Fruta e 1 panqueca de banana',desc:'Kit montado ontem à noite.',tempo:1,tipo:'pronto',prot:5}
 };
 
+const FRUTA={A:{2:'tangerina',3:'maçã',4:'pera',5:'abacaxi em cubos'},B:{2:'laranja',3:'maçã',4:'tangerina',5:'uvas'},C:{2:'pera',3:'laranja',4:'maçã',5:'abacaxi em cubos'},D:{2:'maçã',3:'tangerina',4:'pera',5:'uvas'}};
+const SORVETE={A:'abacaxi',B:'uva',C:'abacaxi',D:'uva'};
+const BOLINHOS={
+ banana:{nome:'Bolinhos de banana com aveia',ing:'2 bananas maduras, 2 ovos, 1 xícara de aveia, 1 col. de mel, canela e 1 col. (chá) de fermento.',passos:['Amasse as bananas e misture tudo com um garfo (ou bata no mixer).','Encha 6 forminhas de silicone até ¾.','Airfryer a 160 °C por 15 min. Palito sai limpo = pronto.','Esfrie na grade. Geladeira 4 dias ou freezer 1 mês.'],prot:4},
+ cenoura:{nome:'Bolinhos de cenoura com aveia',ing:'1 cenoura, 2 ovos, 3 col. de óleo, 1 xícara de aveia, 2 col. de mel e 1 col. (chá) de fermento.',passos:['Bata a cenoura, os ovos, o óleo e o mel no liquidificador.','Misture a aveia e o fermento com uma colher.','6 forminhas de silicone, airfryer a 160 °C por 15 a 18 min.','Geladeira 4 dias ou freezer 1 mês.'],prot:4},
+ salgado:{nome:'Bolinhos salgados de ovo e queijo',ing:'3 ovos, 3 col. de aveia, queijo picado, tomate, cheiro-verde, sal (e frango desfiado, se sobrar).',passos:['Bata os ovos com a aveia e o sal.','Junte o queijo, o tomate e o cheiro-verde.','6 forminhas, airfryer a 180 °C por 12 min.','Geladeira 3 dias. Bom no lanche da manhã no lugar do ovo cozido.'],prot:6}
+};
+const BOLINHO_SEMANA={A:'banana',B:'cenoura',C:'banana',D:'cenoura'};
+/* substituições: [ingrediente, palavras que aparecem nas receitas, trocas] */
+const SUBS=[
+ ['Patinho',['patinho'],'acém, alcatra, lombo bovino ou músculo (o músculo pede 10 min a mais de panela)'],
+ ['Acém',['acém'],'patinho, alcatra ou músculo'],
+ ['Peito de frango',['peito de frango','frango'],'sobrecoxa sem pele (mais suculenta e mais barata) ou filé de frango'],
+ ['Creme de leite',['creme de leite'],'3 col. de requeijão, ou 1 iogurte natural (com o fogo desligado), ou 1 copo de leite engrossado com 1 col. de amido de milho'],
+ ['Extrato de tomate',['extrato'],'2 tomates maduros batidos no mixer, ou molho de tomate pronto'],
+ ['Feijão carioca',['feijão'],'feijão preto, feijão-de-corda ou grão-de-bico'],
+ ['Grão-de-bico',['grão-de-bico'],'feijão branco, feijão-de-corda ou lentilha (a lentilha não precisa de molho)'],
+ ['Farinha de mandioca',['farinha de mandioca'],'flocão de milho ou farofa pronta'],
+ ['Aveia',['aveia'],'flocão de milho (nas panquecas e bolinhos) ou farinha de trigo integral'],
+ ['Farinha de trigo',['farinha de trigo'],'metade aveia batida e metade goma de tapioca'],
+ ['Banana',['banana'],'mamão ou maçã ralada (nas panquecas e bolinhos); abacaxi ou mamão (na vitamina)'],
+ ['Mel',['mel'],'açúcar mascavo ou 2 tâmaras picadas'],
+ ['Leite',['leite'],'iogurte natural com um pouco de água, ou leite em pó'],
+ ['Iogurte natural',['iogurte'],'leite bem gelado (o sorvete fica mais leve) ou 2 col. de requeijão'],
+ ['Queijo mussarela',['queijo'],'queijo coalho, queijo minas ou requeijão'],
+ ['Requeijão',['requeijão'],'queijo cremoso, queijo minas amassado ou manteiga'],
+ ['Couve',['couve'],'repolho fatiado fino ou espinafre'],
+ ['Cenoura',['cenoura'],'abóbora ou chuchu'],
+ ['Batata',['batata'],'macaxeira (congela melhor), batata-doce ou inhame'],
+ ['Macarrão',['macarrão'],'arroz, cuscuz ou batata-doce'],
+ ['Arroz',['arroz'],'cuscuz, macarrão ou macaxeira'],
+ ['Granola',['granola'],'aveia tostada com mel na frigideira, ou amendoim picado'],
+ ['Suco de maracujá',['maracujá'],'acerola, laranja, caju ou goiaba (todos têm vitamina C, que ajuda o ferro)'],
+ ['Limão',['limão'],'vinagre de maçã ou suco de laranja'],
+ ['Abacaxi ou uva (sorvete)',['abacaxi','uva'],'manga, morango, banana ou mamão congelados'],
+ ['Cheiro-verde',['cheiro-verde'],'coentro, cebolinha ou orégano seco'],
+ ['Sobrecoxa',['sobrecoxa'],'coxa de frango ou peito de frango (o peito fica pronto 5 min antes)'],
+ ['Batata-doce',['batata-doce','batatas-doces'],'macaxeira, abóbora ou batata'],
+ ['Pimentão',['pimentão'],'abobrinha ou mais cenoura'],
+ ['Amido de milho',['amido de milho'],'1 col. de farinha de trigo dissolvida em água fria']
+];
+/* como guardar: [palavras, onde e como, dias] */
+const GUARDA=[
+ [/escondidinho|purê/,'Refratário coberto na geladeira. Não congele a batata: ela fica arenosa.',3],
+ [/marmita|estrogonofe|tropeiro|picadinho|iscas|carne de panela|frango xadrez|panquecas de frango|arroz de forno|sobrecoxa/,'Pote fechado na geladeira, na prateleira do meio (não na porta). Sobrou? Pote raso, geladeira em até 2 h.',3],
+ [/sopa|grão-de-bico|feijão/,'Pote fechado na geladeira, ou freezer por até 3 meses em potinhos.',4],
+ [/panquecas de banana/,'Pote fechado na geladeira, ou freezer por 1 mês com papel-manteiga entre elas.',3],
+ [/bolinho/,'Pote fechado na geladeira, ou freezer por 1 mês. Esquente 20 s.',4],
+ [/sorvete/,'A fruta congelada dura 1 mês no freezer, em saquinho sem ar. Batido, coma na hora.',0],
+ [/salada de frutas/,'Pote fechado na geladeira com suco de laranja por cima, para não escurecer.',1],
+ [/vitamina|suco/,'Melhor tomar na hora. Se sobrar, garrafa fechada na geladeira e tome em até 12 h.',-1],
+ [/ovo cozido|ovos cozidos/,'Com casca, em pote na geladeira. Descascado, coma no mesmo dia.',7],
+ [/ovo|omelete|ovos mexidos/,'Ovo pronto é melhor comer na hora. Sobrou? Geladeira, pote fechado.',1],
+ [/vinagrete/,'Pote de vidro fechado na geladeira, sem o sal se quiser durar mais.',3],
+ [/cuscuz/,'Coberto na geladeira. Esquente com 1 col. de água por cima.',2],
+ [/macarrão/,'Pote fechado na geladeira; com molho, aguenta o freezer por 1 mês.',3],
+ [/pão|torrada/,'Pão em saco fechado fora da geladeira; o que não for comer em 2 dias vai para o freezer.',2],
+ [/fruta|maçã|pera|tangerina|laranja|uva|abacaxi/,'Inteiras: fruteira (maçã e pera duram mais na geladeira). Cortadas: pote fechado na geladeira.',2],
+ [/iogurte|leite/,'Geladeira, sempre fechado. Aberto, use em até 3 dias.',3]
+];
+function guardaDe(txt){const t=(txt||'').toLowerCase();return GUARDA.find(g=>g[0].test(t))}
+function guardaHtml(txt,dataBase){const g=guardaDe(txt);if(!g)return '';const ate=g[2]>0&&dataBase?' Coma até '+fmtCurtaD(addDays(dataBase,g[2]))+'.':(g[2]<=0?'':(g[2]>0?' Dura até '+g[2]+' dia'+(g[2]>1?'s':'')+'.':''));return '<details class="guarda"><summary>Como guardar</summary><p class="small">'+g[1]+ate+'</p></details>'}
+function fmtCurtaD(d){return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')}
+function subsDe(txt){const t=' '+(txt||'').toLowerCase()+' ';return SUBS.filter(x=>x[1].some(k=>new RegExp('[^a-zà-ü]'+k.replace(/-/g,'\\-')+'s?[^a-zà-ü]').test(t)))}
+function subsHtml(txt){const L=subsDe(txt);if(!L.length)return '';return '<details class="subs"><summary>Substituições</summary><ul class="steps">'+L.map(x=>'<li><b>'+x[0]+':</b> '+x[2]+'</li>').join('')+'</ul></details>'}
+const TROCAS={
+ cafe:['cuscuz com leite','pão com requeijão e ovos mexidos','torradas com ovo e queijo'],
+ lanche1:['outra fruta (laranja, tangerina, uva, maçã, pera, abacaxi)','salada de frutas num potinho','bolinho de airfryer','cenoura crua em palitos','torradas com requeijão'],
+ lanche2:['salada de frutas com iogurte e granola','sorvete natural de uva ou abacaxi com granola','bolinhos de airfryer com suco','pão com requeijão e suco','cenoura crua em palitos e ovo cozido'],
+ jantar:['ovos mexidos com pão e queijo','cuscuz com leite ou com ovo','torradas com ovo e vinagrete']
+};
+const ALT={
+ cafe:[
+  {nome:'Cuscuz com leite',desc:'5 col. de flocão na cuscuzeira, leite morno por cima.',tempo:12,tipo:'cozinhar',prot:10},
+  {nome:'Pão com requeijão e ovos mexidos',desc:'2 ovos mexidos e pão com requeijão.',tempo:8,tipo:'rapido',prot:16},
+  {nome:'Torradas com ovo e queijo',desc:'Pão tostado na sanduicheira com ovo e queijo.',tempo:8,tipo:'rapido',prot:18},
+  {nome:'Bolinhos de airfryer e 1 copo de leite',desc:'2 bolinhos da segunda.',tempo:1,tipo:'pronto',prot:14}
+ ],
+ lanche1:[
+  {nome:'Fruta e ovo cozido',desc:'Do kit da noite anterior.',tempo:1,tipo:'pronto',prot:7},
+  {nome:'Fruta e 1 bolinho de airfryer',desc:'Do kit da noite anterior.',tempo:1,tipo:'pronto',prot:4},
+  {nome:'Salada de frutas num potinho',desc:'Montada na noite anterior, com suco de laranja por cima.',tempo:1,tipo:'pronto',prot:2},
+  {nome:'Iogurte com granola',desc:'1 iogurte natural e 2 col. de granola em pote separado.',tempo:1,tipo:'pronto',prot:8},
+  {nome:'Cenoura crua e torradas com requeijão',desc:'Palitos de cenoura e 2 torradas.',tempo:1,tipo:'pronto',prot:5}
+ ],
+ lanche2:[
+  {nome:'Vitamina de banana com aveia',desc:'300 ml de leite, 1 banana, 2 col. de aveia.',tempo:3,tipo:'rapido',prot:14},
+  {nome:'Sorvete natural com iogurte e granola',desc:'Fruta congelada batida com iogurte.',tempo:4,tipo:'rapido',prot:9},
+  {nome:'Salada de frutas com iogurte e granola',desc:'Frutas picadas, 1 iogurte e granola.',tempo:8,tipo:'rapido',prot:8},
+  {nome:'Pão com ovo e suco de maracujá',desc:'1 pão, 1 ovo mexido e 1 copo de suco.',tempo:6,tipo:'rapido',prot:12},
+  {nome:'Pão com requeijão e suco',desc:'Na sanduicheira.',tempo:4,tipo:'rapido',prot:6},
+  {nome:'Bolinhos de airfryer com suco',desc:'2 bolinhos e 1 copo de suco de maracujá.',tempo:1,tipo:'pronto',prot:8},
+  {nome:'Cenoura crua e ovo cozido',desc:'Palitos de cenoura e 1 ovo.',tempo:2,tipo:'pronto',prot:7}
+ ],
+ jantar:[
+  {nome:'Ovos mexidos com pão, queijo e suco',desc:'O clássico, em 8 min.',tempo:8,tipo:'rapido',prot:20},
+  {nome:'Cuscuz com leite',desc:'Leve e rápido.',tempo:12,tipo:'rapido',prot:10},
+  {nome:'Torradas com ovo e vinagrete',desc:'2 torradas, 2 ovos e vinagrete.',tempo:8,tipo:'rapido',prot:16},
+  {nome:'Salada de frutas com iogurte e granola',desc:'Para um dia sem fome.',tempo:8,tipo:'rapido',prot:8}
+ ],
+ almoco:[
+  {nome:'Arroz, feijão do freezer, ovo e vinagrete',desc:'Plano B barato: feijão do potinho, 2 ovos e arroz.',tempo:15,tipo:'cozinhar',prot:18,ferro:true},
+  {nome:'Comer fora',desc:'Prato feito: arroz, feijão, carne ou frango grelhado e salada, com suco de fruta.',tempo:0,tipo:'pronto',prot:30,ferro:true}
+ ]
+};
 /* ---------- semanas ---------- */
 const SEMANAS={
  A:{
-  resumo:'Estrogonofe de frango, feijão tropeiro e macarrão temperado com carne moída.',
+  resumo:'Estrogonofe de frango, feijão tropeiro e macarrão temperado com picadinho de patinho.',
   marmitas:[
    {dia:3,nome:'Estrogonofe de frango',acomp:'arroz e feijão',prot:30,onde:'geladeira'},
-   {dia:4,nome:'Feijão tropeiro com carne moída',acomp:'arroz e vinagrete',prot:30,onde:'geladeira',ferro:true},
-   {dia:5,nome:'Macarrão temperado com carne moída',acomp:'vinagrete',prot:26,onde:'freezer',ferro:true}
+   {dia:4,nome:'Feijão tropeiro com cubinhos de patinho',acomp:'arroz e vinagrete',prot:30,onde:'geladeira',ferro:true},
+   {dia:5,nome:'Macarrão temperado com picadinho de patinho',acomp:'vinagrete',prot:26,onde:'freezer',ferro:true}
   ],
   jantar:{
    1:{nome:'Omelete de queijo e tomate com pão',desc:'Feito na hora, com suco de maracujá.',tempo:15,tipo:'cozinhar',prot:22,passos:['Bata 2 ovos com sal, tomate picado e cheiro-verde.','Frigideira untada, 3 min, junte o queijo e dobre.','Pão e 1 copo de suco.']},
    2:{nome:'Estrogonofe de frango com arroz',desc:'Feito hoje no preparo. É só servir.',tempo:0,tipo:'pronto',prot:28},
-   3:{nome:'Misto de carne moída com queijo na sanduicheira',desc:'Carne moída já pronta (pote de terça), vinagrete e suco.',tempo:8,tipo:'esquentar',prot:22,ferro:true,passos:['Aqueça a carne moída 1 min.','Pão com a carne e o queijo na sanduicheira, 3 min.','Vinagrete por cima ou ao lado.']},
+   3:{nome:'Escondidinho de batata com picadinho de patinho',desc:'Picadinho e purê já prontos (potes de terça). Monta e gratina.',tempo:12,tipo:'esquentar',prot:24,ferro:true,passos:['Num refratário: o picadinho embaixo, o purê por cima e 1 fatia de queijo.','Airfryer a 200 °C por 10 min (ou micro-ondas 3 min).','Vinagrete e suco de maracujá ao lado.']},
    4:{nome:'Cuscuz temperado com ovo e couve',desc:'Jantar leve: amanhã você acorda às 3h50.',tempo:15,tipo:'cozinhar',prot:16,ferro:true,passos:['Hidrate 5 col. de flocão com água, sal, cebola e cheiro-verde por 5 min.','Cuscuzeira por 7 min.','Enquanto isso, 1 ovo mexido com couve fatiada.']}
   },
   noiteSeg:['Deixe 250 g de feijão carioca de molho na geladeira. Reduz os fitatos, que atrapalham o ferro, e encurta o cozimento.'],
   prep:{dura:95,
-   rende:[['3','marmitas (qua, qui, sex)'],['2','jantares prontos (ter e qua)'],['6','panquecas de banana'],['3','ovos cozidos'],['2','potinhos de feijão extra']],
+   rende:[['3','marmitas (qua, qui, sex)'],['2','jantares prontos (ter e qua)'],['6','panquecas de banana'],['3','ovos cozidos'],['2','potinhos de feijão extra'],['1','saquinho de sorvete natural']],
    passos:[
     {t:0,d:30,onde:'Pressão',txt:'Feijão de molho na pressão, água 3 dedos acima e 1 folha de louro. Depois que pegar pressão, 20 min em fogo baixo.'},
     {t:0,d:10,onde:'Bancada',txt:'Corte 300 g de peito de frango em cubos e tempere com alho, sal e limão. Pique 2 cebolas e 2 tomates.'},
     {t:10,d:25,onde:'Fogão',txt:'Estrogonofe: doure o frango 10 min, junte cebola, 2 col. de extrato de tomate e ½ copo de água, 10 min. Desligue e misture ½ caixa de creme de leite.'},
     {t:10,d:20,onde:'Fogão',txt:'Arroz: 1 xícara crua (4 porções), 18 min tampado.'},
-    {t:15,d:20,onde:'Fogão',txt:'Refogue 300 g de carne moída com cebola, alho, colorau, 1 cenoura ralada e cheiro-verde, 15 min. Divida em 3 partes.'},
+    {t:15,d:20,onde:'Fogão',txt:'Picadinho: corte 350 g de patinho em cubinhos de 1 cm. Doure em frigideira bem quente, em 2 levas. Junte cebola, alho, colorau, 1 cenoura em cubinhos, 2 col. de extrato e ½ copo de água, 15 min. Divida em 3 partes.'},
     {t:15,d:12,onde:'Fogão',txt:'3 ovos em água fervente por 10 min, depois água fria. Guarde com casca.'},
-    {t:30,d:12,onde:'Fogão',txt:'Macarrão: 100 g, 2 min a menos que o pacote manda. Misture com ⅓ da carne moída e 1 col. de extrato. É a marmita de sexta.'},
+    {t:30,d:12,onde:'Fogão',txt:'Macarrão: 100 g, 2 min a menos que o pacote manda. Misture com ⅓ do picadinho e o molho dele. É a marmita de sexta.'},
     {t:35,d:10,onde:'Pressão',txt:'Tire a pressão. Refogue alho e cebola e junte ao feijão, 10 min.'},
-    {t:45,d:10,onde:'Fogão',txt:'Tropeiro: na frigideira, ⅓ da carne moída, 1 concha de feijão escorrido, 1 ovo mexido, couve fatiada e 4 col. de farinha de mandioca.'},
+    {t:45,d:10,onde:'Fogão',txt:'Tropeiro: na frigideira, ⅓ do picadinho, 1 concha de feijão escorrido, 1 ovo mexido, couve fatiada e 4 col. de farinha de mandioca.'},
     {t:50,d:15,onde:'Bancada',txt:'Panquecas de banana: mixer com 2 bananas, 2 ovos e 6 col. de aveia. Frigideira untada, 2 min de cada lado. Rende 6.'},
+    {t:55,d:20,onde:'Fogão',txt:'Purê para o escondidinho de quarta: 2 batatas em cubos, 15 min em água com sal. Amasse com 1 col. de manteiga e um pouco de leite. Pote na geladeira.'},
     {t:65,d:5,onde:'Bancada',txt:'Vinagrete: tomate, cebola e cheiro-verde picados, limão, sal e fio de azeite. Pote tampado, dura 3 dias.'},
+    {t:68,d:5,onde:'Bancada',txt:'Sorvete natural: corte o abacaxi. Separe os cubos de sexta e congele o resto em saquinho, para o lanche de quinta.'},
     {t:70,d:15,onde:'Bancada',txt:'Espalhe tudo em travessas rasas para esfriar rápido. Separe o seu jantar de hoje.'},
-    {t:85,d:10,onde:'Bancada',txt:'Monte e etiquete: quarta (estrogonofe, arroz, feijão) e quinta (tropeiro, arroz) na geladeira; sexta (macarrão) no freezer. O ⅓ de carne moída restante vai num pote para o jantar de quarta. Feijão extra: 2 potinhos no freezer.'}
+    {t:85,d:10,onde:'Bancada',txt:'Monte e etiquete: quarta (estrogonofe, arroz, feijão) e quinta (tropeiro, arroz) na geladeira; sexta (macarrão) no freezer. O ⅓ de picadinho restante e o purê vão em potes para o escondidinho de quarta. Feijão extra: 2 potinhos no freezer.'}
    ]}
  },
  B:{
@@ -319,12 +432,12 @@ const SEMANAS={
   jantar:{
    1:{nome:'Macarrão temperado com ovo e vinagrete',desc:'Feito na hora, com suco de maracujá.',tempo:20,tipo:'cozinhar',prot:18,passos:['80 g de macarrão.','Refogue alho, cebola, tomate e cheiro-verde; junte 2 ovos mexidos.','Misture o macarrão e sirva com vinagrete.']},
    2:{nome:'Panquecas de frango ao molho',desc:'Feitas hoje no preparo. É só servir.',tempo:0,tipo:'pronto',prot:26},
-   3:{nome:'Salada morna de grão-de-bico com frango e pão',desc:'Grão-de-bico e frango desfiado do pote de terça, com vinagrete.',tempo:5,tipo:'esquentar',prot:22,ferro:true,passos:['Aqueça o grão-de-bico e o frango por 1 min.','Misture o vinagrete e coma com pão.']},
+   3:{nome:'Salada morna de grão-de-bico, frango e batata cozida',desc:'Grão-de-bico, frango desfiado e batata do pote de terça, com vinagrete e cenoura crua ralada.',tempo:5,tipo:'esquentar',prot:22,ferro:true,passos:['Aqueça o grão-de-bico, o frango e a batata por 1 min.','Misture o vinagrete e a cenoura ralada.']},
    4:{nome:'Ovos mexidos com queijo, pão e suco',desc:'Jantar leve: amanhã você acorda às 3h50.',tempo:8,tipo:'rapido',prot:20,passos:['2 ovos mexidos com queijo em fogo baixo.','Pão e 1 copo de suco.']}
   },
   noiteSeg:['Deixe 150 g de grão-de-bico de molho na geladeira (8 a 12 h).','Passe 1 potinho de feijão do freezer para a geladeira, para a marmita de quarta.'],
   prep:{dura:105,
-   rende:[['3','marmitas (qua, qui, sex)'],['2','jantares prontos (ter e qua)'],['6','panquecas de banana'],['3','ovos cozidos'],['1','pote de grão-de-bico']],
+   rende:[['3','marmitas (qua, qui, sex)'],['2','jantares prontos (ter e qua)'],['6','panquecas de banana'],['3','ovos cozidos'],['1','pote de grão-de-bico'],['1','saquinho de sorvete natural']],
    passos:[
     {t:0,d:25,onde:'Pressão',txt:'300 g de peito de frango com água, sal, alho e louro. Depois que pegar pressão, 15 min.'},
     {t:0,d:10,onde:'Bancada',txt:'Corte 300 g de acém ou patinho em iscas finas e tempere com alho, sal e colorau. Pique 2 cebolas e 3 tomates.'},
@@ -337,9 +450,76 @@ const SEMANAS={
     {t:40,d:20,onde:'Fogão',txt:'Faça 6 panquecas (2 min cada). Recheie com frango e enrole. Molho: extrato de tomate, água e cebola, 5 min, por cima. Separe um pouco de frango para quarta.'},
     {t:60,d:15,onde:'Bancada',txt:'Panquecas de banana: mixer com 2 bananas, 2 ovos e 6 col. de aveia. Frigideira, 2 min de cada lado.'},
     {t:70,d:10,onde:'Pressão',txt:'Tire a pressão e refogue o grão-de-bico com alho, cebola e 1 cenoura ralada.'},
+    {t:60,d:15,onde:'Fogão',txt:'2 batatas em cubos, 12 min em água com sal, para a salada de quarta.'},
     {t:75,d:5,onde:'Bancada',txt:'Vinagrete: tomate, cebola, cheiro-verde, limão, sal e fio de azeite.'},
+    {t:78,d:3,onde:'Bancada',txt:'Sorvete natural: lave as uvas, separe as de sexta e congele o resto em saquinho, para o lanche de quinta.'},
     {t:80,d:15,onde:'Bancada',txt:'Espalhe tudo em travessas rasas para esfriar rápido. Separe o seu jantar de hoje.'},
-    {t:95,d:10,onde:'Bancada',txt:'Monte e etiquete: quarta (iscas, arroz, feijão) e quinta (2 panquecas, arroz) na geladeira; sexta (iscas, grão-de-bico, arroz) no freezer. Grão-de-bico e frango restantes num pote para o jantar de quarta.'}
+    {t:95,d:10,onde:'Bancada',txt:'Monte e etiquete: quarta (iscas, arroz, feijão) e quinta (2 panquecas, arroz) na geladeira; sexta (iscas, grão-de-bico, arroz) no freezer. Grão-de-bico, frango e batata restantes num pote para o jantar de quarta.'}
+   ]}
+ },
+ C:{
+  resumo:'Carne de panela com batata e cenoura e frango xadrez com legumes, com feijão preto.',
+  marmitas:[
+   {dia:3,nome:'Carne de panela com batata e cenoura',acomp:'arroz e feijão preto',prot:32,onde:'geladeira',ferro:true},
+   {dia:4,nome:'Frango xadrez com legumes',acomp:'arroz',prot:28,onde:'geladeira'},
+   {dia:5,nome:'Carne de panela desfiada com feijão preto',acomp:'arroz',prot:30,onde:'freezer',ferro:true}
+  ],
+  jantar:{
+   1:{nome:'Cuscuz temperado com ovo e queijo coalho',desc:'Feito na hora, com suco de maracujá.',tempo:15,tipo:'cozinhar',prot:20,passos:['Hidrate 6 col. de flocão com água, sal, cebola e cheiro-verde por 5 min.','Cuscuzeira por 7 min.','2 ovos mexidos e 1 fatia de coalho dourada.']},
+   2:{nome:'Frango xadrez com arroz',desc:'Feito hoje no preparo. É só servir.',tempo:0,tipo:'pronto',prot:26},
+   3:{nome:'Sanduíche quente de carne desfiada com queijo',desc:'Carne de panela desfiada do pote de terça, vinagrete e suco.',tempo:8,tipo:'esquentar',prot:24,ferro:true,passos:['Aqueça a carne 1 min.','Pão, carne e queijo na sanduicheira, 3 min.','Vinagrete ao lado.']},
+   4:{nome:'Torradas com ovos mexidos e requeijão',desc:'Jantar leve: amanhã você acorda às 3h50.',tempo:8,tipo:'rapido',prot:18,passos:['Toste 2 fatias de pão na sanduicheira ou airfryer.','2 ovos mexidos em fogo baixo.','Requeijão nas torradas.']}
+  },
+  noiteSeg:['Deixe 250 g de feijão preto de molho na geladeira (8 a 12 h).','Passe o acém do freezer para a geladeira, se comprado congelado.'],
+  prep:{dura:105,
+   rende:[['3','marmitas (qua, qui, sex)'],['2','jantares prontos (ter e qua)'],['6','panquecas de banana'],['3','ovos cozidos'],['2','potinhos de feijão preto'],['1','saquinho de sorvete natural']],
+   passos:[
+    {t:0,d:10,onde:'Pressão',txt:'Corte 450 g de acém em pedaços grandes e sele na panela de pressão aberta, em 2 levas.'},
+    {t:10,d:40,onde:'Pressão',txt:'Junte cebola, alho, 2 tomates, louro e água até cobrir. Depois que pegar pressão, 30 min.'},
+    {t:10,d:10,onde:'Bancada',txt:'Corte 300 g de peito de frango em cubos e tempere com alho e sal. Corte 1 pimentão, 1 cebola e 1 cenoura em cubos.'},
+    {t:10,d:20,onde:'Fogão',txt:'Arroz: 1 xícara crua (4 porções), 18 min tampado.'},
+    {t:20,d:15,onde:'Fogão',txt:'Frango xadrez: doure o frango 8 min em frigideira bem quente, junte os legumes e ½ copo de água com 1 col. de amido de milho, 5 min.'},
+    {t:35,d:12,onde:'Fogão',txt:'3 ovos em água fervente por 10 min, depois água fria. Guarde com casca.'},
+    {t:35,d:15,onde:'Bancada',txt:'Panquecas de banana: mixer com 2 bananas, 2 ovos e 6 col. de aveia. Frigideira, 2 min de cada lado. Rende 6.'},
+    {t:50,d:15,onde:'Pressão',txt:'Tire a pressão. Junte 2 batatas e 1 cenoura em pedaços e cozinhe 12 min sem pressão. Separe ⅓ da carne, sem batata, e desfie: é a marmita de sexta e o jantar de quarta.'},
+    {t:65,d:30,onde:'Pressão',txt:'Lave a panela e cozinhe o feijão preto de molho. Depois que pegar pressão, 20 min. Tempere com alho e cebola refogados.'},
+    {t:66,d:5,onde:'Bancada',txt:'Vinagrete: tomate, cebola e cheiro-verde picados, limão, sal e fio de azeite.'},
+    {t:71,d:3,onde:'Bancada',txt:'Sorvete natural: corte o abacaxi, separe os cubos de sexta e congele o resto em saquinho, para o lanche de quinta.'},
+    {t:75,d:20,onde:'Bancada',txt:'Espalhe tudo em travessas rasas para esfriar rápido. Separe o seu jantar de hoje.'},
+    {t:95,d:10,onde:'Bancada',txt:'Monte e etiquete: quarta (carne de panela com batata, arroz e feijão) e quinta (frango xadrez e arroz) na geladeira; sexta (carne desfiada, feijão e arroz) no freezer. A carne desfiada restante vai num pote para o jantar de quarta. Feijão extra: 2 potinhos no freezer.'}
+   ]}
+ },
+ D:{
+  resumo:'Estrogonofe de carne e sobrecoxa na airfryer com batata-doce, com feijão carioca.',
+  marmitas:[
+   {dia:3,nome:'Estrogonofe de carne',acomp:'arroz e feijão',prot:30,onde:'geladeira',ferro:true},
+   {dia:4,nome:'Sobrecoxa na airfryer com batata-doce',acomp:'feijão e vinagrete',prot:30,onde:'geladeira',ferro:true},
+   {dia:5,nome:'Arroz de forno com frango e queijo',acomp:'feijão',prot:28,onde:'freezer',ferro:true}
+  ],
+  jantar:{
+   1:{nome:'Macarrão alho e óleo com ovos e queijo',desc:'Feito na hora, com suco de maracujá.',tempo:20,tipo:'cozinhar',prot:20,passos:['Cozinhe 80 g de macarrão.','Doure alho no azeite, junte o macarrão, 2 ovos mexidos e queijo.','Vinagrete ao lado.']},
+   2:{nome:'Estrogonofe de carne com arroz',desc:'Feito hoje no preparo. É só servir.',tempo:0,tipo:'pronto',prot:28,ferro:true},
+   3:{nome:'Ovos mexidos com batata-doce e vinagrete',desc:'Batata-doce já assada (pote de terça).',tempo:8,tipo:'esquentar',prot:16,passos:['Aqueça a batata-doce 1 min.','2 ovos mexidos com tomate.','Vinagrete por cima.']},
+   4:{nome:'Cuscuz com leite e ovo cozido',desc:'Jantar leve: amanhã você acorda às 3h50.',tempo:12,tipo:'rapido',prot:16,passos:['Cuscuz de 5 col. de flocão na cuscuzeira, 7 min.','Leite morno por cima e 1 ovo cozido.']}
+  },
+  noiteSeg:['Deixe 250 g de feijão carioca de molho na geladeira (8 a 12 h).','Passe o patinho e a sobrecoxa do freezer para a geladeira, se comprados congelados.'],
+  prep:{dura:100,
+   rende:[['3','marmitas (qua, qui, sex)'],['2','jantares prontos (ter e qua)'],['6','panquecas de banana'],['4','ovos cozidos'],['2','potinhos de feijão extra'],['1','saquinho de sorvete natural']],
+   passos:[
+    {t:0,d:30,onde:'Pressão',txt:'Feijão de molho na pressão, água 3 dedos acima e 1 folha de louro. Depois que pegar pressão, 20 min.'},
+    {t:0,d:10,onde:'Bancada',txt:'Tempere 500 g de sobrecoxa sem pele com alho, limão, páprica e sal. Corte 2 batatas-doces em cubos com fio de óleo.'},
+    {t:10,d:45,onde:'Airfryer',txt:'Airfryer a 200 °C: sobrecoxa por 25 min, virando na metade. Depois a batata-doce, 20 min.'},
+    {t:10,d:10,onde:'Bancada',txt:'Corte 250 g de patinho em tiras finas e tempere com alho e sal.'},
+    {t:20,d:20,onde:'Fogão',txt:'Estrogonofe de carne: doure as tiras em 2 levas, junte cebola, 2 col. de extrato e ½ copo de água, 10 min. Desligue e misture ½ caixa de creme de leite.'},
+    {t:20,d:20,onde:'Fogão',txt:'Arroz: 1½ xícara crua (6 porções; 2 vão para o arroz de forno), 18 min tampado.'},
+    {t:30,d:12,onde:'Fogão',txt:'4 ovos em água fervente por 10 min, depois água fria. Guarde com casca.'},
+    {t:35,d:10,onde:'Pressão',txt:'Tire a pressão e tempere o feijão com alho e cebola refogados.'},
+    {t:45,d:15,onde:'Bancada',txt:'Panquecas de banana: mixer com 2 bananas, 2 ovos e 6 col. de aveia. Frigideira, 2 min de cada lado.'},
+    {t:60,d:12,onde:'Airfryer',txt:'Arroz de forno da sexta: desfie 1 sobrecoxa, misture com 2 porções de arroz, tomate e cheiro-verde, queijo por cima. Airfryer a 180 °C por 8 min.'},
+    {t:72,d:5,onde:'Bancada',txt:'Vinagrete: tomate, cebola, cheiro-verde, limão, sal e fio de azeite.'},
+    {t:75,d:3,onde:'Bancada',txt:'Sorvete natural: lave as uvas, separe as de sexta e congele o resto em saquinho, para o lanche de quinta.'},
+    {t:78,d:12,onde:'Bancada',txt:'Espalhe tudo em travessas rasas para esfriar rápido. Separe o seu jantar de hoje.'},
+    {t:90,d:10,onde:'Bancada',txt:'Monte e etiquete: quarta (estrogonofe, arroz e feijão) e quinta (sobrecoxa, batata-doce e feijão) na geladeira; sexta (arroz de forno) no freezer. A batata-doce restante vai num pote para o jantar de quarta. Feijão extra: 2 potinhos no freezer.'}
    ]}
  }
 };
@@ -347,24 +527,36 @@ const SEMANAS={
 /* compras: [seção, item, quantidade, preço estimado R$, recorrência] ; rec 'semana' ou 'mes' */
 const COMPRAS={
  A:[
-  ['Açougue','Peito de frango','300 g',5.5,'semana'],['Açougue','Carne moída de acém','300 g',10,'semana'],
-  ['Ovos e laticínios','Ovos','12 un.',8.5,'semana'],['Ovos e laticínios','Leite','1 L',5.5,'semana'],['Ovos e laticínios','Queijo mussarela fatiado','100 g',5,'semana'],['Ovos e laticínios','Creme de leite','1 caixinha',3.5,'semana'],
-  ['Feira','Banana','4 un.',2.5,'semana'],['Feira','Fruta da estação (caju, manga, goiaba, laranja)','4 un.',4,'semana'],['Feira','Tomate','4 un.',3,'semana'],['Feira','Cebola','3 un.',2,'semana'],['Feira','Couve','1 maço',2.5,'semana'],['Feira','Cenoura','1 un.',1,'semana'],['Feira','Limão','2 un.',1,'semana'],['Feira','Cheiro-verde','1 maço',2,'semana'],
+  ['Açougue','Peito de frango','300 g',5.5,'semana'],['Açougue','Patinho em peça ou bife','350 g',14,'semana'],
+  ['Ovos e laticínios','Ovos','12 un.',8.5,'semana'],['Ovos e laticínios','Leite','1 L',5.5,'semana'],['Ovos e laticínios','Queijo mussarela fatiado','100 g',5,'semana'],['Ovos e laticínios','Iogurte natural','1 un.',3,'semana'],['Ovos e laticínios','Creme de leite','1 caixinha',3.5,'semana'],
+  ['Feira','Banana','4 un.',2.5,'semana'],['Feira','Tangerina, maçã e pera','1 de cada',4,'semana'],['Feira','Abacaxi','1 pequeno',5,'semana'],['Feira','Batata','2 un.',1.5,'semana'],['Feira','Tomate','4 un.',3,'semana'],['Feira','Cebola','3 un.',2,'semana'],['Feira','Couve','1 maço',2.5,'semana'],['Feira','Cenoura','1 un.',1,'semana'],['Feira','Limão','2 un.',1,'semana'],['Feira','Cheiro-verde','1 maço',2,'semana'],
   ['Padaria','Pão francês','6 un.',4,'semana']
  ],
  B:[
   ['Açougue','Peito de frango','300 g',5.5,'semana'],['Açougue','Acém ou patinho em bife','300 g',11,'semana'],
-  ['Ovos e laticínios','Ovos','12 un.',8.5,'semana'],['Ovos e laticínios','Leite','1 L',5.5,'semana'],['Ovos e laticínios','Queijo mussarela fatiado','100 g',5,'semana'],
-  ['Feira','Banana','4 un.',2.5,'semana'],['Feira','Fruta da estação (caju, manga, goiaba, laranja)','4 un.',4,'semana'],['Feira','Tomate','5 un.',3.5,'semana'],['Feira','Cebola','3 un.',2,'semana'],['Feira','Cenoura','1 un.',1,'semana'],['Feira','Limão','2 un.',1,'semana'],['Feira','Cheiro-verde','1 maço',2,'semana'],
+  ['Ovos e laticínios','Ovos','12 un.',8.5,'semana'],['Ovos e laticínios','Leite','1 L',5.5,'semana'],['Ovos e laticínios','Queijo mussarela fatiado','100 g',5,'semana'],['Ovos e laticínios','Iogurte natural','1 un.',3,'semana'],
+  ['Feira','Banana','4 un.',2.5,'semana'],['Feira','Laranja, maçã e tangerina','1 de cada',4,'semana'],['Feira','Uva','300 g',5,'semana'],['Feira','Batata','2 un.',1.5,'semana'],['Feira','Tomate','5 un.',3.5,'semana'],['Feira','Cebola','3 un.',2,'semana'],['Feira','Cenoura','1 un.',1,'semana'],['Feira','Limão','2 un.',1,'semana'],['Feira','Cheiro-verde','1 maço',2,'semana'],
+  ['Padaria','Pão francês','6 un.',4,'semana']
+ ],
+ C:[
+  ['Açougue','Acém em peça','450 g',15,'semana'],['Açougue','Peito de frango','300 g',5.5,'semana'],
+  ['Ovos e laticínios','Ovos','12 un.',8.5,'semana'],['Ovos e laticínios','Leite','1 L',5.5,'semana'],['Ovos e laticínios','Queijo mussarela fatiado','100 g',5,'semana'],['Ovos e laticínios','Iogurte natural','1 un.',3,'semana'],
+  ['Feira','Banana','4 un.',2.5,'semana'],['Feira','Pera, laranja e maçã','1 de cada',4,'semana'],['Feira','Abacaxi','1 pequeno',5,'semana'],['Feira','Batata','2 un.',1.5,'semana'],['Feira','Pimentão','1 un.',1.5,'semana'],['Feira','Tomate','4 un.',3,'semana'],['Feira','Cebola','3 un.',2,'semana'],['Feira','Cenoura','2 un.',2,'semana'],['Feira','Limão','2 un.',1,'semana'],['Feira','Cheiro-verde','1 maço',2,'semana'],
+  ['Padaria','Pão francês','6 un.',4,'semana']
+ ],
+ D:[
+  ['Açougue','Patinho em bife','250 g',10,'semana'],['Açougue','Sobrecoxa de frango sem pele','500 g',8,'semana'],
+  ['Ovos e laticínios','Ovos','12 un.',8.5,'semana'],['Ovos e laticínios','Leite','1 L',5.5,'semana'],['Ovos e laticínios','Queijo mussarela fatiado','100 g',5,'semana'],['Ovos e laticínios','Creme de leite','1 caixinha',3.5,'semana'],['Ovos e laticínios','Iogurte natural','1 un.',3,'semana'],
+  ['Feira','Banana','4 un.',2.5,'semana'],['Feira','Maçã, tangerina e pera','1 de cada',4,'semana'],['Feira','Uva','300 g',5,'semana'],['Feira','Batata-doce','2 un.',3,'semana'],['Feira','Tomate','4 un.',3,'semana'],['Feira','Cebola','3 un.',2,'semana'],['Feira','Limão','2 un.',1,'semana'],['Feira','Cheiro-verde','1 maço',2,'semana'],
   ['Padaria','Pão francês','6 un.',4,'semana']
  ],
  mes:[
-  ['Despensa','Arroz','1 kg',6,'mes'],['Despensa','Feijão carioca','1 kg',8,'mes'],['Despensa','Grão-de-bico','500 g',9,'mes'],['Despensa','Aveia em flocos','250 g',5,'mes'],['Despensa','Flocão de milho','500 g',3,'mes'],['Despensa','Macarrão','500 g',4.5,'mes'],['Despensa','Farinha de mandioca','500 g',5,'mes'],['Despensa','Farinha de trigo','1 kg',5,'mes'],['Despensa','Extrato de tomate','2 un.',5,'mes'],['Despensa','Alho','1 cabeça',3,'mes'],['Despensa','Óleo, sal, colorau, louro, mel','se acabar',0,'mes']
+  ['Despensa','Arroz','1 kg',6,'mes'],['Despensa','Feijão carioca','1 kg',8,'mes'],['Despensa','Feijão preto (semana C)','500 g',5,'mes'],['Despensa','Amido de milho','1 caixa pequena',4,'mes'],['Despensa','Grão-de-bico','500 g',9,'mes'],['Despensa','Aveia em flocos','250 g',5,'mes'],['Despensa','Requeijão','1 copo',7,'mes'],['Despensa','Granola','250 g',8,'mes'],['Despensa','Fermento em pó e canela','1 de cada',6,'mes'],['Despensa','Flocão de milho','500 g',3,'mes'],['Despensa','Macarrão','500 g',4.5,'mes'],['Despensa','Farinha de mandioca','500 g',5,'mes'],['Despensa','Farinha de trigo','1 kg',5,'mes'],['Despensa','Extrato de tomate','2 un.',5,'mes'],['Despensa','Alho','1 cabeça',3,'mes'],['Despensa','Óleo, sal, colorau, louro, mel','se acabar',0,'mes']
  ]
 };
 
 const FDS={
- compras:'Para um fim de semana em casa, some cerca de R$ 15: 200 g de frango, 6 ovos e 4 pães.',
+ compras:'Para um fim de semana em casa, some cerca de R$ 18: 200 g de frango ou patinho, 6 ovos, 4 pães e 2 batatas.',
  opcoes:[
   {ref:'Café',nome:'Panquecas de banana com whey e mel',desc:'Mixer com 1 banana, 1 ovo, 3 col. de aveia e 1 dosador de whey (se tiver). 10 min.',prot:28},
   {ref:'Café',nome:'Cuscuz temperado com ovo',desc:'Flocão com cebola, tomate e cheiro-verde, e 1 ovo. 15 min.',prot:12},
@@ -372,7 +564,13 @@ const FDS={
   {ref:'Almoço',nome:'Arroz, feijão do freezer, ovo e vinagrete',desc:'O prato mais barato e completo. 25 min.',prot:16},
   {ref:'Lanche',nome:'Vitamina de banana com aveia',desc:'Leite, banana, aveia e mel. 3 min.',prot:14},
   {ref:'Jantar',nome:'Macarrão temperado com ovo',desc:'Alho, tomate, cheiro-verde e 2 ovos. 20 min.',prot:18},
-  {ref:'Jantar',nome:'Pão com ovo e queijo, e suco',desc:'O seu clássico, na sanduicheira. 8 min.',prot:20}
+  {ref:'Jantar',nome:'Pão com ovo e queijo, e suco',desc:'O seu clássico, na sanduicheira. 8 min.',prot:20},
+  {ref:'Café',nome:'Cuscuz com leite',desc:'Cuscuz quentinho com leite morno por cima. 12 min.',prot:10},
+  {ref:'Café',nome:'Torradas com ovos mexidos e requeijão',desc:'Pão tostado na sanduicheira ou airfryer. 8 min.',prot:16},
+  {ref:'Almoço',nome:'Escondidinho de batata com patinho em cubinhos',desc:'Purê de 2 batatas, 150 g de patinho em cubinhos refogado e queijo, airfryer 10 min. 35 min.',prot:30},
+  {ref:'Sobremesa',nome:'Sorvete natural de uva ou abacaxi com granola',desc:'Fruta congelada batida no mixer com iogurte. 3 min.',prot:8},
+  {ref:'Sobremesa',nome:'Salada de frutas com iogurte e granola',desc:'Pique o que sobrou da semana (maçã, pera, uva, abacaxi, tangerina), suco de laranja por cima, iogurte e granola. 10 min.',prot:8},
+  {ref:'Lanche',nome:'Cenoura crua, pão com requeijão e suco',desc:'Sem fogão. 5 min.',prot:7}
  ]
 };
 
@@ -386,17 +584,20 @@ function planoDoDia(date){
   const kit=t=>({kitPao:'1 fruta e 1 pão com queijo',kitOvo:'1 fruta e 1 ovo cozido',kitPanq:'1 fruta e 1 panqueca de banana'}[t]);
   if(d===0||d===6) return null;
   if(d===1){
-    it.push({id:'lanche2',hora:H.lancheSeg,refeicao:'Lanche da tarde',nome:'Suco de maracujá e pão com queijo na sanduicheira',desc:'Ao chegar do estágio.',tempo:5,tipo:'rapido',prot:10});
+    it.push({id:'lanche2',hora:H.lancheSeg,refeicao:'Lanche da tarde',nome:'Pão com requeijão, cenoura crua e suco de maracujá',desc:'Ao chegar do estágio: pão com requeijão na sanduicheira e palitos de cenoura.',tempo:5,tipo:'rapido',prot:8});
+    const bo=BOLINHOS[BOLINHO_SEMANA[wk]];
+    it.push({id:'bolinhos',hora:'17:30',tipo:'bolinho',nome:bo.nome+' na airfryer',desc:'20 min, enquanto descansa da volta. Rende 6 para os lanches da semana. '+bo.ing,passos:bo.passos});
     it.push(Object.assign({id:'jantar',hora:H.jantar,refeicao:'Jantar'},W.jantar[1]));
     const tasks=W.noiteSeg.slice();
     tasks.push('Guarde na geladeira o almoço de terça que veio da sua mãe.');
-    tasks.push('Monte o kit de amanhã na frente da geladeira: almoço, 1 fruta e 1 pão com queijo.');
+    tasks.push('Monte o kit de amanhã na frente da geladeira: almoço, 1 '+FRUTA[wk][2]+' e 1 bolinho.');
     tasks.push('Confira a lista de compras: o preparo é amanhã, às '+H.preparo+'.');
     it.push({id:'noite',hora:H.noite,tipo:'noite',nome:'Preparar amanhã',desc:'5 a 10 min, logo depois do jantar.',tasks});
   }
   if(d>=2&&d<=5){
     it.push(Object.assign({id:'cafe',hora:d===5?H.cafeSex:H.cafe},C[{2:'vitamina',3:'panqBanana',4:'paoOvo',5:'panqBanana'}[d]]));
-    it.push(Object.assign({id:'lanche1',hora:H.lanche1},C[{2:'kitPao',3:'kitOvo',4:'kitOvo',5:'kitOvo'}[d]]));
+    const fr=FRUTA[wk][d];
+    it.push(Object.assign({id:'lanche1',hora:H.lanche1},C[{2:'kitPao',3:'kitOvo',4:'kitOvo',5:'kitOvo'}[d]],{nome:cap(fr)+(d===2?' e 1 bolinho de airfryer':' e ovo cozido'),prot:d===2?4:7,desc:'Kit montado ontem à noite. Coma por volta das 8h30, com alarme no celular.'}));
     if(d===2){
       it.push({id:'almoco',hora:H.almoco,refeicao:'Almoço',nome:'Almoço feito pela sua mãe',desc:'Trazido na segunda. Esquente com tampa entreaberta e beba suco de maracujá junto.',tempo:4,tipo:'esquentar',passos:MICRO});
     }else{
@@ -408,15 +609,15 @@ function planoDoDia(date){
       it.push({id:'lanche2',hora:'16:00',refeicao:'Lanche da tarde',nome:'Panquecas de banana fresquinhas e suco de maracujá',desc:'Recompensa do preparo: 2 panquecas recém-feitas.',tempo:1,tipo:'pronto',prot:10});
     }
     if(d===3||d===4){
-      it.push({id:'lanche2',hora:H.lancheTarde,refeicao:'Lanche da tarde (pós-treino)',nome:d===3?'Vitamina de banana com aveia':'Pão com ovo e suco de maracujá',desc:d===3?'300 ml de leite, 1 banana, 2 col. de aveia. Até 2 h depois do treino.':'1 pão, 1 ovo mexido e 1 copo de suco.',tempo:d===3?3:6,tipo:'rapido',prot:d===3?14:12});
+      it.push({id:'lanche2',hora:H.lancheTarde,refeicao:'Lanche da tarde (pós-treino)',nome:d===3?'Vitamina de banana com aveia':'Sorvete natural de '+SORVETE[wk]+' com iogurte e granola',desc:d===3?'300 ml de leite, 1 banana, 2 col. de aveia. Até 2 h depois do treino.':'Fruta congelada na terça, batida com iogurte. 2 col. de granola por cima.',tempo:d===3?3:4,tipo:'rapido',prot:d===3?14:9,passos:d===3?null:['1 xícara da fruta congelada e 1 iogurte natural no copo do mixer.','Bata 1 min, até ficar cremoso.','Granola por cima e coma na hora.']});
     }
     if(d<=4){
       it.push(Object.assign({id:'jantar',hora:H.jantar,refeicao:'Jantar'},W.jantar[d]));
       const tasks=[];
       const tom=addDays(date,1), WT=SEMANAS[weekOf(tom)];
       if(d===3) tasks.push('Passe a marmita de sexta ('+W.marmitas[2].nome.toLowerCase()+') do freezer para a geladeira.');
-      if(d===2||d===3) tasks.push('Monte o kit de amanhã na frente da geladeira: marmita, 1 fruta e 1 ovo cozido.');
-      if(d===4){tasks.push('Monte o kit de sexta na frente da geladeira: marmita, 1 fruta e 1 ovo cozido. Amanhã você acorda às 3h50.');tasks.push('Deixe 2 panquecas de banana à mão para o café.')}
+      if(d===2||d===3) tasks.push('Monte o kit de amanhã na frente da geladeira: marmita, 1 '+FRUTA[wk][d+1]+' e 1 ovo cozido.');
+      if(d===4){tasks.push('Monte o kit de sexta na frente da geladeira: marmita, '+FRUTA[wk][5]+' num potinho e 1 ovo cozido. Amanhã você acorda às 3h50.');tasks.push('Deixe 2 panquecas de banana à mão para o café.')}
       if(d===2) tasks.push('As panquecas de banana de quarta ficam na geladeira; as de sexta podem ir para o freezer.');
       it.push({id:'noite',hora:H.noite,tipo:'noite',nome:'Preparar amanhã',desc:'5 min, logo depois do jantar.',tasks});
       it.push({id:'deitar',hora:d===4?subtrai(H.deitar,30):H.deitar,tipo:'sono',nome:d===4?'Deitar mais cedo':'Hora de deitar',desc:d===4?'Sexta você acorda às 3h50. Deitando às '+subtrai(H.deitar,30)+', são cerca de 7 h de sono.':'Acordando às 4h30, deitar às '+H.deitar+' dá 7h30 de sono. Tela longe na última meia hora.'});
@@ -439,6 +640,20 @@ function checks(date){return load('dia:'+iso(date),{})}
 function setCheck(date,k,v){const c=checks(date);if(v)c[k]=true;else delete c[k];save('dia:'+iso(date),c);if(v){const f=load('inicio',null);if(!f||f>iso(date))save('inicio',iso(date))}}
 function refeicoesDe(date){const p=planoDoDia(date);return p?p.filter(i=>i.refeicao).map(i=>i.id):[]}
 function diaCompleto(date){const r=refeicoesDe(date);if(!r.length)return null;const c=checks(date);return r.every(k=>c[k])}
+function altsFor(it,date){
+  const W=SEMANAS[weekOf(date)];let L=[];
+  if(it.id==='cafe')L=[C.vitamina,C.panqBanana,C.paoOvo].concat(ALT.cafe);
+  else if(it.id==='lanche1'||it.id==='lanche2')L=ALT[it.id];
+  else if(it.id==='jantar'){Object.keys(SEMANAS).forEach(k=>Object.values(SEMANAS[k].jantar).forEach(j=>{if(j.tempo)L.push(j)}));L=L.concat(ALT.jantar)}
+  else if(it.id==='almoco')L=W.marmitas.map(m=>({nome:m.nome,desc:'Outra marmita da semana, com '+m.acomp+'.',tempo:4,tipo:'esquentar',prot:m.prot,ferro:!!m.ferro,passos:MICRO,passosTitulo:'Como esquentar'})).concat(ALT.almoco);
+  const seen={};return L.filter(x=>x.nome!==it.nome&&!seen[x.nome]&&(seen[x.nome]=1));
+}
+function aplicaTrocas(itens,date){
+  const T=load('troca:'+iso(date),{});
+  return itens.map(it=>{if(!T[it.id])return it;const a=altsFor(it,date).find(x=>x.nome===T[it.id]);if(!a)return it;
+    return Object.assign({id:it.id,hora:it.hora,refeicao:it.refeicao,passos:null,ferro:false},a,{trocado:true,original:it.nome})});
+}
+let trocaAberta=null;
 function sequencia(){
   let n=0,d=startOfDay(new Date()),guard=0;
   if(diaCompleto(d)!==true) d=addDays(d,-1);
@@ -454,7 +669,7 @@ function meta(){return Math.round((Number(load('peso',50))||50)*1.6)}
 /* ---------- HOJE ---------- */
 function renderHoje(){
   const hoje=startOfDay(new Date()), seg=mondayOf(diaSel);
-  const W=weekOf(diaSel), itens=planoDoDia(diaSel), c=checks(diaSel);
+  const W=weekOf(diaSel), itensP=planoDoDia(diaSel), itens=itensP?aplicaTrocas(itensP,diaSel):null, c=checks(diaSel);
   let h='<section class="view">';
   h+='<div><p class="eyebrow">'+(iso(diaSel)===iso(hoje)?'Hoje':'Planejamento')+' · Semana '+W+'</p><h1>'+DIAS[diaSel.getDay()]+', '+fmtDate(diaSel)+'</h1></div>';
   h+='<div class="days" role="group" aria-label="Dias da semana">';
@@ -486,6 +701,9 @@ function renderHoje(){
     if(it.tipo==='prep'){
       h+='<div class="item"><div class="hora">'+it.hora+'</div><div class="card prep'+(done?' checked':'')+'"><div class="body"><p class="eyebrow">Terça de preparo</p><h3>'+it.nome+'</h3><p class="small">'+it.desc+'</p><div><a class="btn small" href="#preparo" style="display:inline-block;text-decoration:none">Abrir o passo a passo</a></div></div><input type="checkbox" class="check" aria-label="Feito" data-k="'+it.id+'" '+(done?'checked':'')+'></div></div>';return;
     }
+    if(it.tipo==='bolinho'){
+      h+='<div class="item"><div class="hora">'+it.hora+'</div><div class="card prep'+(done?' checked':'')+'"><div class="body"><p class="eyebrow">Bolinhos da semana</p><h3>'+esc(it.nome)+'</h3><p class="small">'+esc(it.desc)+'</p><details><summary>Como fazer</summary><ol class="steps">'+it.passos.map(p=>'<li>'+esc(p)+'</li>').join('')+'</ol></details>'+subsHtml(it.desc)+guardaHtml('bolinho',null)+'</div><input type="checkbox" class="check" aria-label="Feito" data-k="'+it.id+'" '+(done?'checked':'')+'></div></div>';return;
+    }
     if(it.tipo==='sono'||it.tipo==='fds'){
       h+='<div class="item"><div class="hora">'+it.hora+'</div><div class="card noite'+(done?' checked':'')+'"><div class="body"><p class="eyebrow">'+(it.tipo==='sono'?'Sono':'Depois do estágio')+'</p><h3>'+it.nome+'</h3><p class="small muted">'+it.desc+'</p></div>'+(it.tipo==='sono'?'<input type="checkbox" class="check" aria-label="Feito" data-k="'+it.id+'" '+(done?'checked':'')+'>':'<div></div>')+'</div></div>';return;
     }
@@ -493,7 +711,18 @@ function renderHoje(){
     h+='<p class="eyebrow">'+esc(it.refeicao||'')+'</p><h3>'+esc(it.nome)+'</h3>';
     if(it.desc)h+='<p class="small muted">'+esc(it.desc)+'</p>';
     h+='<div class="meta">'+chipTipo(it.tipo)+(it.tempo?'<span class="chip mono">'+tempoTxt(it.tempo)+'</span>':'')+(it.prot?'<span class="chip mono">≈ '+it.prot+' g prot.</span>':'')+(it.ferro?'<span class="chip ferro">Ferro</span>':'')+'</div>';
+
     if(it.passos&&it.passos.length)h+='<details><summary>'+(it.passosTitulo||'Como fazer')+'</summary><ol class="steps">'+it.passos.map(p=>'<li>'+esc(p)+'</li>').join('')+'</ol></details>';
+    if(it.id!=='almoco')h+=subsHtml(it.nome+' '+(it.desc||'')+' '+(it.passos||[]).join(' '));
+    const ehMarm=it.id==='almoco'&&it.tipo==='esquentar'&&!it.trocado&&diaSel.getDay()>=3;
+    const terca=addDays(mondayOf(diaSel),1);
+    if(ehMarm){const m=SEMANAS[W].marmitas.find(x=>x.dia===diaSel.getDay());h+='<details class="guarda"><summary>Como guardar</summary><p class="small">'+(m&&m.onde==='freezer'?'No freezer até a noite de quarta; depois na geladeira para descongelar (12 a 24 h). Descongelada, coma em até 24 h e não congele de novo. No estágio, direto para a geladeira ao chegar.':'Pote fechado na geladeira de casa e, no estágio, direto para a geladeira ao chegar. Feita na terça, coma até '+fmtCurtaD(addDays(terca,4))+'.')+'</p></details>'}
+    else h+=guardaHtml(it.nome+' '+(it.desc||''),null);
+    const alts=altsFor(it,diaSel);
+    if(alts.length){
+      h+='<div class="row" style="justify-content:flex-start;gap:8px">'+(it.trocado?'<span class="chip esquentar">Trocado</span><button class="btn small ghost" data-desfaz="'+it.id+'">Voltar ao plano</button>':'')+'<button class="btn small ghost" data-trocar="'+it.id+'">'+(trocaAberta===it.id?'Fechar':'Trocar')+'</button></div>';
+      if(trocaAberta===it.id)h+='<div class="swaplist">'+(it.trocado?'<p class="small muted">No plano: '+esc(it.original)+'</p>':'')+alts.map(a=>'<button data-escolhe="'+it.id+'" data-nome="'+esc(a.nome)+'"><b>'+esc(a.nome)+'</b><span class="small muted">'+(a.tempo?tempoTxt(a.tempo)+' · ':'')+(a.prot?'≈ '+a.prot+' g prot.':'')+'</span></button>').join('')+'</div>';
+    }
     h+='</div><input type="checkbox" class="check" aria-label="Feito: '+esc(it.nome)+'" data-k="'+it.id+'" '+(done?'checked':'')+'></div></div>';
   });
   h+='</div>';
@@ -501,6 +730,10 @@ function renderHoje(){
   h+='<p class="tip">Água: deixe uma garrafa de 500 ml na bolsa e beba 2 dessas no estágio e 1 em casa. Suco de maracujá junto do almoço e do jantar ajuda o ferro; leite e queijo ficam melhor nos lanches.</p>';
   h+='</section>';
   main.innerHTML=h;bindDays();bindFds();
+  const salvaTroca=(id,nome)=>{const k='troca:'+iso(diaSel),T=load(k,{});if(nome)T[id]=nome;else delete T[id];save(k,T);trocaAberta=null;render()};
+  main.querySelectorAll('button[data-trocar]').forEach(b=>b.onclick=()=>{trocaAberta=trocaAberta===b.dataset.trocar?null:b.dataset.trocar;render()});
+  main.querySelectorAll('button[data-escolhe]').forEach(b=>b.onclick=()=>{salvaTroca(b.dataset.escolhe,b.dataset.nome);toast('Trocado: '+b.dataset.nome)});
+  main.querySelectorAll('button[data-desfaz]').forEach(b=>b.onclick=()=>salvaTroca(b.dataset.desfaz,null));
   main.querySelectorAll('input[data-k]').forEach(inp=>inp.onchange=()=>{setCheck(diaSel,inp.dataset.k,inp.checked);render();
     if(inp.checked&&diaCompleto(diaSel)===true&&refeicoesDe(diaSel).includes(inp.dataset.k))toast('Dia completo. Mais um tijolo no hábito.');});
 }
@@ -519,24 +752,28 @@ function bindFds(){const b=document.getElementById('fdsBtn');if(b)b.onclick=()=>
 
 /* ---------- SEMANA ---------- */
 let semanaVer=null;
-function segWeek(W){return '<div class="seg" role="group" aria-label="Escolher semana"><button data-w="A" aria-pressed="'+(W==='A')+'">Semana A</button><button data-w="B" aria-pressed="'+(W==='B')+'">Semana B</button></div>'}
+function segWeek(W){return '<div class="seg" role="group" aria-label="Escolher semana">'+LETRAS.map(l=>'<button data-w="'+l+'" aria-pressed="'+(W===l)+'">'+(l==='A'?'Semana A':l)+'</button>').join('')+'</div>'}
 function bindSeg(fn){main.querySelectorAll('.seg button[data-w]').forEach(b=>b.onclick=()=>fn(b.dataset.w))}
 function renderSemana(){
   const atual=weekOf(new Date()),W=semanaVer||atual,S=SEMANAS[W],hoje=new Date().getDay();
   let h='<section class="view"><div class="row"><div><p class="eyebrow">Cardápio</p><h1>Semana '+W+'</h1></div>'+segWeek(W)+'</div>';
-  h+='<div class="weekcard"><p>'+S.resumo+'</p><p class="small muted">As semanas A e B se alternam para variar sem complicar as compras. Frango entra no máximo 2 vezes por semana. Esta semana é a '+atual+'.</p><div class="marmitas">';
-  S.marmitas.forEach(m=>h+='<div class="marmita"><span class="eyebrow">Marmita de '+DIAS[m.dia].toLowerCase()+' · ≈ '+m.prot+' g prot.</span><b>'+m.nome+'</b><span class="small muted">com '+m.acomp+' · '+m.onde+'</span></div>');
+  h+='<div class="weekcard"><p>'+S.resumo+'</p><p class="small muted">As 4 semanas (A, B, C e D) se alternam para variar sem complicar as compras. Frango entra no máximo 2 vezes por semana. Esta semana é a '+atual+'.</p><div class="marmitas">';
+  S.marmitas.forEach(m=>h+='<div class="marmita"><span class="eyebrow">Marmita de '+DIAS[m.dia].toLowerCase()+' · ≈ '+m.prot+' g prot.</span><b>'+m.nome+'</b><span class="small muted">com '+m.acomp+' · '+(m.onde==='freezer'?'freezer até 2 meses; desce à geladeira na quarta à noite':'geladeira, coma em até 4 dias')+'</span></div>');
   h+='</div></div>';
   h+='<div class="tablewrap"><table><thead><tr><th>Dia</th><th>Café</th><th>Almoço</th><th>Lanche da tarde</th><th>Jantar</th></tr></thead><tbody>';
   const cafes={2:C.vitamina.nome,3:C.panqBanana.nome,4:C.paoOvo.nome,5:C.panqBanana.nome};
-  const tardes={1:'Suco e pão com queijo',2:'Panquecas de banana e suco',3:'Vitamina de banana',4:'Pão com ovo e suco'};
+  const tardes={1:'Pão com requeijão e cenoura crua',2:'Panquecas de banana e suco',3:'Vitamina de banana',4:'Sorvete natural de '+SORVETE[W]+' com granola'};
   [1,2,3,4,5].forEach(d=>{
     const m=S.marmitas.find(x=>x.dia===d);
     h+='<tr class="'+(d===hoje&&W===atual?'hoje':'')+'"><td class="dia">'+DIAS_C[d]+'</td><td>'+(cafes[d]||'<span class="muted">casa dos pais</span>')+'</td><td>'+(m?m.nome:'<span class="muted">feito pela sua mãe</span>')+'</td><td>'+(tardes[d]||'<span class="muted">—</span>')+'</td><td>'+(S.jantar[d]?S.jantar[d].nome:'<span class="muted">casa dos pais</span>')+'</td></tr>';
   });
   h+='</tbody></table></div>';
-  h+='<p class="small muted">Lanche da manhã de terça a sexta: 1 fruta da estação com ovo cozido, pão com queijo ou panqueca de banana, sempre no kit da noite anterior. Fins de semana na casa dos pais ficam livres; a aba Hoje mostra opções se você ficar em casa.</p></section>';
+  h+='<p class="small muted">Lanche da manhã de terça a sexta: '+[2,3,4,5].map(d=>FRUTA[W][d]).join(', ')+', com pão com queijo ou ovo cozido, sempre no kit da noite anterior.</p>';
+  h+='<div class="weekcard"><h3>Bolinhos de airfryer</h3><p class="small muted">Feitos na segunda à tarde; nesta semana, '+BOLINHOS[BOLINHO_SEMANA[W]].nome.toLowerCase()+'. Use forminhas de silicone.</p><div class="marmitas">'+Object.values(BOLINHOS).map(b=>'<div class="marmita"><span class="eyebrow">6 un. · ≈ '+b.prot+' g prot. cada</span><b>'+b.nome+'</b><span class="small muted">'+b.ing+'</span><details><summary>Como fazer</summary><ol class="steps">'+b.passos.map(x=>'<li>'+x+'</li>').join('')+'</ol></details>'+subsHtml(b.ing)+'</div>').join('')+'</div></div>';
+  h+='<div class="weekcard"><h3>Substituições de ingredientes</h3><p class="small muted">Faltou algo em casa ou não gosta? Troque por um destes, na mesma quantidade.</p><label for="subsBusca" class="small muted">Buscar ingrediente</label><input type="text" id="subsBusca" placeholder="Ex.: creme de leite" style="font:inherit;padding:8px 10px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--fg);width:100%"><div class="tablewrap"><table><thead><tr><th>Ingrediente</th><th>Pode usar</th></tr></thead><tbody id="subsTab">'+SUBS.map(x=>'<tr data-q="'+(x[0]+' '+x[2]).toLowerCase()+'"><td><b>'+x[0]+'</b></td><td>'+x[2]+'</td></tr>').join('')+'</tbody></table></div></div>';
+  h+='<div class="weekcard"><h3>Trocas que você gosta</h3><p class="small muted">Na aba Hoje, toque em <b>Trocar</b> em qualquer refeição para escolher outra opção. A troca fica salva só naquele dia.</p><div class="marmitas">'+[['Café da manhã','cafe'],['Lanche da manhã','lanche1'],['Lanche da tarde','lanche2'],['Jantar','jantar']].map(([t,k])=>'<div class="marmita"><span class="eyebrow">'+t+'</span><span class="small">'+cap(TROCAS[k].join(' · '))+'</span></div>').join('')+'</div></div></section>';
   main.innerHTML=h;bindSeg(v=>{semanaVer=v;render()});
+  const sb=document.getElementById('subsBusca');if(sb)sb.oninput=()=>{const q=sb.value.trim().toLowerCase();document.querySelectorAll('#subsTab tr').forEach(tr=>{tr.hidden=q&&!tr.dataset.q.includes(q)})};
 }
 
 /* ---------- PREPARO ---------- */
@@ -553,8 +790,9 @@ function renderPreparo(){
   h+='<p class="small muted">Antes de começar: coma algo rápido (suco e pão), separe as 3 marmiteiras, 3 potinhos, fita crepe e caneta. Usa panela de pressão, 3 bocas do fogão e o mixer.</p>';
   h+='<div class="steplist">';
   P.passos.forEach((s,i)=>{const now=el!=null&&el>=s.t&&el<s.t+s.d&&!done[i],ok=!!done[i];
-    h+='<div class="step'+(now?' now':'')+(ok?' done':'')+'"><div class="t">'+fmtMin(s.t)+'<small>'+s.d+' min</small></div><div class="txt"><span class="lane '+s.onde+'">'+s.onde+'</span><span>'+esc(s.txt)+'</span></div><input type="checkbox" aria-label="Passo feito" data-i="'+i+'" '+(ok?'checked':'')+'></div>'});
+    h+='<div class="step'+(now?' now':'')+(ok?' done':'')+'"><div class="t">'+fmtMin(s.t)+'<small>'+s.d+' min</small></div><div class="txt"><span class="lane '+s.onde+'">'+s.onde+'</span><span>'+esc(s.txt)+'</span>'+subsHtml(s.txt)+'</div><input type="checkbox" aria-label="Passo feito" data-i="'+i+'" '+(ok?'checked':'')+'></div>'});
   h+='</div>';
+  h+='<div class="sci"><h3>Como guardar o que foi feito</h3><div class="tablewrap"><table><thead><tr><th>O quê</th><th>Onde e como</th><th>Coma até</th></tr></thead><tbody>'+SEMANAS[W].marmitas.map(m=>'<tr><td>Marmita de '+DIAS[m.dia].toLowerCase()+'</td><td>'+(m.onde==='freezer'?'Freezer, pote fechado e etiquetado':'Geladeira, prateleira do meio, pote fechado')+'</td><td>'+(m.onde==='freezer'?'2 meses no freezer; 24 h depois de descongelar':'4 dias (sábado)')+'</td></tr>').join('')+'<tr><td>Jantares prontos</td><td>Geladeira, pote raso e fechado</td><td>3 dias</td></tr><tr><td>Feijão extra</td><td>Freezer, potinhos de 1 porção</td><td>3 meses</td></tr><tr><td>Panquecas de banana</td><td>Geladeira (quarta) e freezer (sexta), com papel-manteiga entre elas</td><td>3 dias; 1 mês no freezer</td></tr><tr><td>Ovos cozidos</td><td>Geladeira, com casca</td><td>7 dias</td></tr><tr><td>Vinagrete</td><td>Pote de vidro fechado na geladeira</td><td>3 dias</td></tr><tr><td>Fruta para o sorvete</td><td>Freezer, saquinho sem ar</td><td>1 mês</td></tr></tbody></table></div><p class="small muted">Regra geral: tudo na geladeira em até 2 h depois de pronto, em potes rasos. Nunca deixe esfriar na pia de um dia para o outro.</p></div>';
   h+='<div class="timer"><p class="eyebrow">Ao terminar</p><p class="small">Registre o que foi feito no controle de validade: marmitas, panquecas, ovos cozidos e vinagrete entram com o prazo certo.</p><div><button class="btn small" id="regVal">Registrar nas validades</button></div></div>';
   h+='<div class="sci"><h3>Por que assim</h3><ul class="steps"><li>O que demora mais (pressão) começa primeiro; o resto acontece enquanto ela trabalha.</li><li>Comida em camada rasa esfria rápido e entra na geladeira dentro de 2 h.</li><li>Quarta e quinta ficam na geladeira (até 3 a 4 dias). Sexta vai para o freezer e desce para a geladeira na quarta à noite.</li><li>O macarrão sai 2 min antes do ponto porque termina de cozinhar no micro-ondas.</li></ul></div>';
   h+='</section>';
@@ -618,7 +856,7 @@ function renderCiencia(){
    ['Hábito leva cerca de 66 dias','Em média um hábito fica automático em 66 dias (variou de 18 a 254). Falhar um dia não apaga o progresso.','Por isso: horários fixos e o contador de dias. Vale pelo conjunto, não pela perfeição.',S('Lally et al., 2010','https://doi.org/10.1002/ejsp.674')]
   ];
   cards.forEach(c=>h+='<div class="sci"><h3>'+c[0]+'</h3><p>'+c[1]+'</p><p class="rule">'+c[2]+'</p><p class="src">Fonte: '+c[3]+'</p></div>');
-  h+='<div class="sci"><h3>O que fica bom no micro-ondas</h3><div class="two"><div><span class="chip pronto">Esquenta bem</span><ul><li>Feijão, tropeiro, grão-de-bico</li><li>Arroz, com 1 colher de água</li><li>Estrogonofe, carne moída, iscas ao molho</li><li>Panquecas cobertas com molho</li><li>Macarrão cozido 2 min a menos</li></ul></div><div><span class="chip ferro">Evitar na marmita</span><ul><li>Bife grelhado seco (resseca): prefira com molho</li><li>Batata inglesa (fica arenosa no freezer)</li><li>Fritura e empanados (amolecem)</li><li>Ovo frito ou cozido (fica borrachudo)</li><li>Vinagrete quente: vai em pote separado</li></ul></div></div></div>';
+  h+='<div class="sci"><h3>O que fica bom no micro-ondas</h3><div class="two"><div><span class="chip pronto">Esquenta bem</span><ul><li>Feijão, tropeiro, grão-de-bico</li><li>Arroz, com 1 colher de água</li><li>Estrogonofe, picadinho e iscas ao molho</li><li>Panquecas cobertas com molho</li><li>Macarrão cozido 2 min a menos</li></ul></div><div><span class="chip ferro">Evitar na marmita</span><ul><li>Bife grelhado seco (resseca): prefira com molho</li><li>Batata inglesa (fica arenosa no freezer)</li><li>Fritura e empanados (amolecem)</li><li>Ovo frito ou cozido (fica borrachudo)</li><li>Vinagrete quente: vai em pote separado</li></ul></div></div></div>';
   h+='<div class="sci"><h3>Quanto tempo dura</h3><div class="tablewrap"><table><thead><tr><th>Alimento</th><th>Geladeira</th><th>Freezer</th></tr></thead><tbody><tr><td>Marmita cozida</td><td>3 a 4 dias</td><td>2 a 3 meses</td></tr><tr><td>Feijão e grão-de-bico cozidos</td><td>3 a 4 dias</td><td>3 meses</td></tr><tr><td>Panquecas de banana</td><td>3 dias</td><td>1 mês</td></tr><tr><td>Ovo cozido com casca</td><td>7 dias</td><td>não congelar</td></tr><tr><td>Vinagrete</td><td>3 dias</td><td>não congelar</td></tr><tr><td>Carne e frango crus</td><td>1 a 2 dias</td><td>até 4 a 12 meses</td></tr></tbody></table></div><p class="src">Prazos do USDA FoodKeeper, com geladeira a 5 °C ou menos e freezer a −18 °C.</p></div>';
   h+='</section>';
   main.innerHTML=h;
@@ -634,7 +872,7 @@ function renderPerfil(){
   h+='<div class="form"><h3>Horários</h3><p class="small muted">Mesmos horários todo dia ajudam o hábito a ficar automático.</p>';
   Object.keys(nomes).forEach(k=>h+='<label for="h-'+k+'">'+nomes[k]+'<input type="time" id="h-'+k+'" data-h="'+k+'" value="'+H[k]+'"></label>');
   h+='</div>';
-  h+='<div class="form"><h3>Rodízio de semanas</h3><p class="small muted">No automático, as semanas A e B se alternam sozinhas.</p><div class="seg" role="group" aria-label="Semana"><button data-s="auto" aria-pressed="'+(sem==='auto')+'">Automático</button><button data-s="A" aria-pressed="'+(sem==='A')+'">Sempre A</button><button data-s="B" aria-pressed="'+(sem==='B')+'">Sempre B</button></div></div>';
+  h+='<div class="form"><h3>Rodízio de semanas</h3><p class="small muted">No automático, as semanas A, B, C e D se alternam sozinhas. Para repetir uma semana de que gostou, fixe a letra.</p><div class="seg" role="group" aria-label="Semana"><button data-s="auto" aria-pressed="'+(sem==='auto')+'">Automático</button>'+LETRAS.map(l=>'<button data-s="'+l+'" aria-pressed="'+(sem===l)+'">'+l+'</button>').join('')+'</div></div>';
   h+='<div class="form"><h3>Seus registros</h3><p class="small muted">As marcações ficam guardadas só neste aparelho e navegador.</p><div><button class="btn ghost small" id="zerar">Apagar marcações</button></div><p class="small" id="confirma" hidden>Apagar as marcações de refeições, compras e preparo? <button class="btn small" id="sim">Apagar</button> <button class="btn ghost small" id="nao">Cancelar</button></p></div>';
   h+='</section>';
   main.innerHTML=h;
@@ -652,7 +890,7 @@ const LOCAIS=['Geladeira','Freezer','Armário'];
 const PRESETS=[
  ['Leite aberto',3,'Geladeira'],['Creme de leite aberto',2,'Geladeira'],['Extrato de tomate aberto',5,'Geladeira'],['Queijo fatiado aberto',5,'Geladeira'],
  ['Frango cru',2,'Geladeira'],['Carne crua',2,'Geladeira'],['Frango cru no freezer',180,'Freezer'],['Carne crua no freezer',120,'Freezer'],
- ['Pão francês',2,'Armário'],['Pão no freezer',30,'Freezer'],['Feijão cozido',4,'Geladeira'],['Marmita',4,'Geladeira'],['Marmita no freezer',60,'Freezer'],['Polpa de fruta',180,'Freezer']
+ ['Pão francês',2,'Armário'],['Pão no freezer',30,'Freezer'],['Feijão cozido',4,'Geladeira'],['Marmita',4,'Geladeira'],['Marmita no freezer',60,'Freezer'],['Polpa de fruta',180,'Freezer'],['Bolinhos de airfryer',4,'Geladeira'],['Salada de frutas',1,'Geladeira']
 ];
 function hojeIso(){return iso(startOfDay(new Date()))}
 function diasAte(dataIso){const [y,m,d]=dataIso.split('-').map(Number);return Math.round((new Date(y,m-1,d)-startOfDay(new Date()))/864e5)}
@@ -684,7 +922,7 @@ function renderValidade(){
       it.forEach(i=>{const [cls,txt]=rotuloDias(diasAte(i.data));h+='<div class="vrow"><div style="min-width:0"><b>'+esc(i.nome)+'</b> <span class="small muted">'+esc(i.local)+(i.qtd?' · '+esc(i.qtd):'')+' · '+fmtCurta(i.data)+'</span></div><span class="dias '+cls+'">'+txt+'</span><div class="acts" style="grid-column:1/-1"><button data-usou="'+i.id+'">Usei</button><button data-jogou="'+i.id+'">Joguei fora</button>'+(i.local==='Freezer'?'':'<button data-freezer="'+i.id+'">Mandar ao freezer</button>')+'</div></div>'});
       h+='</div>'});
   }
-  h+='<div class="sci"><h3>Para não perder comida</h3><ul class="steps"><li>Na terça, antes das compras, abra esta aba: o que vence logo entra no cardápio da semana.</li><li>Na geladeira, o que vence primeiro fica na frente (primeiro que vence, primeiro que sai).</li><li>Sobrou e não vai dar tempo? Freezer antes de vencer: carne, frango, pão, feijão e polpa congelam bem.</li><li>Leite, creme de leite e extrato abertos duram poucos dias: anote no dia em que abrir.</li></ul></div>';
+  h+='<div class="sci"><h3>Para não perder comida</h3><ul class="steps"><li>Na terça, antes das compras, abra esta aba: o que vence logo entra no cardápio da semana.</li><li>Na geladeira, o que vence primeiro fica na frente (primeiro que vence, primeiro que sai).</li><li>Frutas maduras demais? Vira salada de frutas (dura 1 dia na geladeira com suco de laranja por cima), sorvete natural ou bolinho de banana.</li><li>Sobrou e não vai dar tempo? Freezer antes de vencer: carne, frango, pão, feijão e polpa congelam bem.</li><li>Leite, creme de leite e extrato abertos duram poucos dias: anote no dia em que abrir.</li></ul></div>';
   h+='</section>';
   main.innerHTML=h;
   let local='Geladeira';
@@ -702,7 +940,7 @@ function registrarPreparo(W){
   addEstoque('Panquecas de banana',iso(addDays(t,3)),'Geladeira','');
   addEstoque('Ovos cozidos',iso(addDays(t,7)),'Geladeira','3 un.');
   addEstoque('Vinagrete',iso(addDays(t,3)),'Geladeira','');
-  if(W==='A')addEstoque('Feijão extra',iso(addDays(t,90)),'Freezer','2 potinhos');
+  if(W!=='B')addEstoque('Feijão extra',iso(addDays(t,90)),'Freezer','2 potinhos');
 }
 
 /* ---------- roteamento ---------- */
